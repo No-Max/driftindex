@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EventStatus {
+  SCHEDULED
+  FINISHED
+  CANCELLED
+}
+
+enum DataStatus {
+  UNVERIFIED
+  VERIFIED
+}
+
+model Series {
+  id            String         @id @default(cuid())
+  slug          String         @unique
+  nameEn        String
+  nameRu        String
+  country       String?
+  logoUrl       String?
+  featuredOrder Int?
+  defaultWeight Float          @default(1.0)
+  seasons       Season[]
+  weights       SeriesWeight[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model SeriesWeight {
+  id           String   @id @default(cuid())
+  seriesId     String
+  series       Series   @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  year         Int
+  weight       Float
+  prestigeRank Int?
+  calculatedAt DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([seriesId, year])
+}
+
+model Season {
+  id            String   @id @default(cuid())
+  seriesId      String
+  series        Series   @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  year          Int
+  nameEn        String?
+  nameRu        String?
+  sourceLabelEn String?
+  sourceLabelRu String?
+  sourceUrl     String?
+  events        Event[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([seriesId, year])
+}
+
+model Event {
+  id          String      @id @default(cuid())
+  seasonId    String
+  season      Season      @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  slug        String
+  roundNumber Int
+  nameEn      String
+  nameRu      String
+  trackEn     String?
+  trackRu     String?
+  startsAt    DateTime?
+  status      EventStatus @default(SCHEDULED)
+  results     EventResult[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@unique([seasonId, slug])
+}
+
+model Pilot {
+  id        String        @id @default(cuid())
+  slug      String        @unique
+  firstName String
+  lastName  String
+  nameRu    String?
+  country   String?
+  number    Int?
+  photoUrl  String?
+  results   EventResult[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model Team {
+  id        String        @id @default(cuid())
+  name      String
+  results   EventResult[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model EventResult {
+  id             String     @id @default(cuid())
+  eventId        String
+  event          Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  pilotId        String
+  pilot          Pilot      @relation(fields: [pilotId], references: [id], onDelete: Cascade)
+  teamId         String?
+  team           Team?      @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  qualPosition   Int?
+  qualPoints     Float?
+  tandemPosition Int?
+  points         Int        @default(0)
+  dataStatus     DataStatus @default(UNVERIFIED)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@unique([eventId, pilotId])
+}

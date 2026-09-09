@@ -1,0 +1,78 @@
+{
+  "brand": "Drift Index",
+  "tagline": "Турнирные таблицы и статистика дрифта",
+  "nav": {
+    "home": "Главная",
+    "series": "Серии"
+  },
+  "lang": {
+    "en": "EN",
+    "ru": "RU"
+  },
+  "home": {
+    "title": "Drift Index",
+    "subtitle": "Мировые standings, чемпионы и pound-for-pound рейтинг.",
+    "champion": "Лидер",
+    "noLeader": "Таблица пока пуста",
+    "pole": "Победитель квалификации",
+    "qualPoints": "б.",
+    "gap": "отрыв",
+    "p4pScore": "P4P",
+    "p4pLeader": "Pound-for-pound #1",
+    "noEvents": "Нет этапов",
+    "sections": {
+      "championships": "Чемпионаты",
+      "superPodium": "Супер-подиум",
+      "superPodiumSub": "Актуальные лидеры топ-серий",
+      "qualWinners": "Победители квалификаций",
+      "qualWinnersSub": "Pole на последнем этапе каждой серии",
+      "calendar": "Календарь {year}",
+      "calendarSub": "Все этапы featured-чемпионатов",
+      "p4p": "Pound-for-pound",
+      "p4pSub": "Лучший S/P — S = вес серии, P = место в таблице",
+      "fanVotes": "Голосование фанатов"
+    },
+    "eventStatus": {
+      "scheduled": "Скоро",
+      "finished": "Сыгран",
+      "cancelled": "Отменён"
+    },
+    "fanVote": {
+      "pilot": "Лучший пилот",
+      "car": "Лучший автомобиль",
+      "comingSoon": "Голосование откроется в конце сезона"
+    }
+  },
+  "standings": {
+    "title": "Турнирная таблица",
+    "rank": "Место",
+    "pilot": "Пилот",
+    "total": "Итого",
+    "round": "Э{n}",
+    "eventsProgress": "Сыграно {finished} из {total} этапов",
+    "source": "Источник"
+  },
+  "pilot": {
+    "title": "Профиль пилота",
+    "results": "Последние результаты",
+    "series": "Серия",
+    "event": "Этап",
+    "points": "Очки",
+    "qual": "Квал",
+    "tandem": "Пары",
+    "stats": {
+      "title": "Статистика",
+      "winRate": "Процент побед",
+      "events": "Этапы",
+      "seasons": "Сезоны",
+      "avgQual": "Средний балл квалификации",
+      "winsShort": "побед",
+      "eventsShort": "этапов",
+      "qualShort": "ср. квал"
+    }
+  },
+  "states": {
+    "loading": "Загрузка…",
+    "error": "Не удалось загрузить данные"
+  }
+}

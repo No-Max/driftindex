@@ -1,0 +1,78 @@
+{
+  "brand": "Drift Index",
+  "tagline": "Drift standings, stats, and rankings",
+  "nav": {
+    "home": "Home",
+    "series": "Series"
+  },
+  "lang": {
+    "en": "EN",
+    "ru": "RU"
+  },
+  "home": {
+    "title": "Drift Index",
+    "subtitle": "Global drift standings, champions, and pound-for-pound rankings.",
+    "champion": "Leader",
+    "noLeader": "No standings yet",
+    "pole": "Qualifying winner",
+    "qualPoints": "pts",
+    "gap": "gap",
+    "p4pScore": "P4P",
+    "p4pLeader": "Pound-for-pound #1",
+    "noEvents": "No events",
+    "sections": {
+      "championships": "Championships",
+      "superPodium": "Super Podium",
+      "superPodiumSub": "Current season leaders across top series",
+      "qualWinners": "Qualifying winners",
+      "qualWinnersSub": "Pole position at the latest round of each series",
+      "calendar": "Calendar {year}",
+      "calendarSub": "All rounds across featured championships",
+      "p4p": "Pound-for-pound",
+      "p4pSub": "Best S/P score — S = series weight, P = standing place",
+      "fanVotes": "Fan votes"
+    },
+    "eventStatus": {
+      "scheduled": "Upcoming",
+      "finished": "Done",
+      "cancelled": "Cancelled"
+    },
+    "fanVote": {
+      "pilot": "Best pilot",
+      "car": "Best car",
+      "comingSoon": "Voting opens at season end"
+    }
+  },
+  "standings": {
+    "title": "Season standings",
+    "rank": "Rank",
+    "pilot": "Pilot",
+    "total": "Total",
+    "round": "R{n}",
+    "eventsProgress": "{finished} / {total} rounds completed",
+    "source": "Source"
+  },
+  "pilot": {
+    "title": "Pilot profile",
+    "results": "Recent results",
+    "series": "Series",
+    "event": "Event",
+    "points": "Points",
+    "qual": "Qual",
+    "tandem": "Tandem",
+    "stats": {
+      "title": "Statistics",
+      "winRate": "Win rate",
+      "events": "Events",
+      "seasons": "Seasons",
+      "avgQual": "Avg qual score",
+      "winsShort": "wins",
+      "eventsShort": "events",
+      "qualShort": "avg qual"
+    }
+  },
+  "states": {
+    "loading": "Loading…",
+    "error": "Failed to load data"
+  }
+}

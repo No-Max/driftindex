@@ -1,0 +1,129 @@
+:root {
+  color-scheme: dark;
+  --bg: #0b0d10;
+  --surface: #141820;
+  --surface-2: #1b2230;
+  --border: #2a3344;
+  --text: #eef2f7;
+  --muted: #8b97ab;
+  --accent: #ff4d1a;
+  --accent-soft: rgba(255, 77, 26, 0.12);
+  --verified: #22c55e;
+  --unverified: #f59e0b;
+  font-family: Inter, system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top right, rgba(255, 77, 26, 0.08), transparent 30%),
+    var(--bg);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font: inherit;
+}
+
+.container {
+  width: min(1200px, calc(100% - 2rem));
+  margin: 0 auto;
+}
+
+.page-title {
+  font-family: Oswald, Inter, sans-serif;
+  font-size: clamp(2rem, 4vw, 3rem);
+  letter-spacing: 0.02em;
+  margin: 0 0 0.5rem;
+  text-transform: uppercase;
+}
+
+.page-subtitle {
+  color: var(--muted);
+  margin: 0 0 2rem;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge--verified {
+  background: rgba(34, 197, 94, 0.12);
+  color: var(--verified);
+}
+
+.badge--unverified {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--unverified);
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+
+th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  background: var(--surface-2);
+}
+
+tbody tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.rank {
+  font-family: Oswald, sans-serif;
+  font-size: 1.1rem;
+  color: var(--accent);
+}
+
+.pilot-link {
+  font-weight: 600;
+}
+
+.pilot-link:hover {
+  color: var(--accent);
+}
+
+.muted {
+  color: var(--muted);
+}
