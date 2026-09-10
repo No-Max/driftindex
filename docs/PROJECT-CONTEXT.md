@@ -193,10 +193,31 @@ Example overlap result: FD hardness ≈ 18 (7 samples) — most cross-series com
 
 ---
 
+## Data import
+
+### Royal Drift Series (`royalds.cn`)
+
+```bash
+npm run db:import:royal-ds
+```
+
+Source: SvelteKit `__data.json` from `https://royalds.cn/en/results`.
+
+**Import rules:**
+
+- Pilots with **0 season points** are skipped
+- Per-event results with **0 points** are skipped
+- Only `official` scored stages are imported
+
+Importer: `apps/api/src/importers/royal-ds.ts` · script: `apps/api/scripts/import-royal-ds.ts`
+
+---
+
 ## Open / next tasks
 
 - [ ] Admin panel for manual data entry
 - [ ] Pilot photos (`photoUrl`), series logos
+- [ ] Import remaining series (FD, DM, D1, RDS, Drift Kings)
 - [ ] UI block for series prestige / overlap debug on homepage
 - [ ] More historical seed data for stronger overlap
 - [ ] Deploy to driftindex.pro

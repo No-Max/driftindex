@@ -10,7 +10,8 @@
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "db:import:royal-ds": "tsx scripts/import-royal-ds.ts"
   },
   "dependencies": {
     "@drift-index/shared": "*",

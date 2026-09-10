@@ -269,17 +269,7 @@ async function main() {
     { slug: 'kazan', round: 3, nameEn: 'Kazan', nameRu: 'Казань', trackEn: 'Kazan Ring', startsAt: '2026-11-09T12:00:00Z', status: 'SCHEDULED' },
   ]);
 
-  await seedSeason(series.get('royal-ds')!.id, 'royal-ds', pilots, [
-    {
-      slug: 'shanghai', round: 1, nameEn: 'Shanghai', nameRu: 'Шанхай', trackEn: 'Shanghai Intl Circuit', startsAt: '2026-05-03T06:00:00Z', status: 'FINISHED',
-      results: [
-        { pilotSlug: 'chris-papadakis', qual: 1, qualPoints: 95.0, tandem: 50, points: 51 },
-        { pilotSlug: 'branden-sorensen', qual: 2, qualPoints: 93.5, tandem: 40, points: 41 },
-        { pilotSlug: 'vaughn-gittin-jr', qual: 3, qualPoints: 92.0, tandem: 30, points: 31 },
-      ],
-    },
-    { slug: 'chengdu', round: 2, nameEn: 'Chengdu', nameRu: 'Чэнду', trackEn: 'Chengdu Circuit', startsAt: '2026-08-30T06:00:00Z', status: 'SCHEDULED' },
-  ]);
+  // Royal DS: real data via `npm run db:import:royal-ds`
 
   await seedSeason(series.get('drift-kings')!.id, 'drift-kings', pilots, [
     {
