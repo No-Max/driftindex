@@ -164,3 +164,27 @@ export async function fetchRoyalDsSeason(): Promise<RoyalDsSeasonData> {
   const page = await fetchSvelteKitPage<StandingsPage>(`${BASE}/results`);
   return normalizeRoyalDsStandings(page);
 }
+
+interface EventQualificationPage {
+  results: {
+    event: { slug: string };
+    qualification: Array<{
+      driverSlug: string;
+      total: number | null;
+    }>;
+  };
+}
+
+/** Best qualifying run score (0–100) per driver on an event page. */
+export async function fetchRoyalDsEventQualScores(eventSlug: string): Promise<Map<string, number>> {
+  const page = await fetchSvelteKitPage<EventQualificationPage>(`${BASE}/results/${eventSlug}`);
+  const scores = new Map<string, number>();
+
+  for (const row of page.results.qualification ?? []) {
+    if (row.total != null && Number.isFinite(row.total)) {
+      scores.set(row.driverSlug, row.total);
+    }
+  }
+
+  return scores;
+}

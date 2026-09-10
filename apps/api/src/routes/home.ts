@@ -88,12 +88,12 @@ homeRouter.get('/home', async (req, res) => {
     if (lastFinished) {
       const qualWinner = lastFinished.results
         .filter((r) => r.qualPosition === 1)
-        .sort((a, b) => (b.qualPoints ?? 0) - (a.qualPoints ?? 0))[0];
+        .sort((a, b) => (b.qualScore100 ?? 0) - (a.qualScore100 ?? 0))[0];
 
       if (qualWinner) {
         const runnerUp = lastFinished.results
           .filter((r) => r.qualPosition === 2)
-          .sort((a, b) => (b.qualPoints ?? 0) - (a.qualPoints ?? 0))[0];
+          .sort((a, b) => (b.qualScore100 ?? 0) - (a.qualScore100 ?? 0))[0];
 
         qualWinners.push({
           pilot: toPilotCard(qualWinner.pilot),
@@ -110,9 +110,9 @@ homeRouter.get('/home', async (req, res) => {
             nameEn: lastFinished.nameEn,
             nameRu: lastFinished.nameRu,
           },
-          qualPoints: qualWinner.qualPoints,
-          gapToSecond: runnerUp?.qualPoints != null && qualWinner.qualPoints != null
-            ? Math.round((qualWinner.qualPoints - runnerUp.qualPoints) * 10) / 10
+          qualScore: qualWinner.qualScore100,
+          gapToSecond: runnerUp?.qualScore100 != null && qualWinner.qualScore100 != null
+            ? Math.round((qualWinner.qualScore100 - runnerUp.qualScore100) * 10) / 10
             : null,
         });
       }
@@ -130,7 +130,7 @@ homeRouter.get('/home', async (req, res) => {
     },
   });
 
-  const p4pRows = computeP4P(p4pInputs, 10);
+  const p4pRows = computeP4P(p4pInputs, 10, prestige.totalSeries);
   const p4pPilotIds = p4pRows.map((row) => row.pilot.id);
   const p4pPilotResults = await prisma.pilot.findMany({
     where: { id: { in: p4pPilotIds } },

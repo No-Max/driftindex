@@ -15,7 +15,7 @@
     "champion": "Лидер",
     "noLeader": "Таблица пока пуста",
     "pole": "Победитель квалификации",
-    "qualPoints": "б.",
+    "qualScore": "/100",
     "gap": "отрыв",
     "p4pScore": "P4P",
     "p4pLeader": "Pound-for-pound #1",
@@ -65,10 +65,10 @@
       "winRate": "Процент побед",
       "events": "Этапы",
       "seasons": "Сезоны",
-      "avgQual": "Средний балл квалификации",
+      "avgQual": "Средний балл квалификации (/100)",
       "winsShort": "побед",
       "eventsShort": "этапов",
-      "qualShort": "ср. квал"
+      "qualShort": "/100"
     }
   },
   "states": {

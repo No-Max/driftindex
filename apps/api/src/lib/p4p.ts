@@ -26,8 +26,12 @@ export interface P4PResult {
 }
 
 /** P4P = max(S / P) across series, S = series weight, P = standing place */
-export function computeP4P(seriesList: P4PInputSeries[], limit = 10): P4PResult[] {
-  const totalSeries = seriesList.length;
+export function computeP4P(
+  seriesList: P4PInputSeries[],
+  limit = 10,
+  totalFeaturedSeries?: number,
+): P4PResult[] {
+  const totalSeries = totalFeaturedSeries ?? seriesList.length;
   const bestByPilot = new Map<
     string,
     {

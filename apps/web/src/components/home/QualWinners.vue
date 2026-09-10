@@ -33,8 +33,8 @@ function eventName(item: HomeQualWinner) {
       <div class="qual-card__meta">
         <p class="qual-card__series">{{ seriesName(item) }}</p>
         <p class="muted">{{ eventName(item) }} · R{{ item.event.roundNumber }}</p>
-        <div v-if="item.qualPoints != null" class="qual-card__stats">
-          <span>{{ item.qualPoints }} {{ t('home.qualPoints') }}</span>
+        <div v-if="item.qualScore != null" class="qual-card__stats">
+          <span>{{ item.qualScore.toFixed(1) }} {{ t('home.qualScore') }}</span>
           <span v-if="item.gapToSecond != null" class="muted">
             +{{ item.gapToSecond }} {{ t('home.gap') }}
           </span>

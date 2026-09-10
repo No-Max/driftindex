@@ -205,6 +205,7 @@ publicRouter.get('/pilots/:slug', async (req, res) => {
       eventNameRu: result.event.nameRu,
       roundNumber: result.event.roundNumber,
       qualPosition: result.qualPosition,
+      qualScore100: result.qualScore100,
       qualPoints: result.qualPoints,
       tandemPosition: result.tandemPosition,
       points: result.points,

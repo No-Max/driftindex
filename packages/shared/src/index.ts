@@ -52,7 +52,7 @@ export interface PilotStats {
   seasonsCount: number;
   winsCount: number;
   winRate: number | null;
-  avgQualPoints: number | null;
+  avgQualScore: number | null;
 }
 
 export interface PilotSummary {
@@ -95,7 +95,7 @@ export interface HomeQualWinner {
     nameEn: string;
     nameRu: string;
   };
-  qualPoints: number | null;
+  qualScore: number | null;
   gapToSecond: number | null;
 }
 

@@ -36,7 +36,7 @@ function formatQual(value: number | null) {
     </div>
     <div class="stats__item">
       <dt>{{ t('pilot.stats.avgQual') }}</dt>
-      <dd>{{ formatQual(stats.avgQualPoints) }}</dd>
+      <dd>{{ formatQual(stats.avgQualScore) }}</dd>
     </div>
   </dl>
 </template>

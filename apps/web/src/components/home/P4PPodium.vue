@@ -67,8 +67,8 @@ function isFeatured(rank: number) {
             <p v-if="item.pilot.stats && isFeatured(item.rank)" class="p4p-list__meta">
               <span>{{ item.pilot.stats.winRate ?? '—' }}% {{ t('pilot.stats.winsShort') }}</span>
               <span>{{ item.pilot.stats.eventsCount }} {{ t('pilot.stats.eventsShort') }}</span>
-              <span v-if="item.pilot.stats.avgQualPoints != null">
-                {{ item.pilot.stats.avgQualPoints.toFixed(1) }} {{ t('pilot.stats.qualShort') }}
+              <span v-if="item.pilot.stats.avgQualScore != null">
+                {{ item.pilot.stats.avgQualScore.toFixed(1) }} {{ t('pilot.stats.qualShort') }}
               </span>
             </p>
           </div>

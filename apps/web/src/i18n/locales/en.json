@@ -15,7 +15,7 @@
     "champion": "Leader",
     "noLeader": "No standings yet",
     "pole": "Qualifying winner",
-    "qualPoints": "pts",
+    "qualScore": "/100",
     "gap": "gap",
     "p4pScore": "P4P",
     "p4pLeader": "Pound-for-pound #1",
@@ -65,10 +65,10 @@
       "winRate": "Win rate",
       "events": "Events",
       "seasons": "Seasons",
-      "avgQual": "Avg qual score",
+      "avgQual": "Avg qual score (/100)",
       "winsShort": "wins",
       "eventsShort": "events",
-      "qualShort": "avg qual"
+      "qualShort": "/100"
     }
   },
   "states": {

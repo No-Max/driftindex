@@ -1,7 +1,8 @@
 import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
-import { fetchRoyalDsSeason } from '../src/importers/royal-ds.js';
+import { fetchRoyalDsEventQualScores, fetchRoyalDsSeason } from '../src/importers/royal-ds.js';
 import { mirrorPilotPortrait } from '../src/lib/media/mirror.js';
+import { toQualScore100 } from '../src/lib/qualScore.js';
 
 const prisma = new PrismaClient();
 const SERIES_SLUG = 'royal-ds';
@@ -47,6 +48,12 @@ async function main() {
       sourceUrl: data.sourceUrl,
     },
   });
+
+  const qualScoresByEvent = new Map<string, Map<string, number>>();
+  for (const event of data.events.filter((item) => item.status === 'FINISHED')) {
+    qualScoresByEvent.set(event.slug, await fetchRoyalDsEventQualScores(event.slug));
+    console.log(`Loaded qual scores for ${event.slug}`);
+  }
 
   const eventRecords = new Map<string, { id: string }>();
   for (const event of data.events) {
@@ -127,11 +134,15 @@ async function main() {
       const event = eventRecords.get(stage.eventSlug);
       if (!event) continue;
 
+      const rawQualScore = qualScoresByEvent.get(stage.eventSlug)?.get(pilot.slug) ?? null;
+      const qualScore100 = toQualScore100(rawQualScore, SERIES_SLUG);
+
       await prisma.eventResult.upsert({
         where: { eventId_pilotId: { eventId: event.id, pilotId: pilotRecord.id } },
         update: {
           qualPosition: stage.qualifyingPosition,
           qualPoints: stage.qualifyingPoints,
+          qualScore100,
           tandemPosition: stage.tandemPosition,
           points: stage.points,
           teamId: await teamId(pilot.team),
@@ -142,6 +153,7 @@ async function main() {
           pilotId: pilotRecord.id,
           qualPosition: stage.qualifyingPosition,
           qualPoints: stage.qualifyingPoints,
+          qualScore100,
           tandemPosition: stage.tandemPosition,
           points: stage.points,
           teamId: await teamId(pilot.team),

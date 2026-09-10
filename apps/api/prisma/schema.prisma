@@ -117,6 +117,7 @@ model EventResult {
   team           Team?      @relation(fields: [teamId], references: [id], onDelete: SetNull)
   qualPosition   Int?
   qualPoints     Float?
+  qualScore100   Float?
   tandemPosition Int?
   points         Int        @default(0)
   dataStatus     DataStatus @default(UNVERIFIED)

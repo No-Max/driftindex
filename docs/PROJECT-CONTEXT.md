@@ -163,7 +163,7 @@ Computed from **finished events only**:
 | Win rate | `tandemPosition === 1` / events count |
 | Events | Finished events with a result |
 | Seasons | Unique (series + year) pairs |
-| Avg qual | Mean of `qualPoints` where present |
+| Avg qual (/100) | Mean of `qualScore100` on finished events |
 
 Shown on pilot profile + P4P #1 card (+ compact on P4P #2–#3).
 
