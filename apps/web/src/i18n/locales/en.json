@@ -53,6 +53,62 @@
     "eventsProgress": "{finished} / {total} rounds completed",
     "source": "Source"
   },
+  "seriesPage": {
+    "title": "Series",
+    "subtitle": "Prestige ranking and P4P weights · {year}",
+    "prestigeTitle": "Series prestige",
+    "prestigeLead": "Featured championships ranked by how hard they are relative to each other. The coefficient S feeds directly into pound-for-pound (P4P) scores.",
+    "historyWindow": "Overlap window: {from}–{to} ({years} seasons)",
+    "overlapGroups": "{count} multi-series pilot groups in window",
+    "col": {
+      "rank": "Rank",
+      "series": "Series",
+      "coefficient": "S",
+      "overlapOrder": "Overlap",
+      "manualOrder": "Manual",
+      "hardness": "Hardness",
+      "samples": "Samples"
+    },
+    "showOverlap": "Examples",
+    "hideOverlap": "Hide",
+    "overlapExamples": "Overlap signals (harder series listed first)",
+    "overlapLine": "{harder} #{hardPlace} vs {easier} #{easyPlace} · Δ{delta}",
+    "source": {
+      "overlap": "Live overlap ranking",
+      "manual": "Default manual order",
+      "stored": "Stored season snapshot"
+    },
+    "methodTitle": "How we calculate it",
+    "method": {
+      "overlap": {
+        "title": "1. Pilot overlap",
+        "body": "When the same driver competes in two featured series in the same season, we compare their championship places. If they rank lower in series B than in series A, B gets hardness points — it was tougher for them."
+      },
+      "coefficient": {
+        "title": "2. Series coefficient S",
+        "body": "After ranking series by accumulated hardness, we convert rank to a weight. Top series gets S = 1.000, the last gets 1/N."
+      },
+      "p4p": {
+        "title": "3. Pound-for-pound (P4P)",
+        "body": "Each pilot's best score across featured series standings:",
+        "note": "P = championship place in that series. Only the single best S/P counts."
+      },
+      "history": {
+        "title": "4. Multi-year history",
+        "body": "Overlap signals from the last {years} seasons are combined. Recent seasons count more than older ones.",
+        "decay": "Each year back is weighted ×0.85 (2026 = 100%, 2025 = 85%, 2024 = 72%, …)."
+      },
+      "fallback": {
+        "title": "5. Fallback order",
+        "body": "If there is not enough cross-series data yet, we fall back to a manual seed order until overlap samples appear."
+      }
+    },
+    "catalogTitle": "Championship catalog",
+    "catalogLead": "Open season standings for each tracked series · {year}",
+    "seasonCount": "{count} seasons in database",
+    "openStandings": "Standings {year}",
+    "noSeason": "No season data yet"
+  },
   "pilots": {
     "title": "Pilots",
     "subtitle": "Sorted by pound-for-pound score · {year}",

@@ -53,6 +53,62 @@
     "eventsProgress": "Сыграно {finished} из {total} этапов",
     "source": "Источник"
   },
+  "seriesPage": {
+    "title": "Серии",
+    "subtitle": "Рейтинг престижа и веса P4P · {year}",
+    "prestigeTitle": "Престиж серий",
+    "prestigeLead": "Featured-чемпионаты, отсортированные по «сложности» относительно друг друга. Коэффициент S напрямую влияет на pound-for-pound (P4P).",
+    "historyWindow": "Окно overlap: {from}–{to} ({years} сезона)",
+    "overlapGroups": "{count} групп пилотов в 2+ сериях",
+    "col": {
+      "rank": "Место",
+      "series": "Серия",
+      "coefficient": "S",
+      "overlapOrder": "Overlap",
+      "manualOrder": "Manual",
+      "hardness": "Hardness",
+      "samples": "Samples"
+    },
+    "showOverlap": "Примеры",
+    "hideOverlap": "Скрыть",
+    "overlapExamples": "Сигналы overlap (сначала более «тяжёлая» серия)",
+    "overlapLine": "{harder} #{hardPlace} vs {easier} #{easyPlace} · Δ{delta}",
+    "source": {
+      "overlap": "Расчёт по overlap",
+      "manual": "Ручной порядок по умолчанию",
+      "stored": "Сохранённый снимок сезона"
+    },
+    "methodTitle": "Как считается",
+    "method": {
+      "overlap": {
+        "title": "1. Пересечение пилотов",
+        "body": "Если один пилот выступает в двух featured-сериях в одном сезоне, сравниваем его места. Если в серии B он ниже, чем в A — B получает hardness-баллы: для него она была сложнее."
+      },
+      "coefficient": {
+        "title": "2. Коэффициент серии S",
+        "body": "После сортировки серий по суммарной hardness переводим место в вес. Первая серия получает S = 1.000, последняя — 1/N."
+      },
+      "p4p": {
+        "title": "3. Pound-for-pound (P4P)",
+        "body": "Лучший результат пилота среди featured-серий:",
+        "note": "P = место в чемпионате серии. Учитывается только один лучший S/P."
+      },
+      "history": {
+        "title": "4. История за несколько лет",
+        "body": "Overlap-сигналы за последние {years} сезонов суммируются. Более свежие сезоны важнее старых.",
+        "decay": "Каждый год назад умножается на 0.85 (2026 = 100%, 2025 = 85%, 2024 = 72%, …)."
+      },
+      "fallback": {
+        "title": "5. Fallback",
+        "body": "Если пересечений мало, используем ручной seed-порядок, пока не накопится достаточно overlap-данных."
+      }
+    },
+    "catalogTitle": "Каталог чемпионатов",
+    "catalogLead": "Standings по каждой серии · {year}",
+    "seasonCount": "{count} сезонов в базе",
+    "openStandings": "Таблица {year}",
+    "noSeason": "Нет данных по сезону"
+  },
   "pilots": {
     "title": "Пилоты",
     "subtitle": "Сортировка по pound-for-pound · {year}",

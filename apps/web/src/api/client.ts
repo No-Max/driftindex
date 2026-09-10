@@ -3,6 +3,7 @@ import type {
   PilotProfileResponse,
   PilotsListResponse,
   SeasonStandingsResponse,
+  SeriesPrestigeResponse,
 } from '@drift-index/shared';
 
 async function getJson<T>(path: string): Promise<T> {
@@ -28,6 +29,11 @@ export interface SeriesListItem {
 
 export function fetchSeriesList() {
   return getJson<SeriesListItem[]>('/api/series');
+}
+
+export function fetchSeriesPrestige(year?: number) {
+  const query = year ? `?year=${year}` : '';
+  return getJson<SeriesPrestigeResponse>(`/api/series/prestige${query}`);
 }
 
 export function fetchStandings(slug: string, year: number) {
