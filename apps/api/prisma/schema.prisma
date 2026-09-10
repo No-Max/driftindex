@@ -19,18 +19,19 @@ enum DataStatus {
 }
 
 model Series {
-  id            String         @id @default(cuid())
-  slug          String         @unique
+  id            String             @id @default(cuid())
+  slug          String             @unique
   nameEn        String
   nameRu        String
   country       String?
   logoUrl       String?
   featuredOrder Int?
-  defaultWeight Float          @default(1.0)
+  defaultWeight Float              @default(1.0)
   seasons       Season[]
   weights       SeriesWeight[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  pilotPhotos   PilotSeriesPhoto[]
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
 }
 
 model SeriesWeight {
@@ -84,19 +85,35 @@ model Event {
 }
 
 model Pilot {
-  id        String        @id @default(cuid())
-  slug      String        @unique
-  firstName String
-  lastName  String
-  nameRu    String?
-  country   String?
+  id               String             @id @default(cuid())
+  slug             String             @unique
+  firstName        String
+  lastName         String
+  nameRu           String?
+  country          String?
   number           Int?
   photoUrl         String?
   photoSourceUrl   String?
   photoUpdatedAt   DateTime?
   results          EventResult[]
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  seriesPhotos     PilotSeriesPhoto[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+}
+
+model PilotSeriesPhoto {
+  id             String    @id @default(cuid())
+  pilotId        String
+  pilot          Pilot     @relation(fields: [pilotId], references: [id], onDelete: Cascade)
+  seriesId       String
+  series         Series    @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  photoUrl       String?
+  photoSourceUrl String?
+  photoUpdatedAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([pilotId, seriesId])
 }
 
 model Team {

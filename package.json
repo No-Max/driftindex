@@ -16,6 +16,12 @@
     "db:migrate:deploy": "npm run db:migrate:deploy --workspace=apps/api",
     "db:seed": "npm run db:seed --workspace=apps/api",
     "db:import:royal-ds": "npm run db:import:royal-ds --workspace=apps/api",
+    "db:import:rds-gp": "npm run db:import:rds-gp --workspace=apps/api",
+    "db:import:rds-gp:list": "npm run db:import:rds-gp:list --workspace=apps/api",
+    "db:import:rds-gp:all": "npm run db:import:rds-gp:all --workspace=apps/api",
+    "db:import:rds-almanac": "npm run db:import:rds-almanac --workspace=apps/api",
+    "db:merge-almanac-pilots": "npm run db:merge-almanac-pilots --workspace=apps/api",
+    "db:dedupe-pilots": "npm run db:dedupe-pilots --workspace=apps/api",
     "db:setup": "npm run db:up && npm run db:migrate && npm run db:seed && npm run db:import:royal-ds",
     "db:setup:prod": "npm run db:migrate:deploy && npm run db:seed && npm run db:import:royal-ds"
   }

@@ -124,7 +124,7 @@ S = (N − seriesRank + 1) / N
 ### Pilot P4P score
 
 ```
-P4P = max(S / P)   across all series the pilot participates in
+P4P = max(S / P) × 1000   across all series the pilot participates in
 ```
 
 - `P` = current standing place in season (1 = leader)
@@ -223,6 +223,22 @@ Source: SvelteKit `__data.json` from `https://royalds.cn/en/results`.
 - Only `official` scored stages are imported
 
 Importer: `apps/api/src/importers/royal-ds.ts` · script: `apps/api/scripts/import-royal-ds.ts`
+
+### RDS GP (`rdsgp.com`)
+
+```bash
+npm run db:import:rds-gp
+```
+
+Source: HTML results pages from `https://rdsgp.com/results/rdsgp2026/`.
+
+**Import rules:**
+
+- Per-event results parsed from official stage tables
+- `qualScore100` = best qualifying run (0–100 scale, comma decimals)
+- Pilots keyed as `rds-{pilotId}` from `/pilots/{id}/` links
+
+Importer: `apps/api/src/importers/rds-gp.ts` · script: `apps/api/scripts/import-rds-gp.ts`
 
 ---
 

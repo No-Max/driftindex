@@ -164,6 +164,11 @@ publicRouter.get('/pilots/:slug', async (req, res) => {
   const pilot = await prisma.pilot.findUnique({
     where: { slug: req.params.slug },
     include: {
+      seriesPhotos: {
+        where: { photoUrl: { not: null } },
+        include: { series: true },
+        orderBy: { series: { featuredOrder: 'asc' } },
+      },
       results: {
         include: {
           event: {
@@ -194,6 +199,14 @@ publicRouter.get('/pilots/:slug', async (req, res) => {
     country: pilot.country,
     number: pilot.number,
     photoUrl: pilot.photoUrl,
+    photos: pilot.seriesPhotos
+      .filter((entry) => entry.photoUrl)
+      .map((entry) => ({
+        seriesSlug: entry.series.slug,
+        seriesNameEn: entry.series.nameEn,
+        seriesNameRu: entry.series.nameRu,
+        photoUrl: entry.photoUrl!,
+      })),
     stats,
     results: pilot.results.map((result) => ({
       seriesSlug: result.event.season.series.slug,

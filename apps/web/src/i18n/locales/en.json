@@ -60,6 +60,8 @@
     "points": "Points",
     "qual": "Qual",
     "tandem": "Tandem",
+    "photoPrev": "Previous photo",
+    "photoNext": "Next photo",
     "stats": {
       "title": "Statistics",
       "winRate": "Win rate",

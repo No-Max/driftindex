@@ -25,7 +25,7 @@ export interface P4PResult {
   bestSeriesPlace: number;
 }
 
-/** P4P = max(S / P) across series, S = series weight, P = standing place */
+/** P4P = max(S / P) × 1000 across series, S = series weight, P = standing place */
 export function computeP4P(
   seriesList: P4PInputSeries[],
   limit = 10,
@@ -72,7 +72,7 @@ export function computeP4P(
     .slice(0, limit)
     .map((row, index) => ({
       rank: index + 1,
-      score: Math.round(row.score * 1000) / 1000,
+      score: Math.round(row.score * 1000),
       pilot: row.pilot,
       bestSeriesSlug: row.seriesSlug,
       bestSeriesNameEn: row.seriesNameEn,

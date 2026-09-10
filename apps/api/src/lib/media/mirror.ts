@@ -3,7 +3,7 @@ import path from 'node:path';
 import sharp from 'sharp';
 import {
   getMediaRoot,
-  pilotPortraitRelativePath,
+  pilotSeriesPortraitRelativePath,
   toPublicMediaPath,
 } from './config.js';
 
@@ -13,15 +13,16 @@ export interface MirroredPhoto {
   photoUpdatedAt: Date | null;
 }
 
-export async function mirrorPilotPortrait(
-  slug: string,
+export async function mirrorPilotSeriesPortrait(
+  pilotSlug: string,
+  seriesSlug: string,
   sourceUrl: string | null,
 ): Promise<MirroredPhoto> {
   if (!sourceUrl) {
     return { photoUrl: null, photoSourceUrl: null, photoUpdatedAt: null };
   }
 
-  const relativePath = pilotPortraitRelativePath(slug);
+  const relativePath = pilotSeriesPortraitRelativePath(pilotSlug, seriesSlug);
   const destPath = path.join(getMediaRoot(), relativePath);
   await fs.mkdir(path.dirname(destPath), { recursive: true });
 
@@ -44,7 +45,7 @@ export async function mirrorPilotPortrait(
       photoUpdatedAt: new Date(),
     };
   } catch (error) {
-    console.warn(`Failed to mirror pilot photo ${slug}:`, error);
+    console.warn(`Failed to mirror pilot photo ${pilotSlug}/${seriesSlug}:`, error);
     return { photoUrl: null, photoSourceUrl: sourceUrl, photoUpdatedAt: null };
   }
 }

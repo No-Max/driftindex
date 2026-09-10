@@ -21,6 +21,7 @@ export function toPublicMediaPath(relativePath: string): string {
   return `${getMediaPublicBase()}/${normalized}`;
 }
 
-export function pilotPortraitRelativePath(slug: string): string {
-  return `pilots/${slug}.webp`;
+/** One portrait per pilot per series: pilots/{pilotSlug}/{seriesSlug}.webp */
+export function pilotSeriesPortraitRelativePath(pilotSlug: string, seriesSlug: string): string {
+  return `pilots/${pilotSlug}/${seriesSlug}.webp`;
 }

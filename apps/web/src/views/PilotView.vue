@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import { fetchPilot } from '../api/client';
 import PilotAvatar from '../components/PilotAvatar.vue';
+import PilotPhotoSlider from '../components/PilotPhotoSlider.vue';
 import PilotStatsGrid from '../components/PilotStatsGrid.vue';
 
 const route = useRoute();
@@ -54,7 +55,13 @@ function eventName(result: PilotProfileResponse['results'][0]) {
 
     <template v-else-if="pilot">
       <div class="pilot-header">
-        <PilotAvatar :pilot="pilot" size="xl" />
+        <PilotPhotoSlider
+          v-if="pilot.photos.length > 0"
+          :pilot="pilot"
+          :photos="pilot.photos"
+          size="xl"
+        />
+        <PilotAvatar v-else :pilot="pilot" size="xl" />
         <div>
           <h1 class="page-title">{{ displayName }}</h1>
           <p class="page-subtitle">

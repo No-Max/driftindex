@@ -12,11 +12,18 @@
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
-    "db:import:royal-ds": "tsx scripts/import-royal-ds.ts"
+    "db:import:royal-ds": "tsx scripts/import-royal-ds.ts",
+    "db:import:rds-gp": "tsx scripts/import-rds-gp.ts",
+    "db:import:rds-gp:list": "tsx scripts/import-rds-gp.ts --list-seasons",
+    "db:import:rds-gp:all": "tsx scripts/import-rds-gp.ts --all --skip-photos",
+    "db:import:rds-almanac": "tsx scripts/import-rds-almanac.ts",
+    "db:merge-almanac-pilots": "tsx scripts/merge-almanac-pilots.ts",
+    "db:dedupe-pilots": "tsx scripts/dedupe-pilots.ts"
   },
   "dependencies": {
     "@drift-index/shared": "*",
     "@prisma/client": "^6.3.0",
+    "cheerio": "^1.2.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",

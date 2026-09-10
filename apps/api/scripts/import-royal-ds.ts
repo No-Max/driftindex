@@ -1,7 +1,8 @@
 import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import { fetchRoyalDsEventQualScores, fetchRoyalDsSeason } from '../src/importers/royal-ds.js';
-import { mirrorPilotPortrait } from '../src/lib/media/mirror.js';
+import { upsertPilotSeriesPhoto } from '../src/lib/media/pilotPhoto.js';
+import { canonicalEnglishNames } from '../src/lib/pilotNames.js';
 import { toQualScore100 } from '../src/lib/qualScore.js';
 
 const prisma = new PrismaClient();
@@ -99,36 +100,37 @@ async function main() {
   let photosFailed = 0;
 
   for (const pilot of data.pilots) {
-    const photo = await mirrorPilotPortrait(pilot.slug, pilot.photoSourceUrl);
-    if (pilot.photoSourceUrl) {
-      if (photo.photoUrl) photosMirrored++;
-      else photosFailed++;
-    }
-
+    const english = canonicalEnglishNames(pilot);
     const pilotRecord = await prisma.pilot.upsert({
       where: { slug: pilot.slug },
       update: {
-        firstName: pilot.firstName,
-        lastName: pilot.lastName,
+        firstName: english.firstName,
+        lastName: english.lastName,
         nameRu: pilot.nameRu,
         country: pilot.country,
         number: pilot.number,
-        photoUrl: photo.photoUrl,
-        photoSourceUrl: photo.photoSourceUrl,
-        photoUpdatedAt: photo.photoUpdatedAt,
       },
       create: {
         slug: pilot.slug,
-        firstName: pilot.firstName,
-        lastName: pilot.lastName,
+        firstName: english.firstName,
+        lastName: english.lastName,
         nameRu: pilot.nameRu,
         country: pilot.country,
         number: pilot.number,
-        photoUrl: photo.photoUrl,
-        photoSourceUrl: photo.photoSourceUrl,
-        photoUpdatedAt: photo.photoUpdatedAt,
       },
     });
+
+    if (pilot.photoSourceUrl) {
+      const { mirrored } = await upsertPilotSeriesPhoto(prisma, {
+        pilotId: pilotRecord.id,
+        seriesId: series.id,
+        pilotSlug: pilot.slug,
+        seriesSlug: SERIES_SLUG,
+        photoSourceUrl: pilot.photoSourceUrl,
+      });
+      if (mirrored) photosMirrored++;
+      else photosFailed++;
+    }
 
     for (const stage of pilot.stages) {
       const event = eventRecords.get(stage.eventSlug);

@@ -176,7 +176,15 @@ export interface HomeResponse {
   };
 }
 
+export interface PilotSeriesPhoto {
+  seriesSlug: string;
+  seriesNameEn: string;
+  seriesNameRu: string;
+  photoUrl: string;
+}
+
 export interface PilotProfileResponse extends PilotSummary {
+  photos: PilotSeriesPhoto[];
   stats: PilotStats;
   results: Array<{
     seriesSlug: string;
