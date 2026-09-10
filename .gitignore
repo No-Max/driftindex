@@ -2,5 +2,7 @@ node_modules
 dist
 .env
 apps/api/.env
+storage/media/*
+!storage/media/.gitkeep
 *.log
 .DS_Store

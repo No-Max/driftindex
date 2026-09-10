@@ -46,7 +46,7 @@ packages/shared/   Shared TypeScript types
 docker-compose.yml PostgreSQL :5433
 ```
 
-**Ports:** API `3221`, Web `3220` (Vite proxies `/api` → API)
+**Ports:** API `5021`, Web `5020` (Vite proxies `/api` → API)
 
 ### Environment files
 
@@ -177,9 +177,9 @@ Notable fields:
 
 - `Series.featuredOrder`, `Series.defaultWeight` (legacy, P4P uses overlap/manual rank)
 - `SeriesWeight.prestigeRank`, `SeriesWeight.weight` (= S coefficient when persisted)
-- `Pilot.photoUrl`, `EventResult.qualPoints`
+- `Pilot.photoUrl` (local `/media/...`), `Pilot.photoSourceUrl`, `EventResult.qualPoints`
 
-Seed: 6 featured series, 2026 seasons, 12 pilots, cross-series overlap (Deane/Conor/Jack in FD+DM+RDS, etc.)
+Seed: 6 featured series (catalog only, no mock results). Real data via importers (`db:import:royal-ds`).
 
 ---
 
@@ -196,18 +196,6 @@ Seed: 6 featured series, 2026 seasons, 12 pilots, cross-series overlap (Deane/Co
 | GET | `/api/pilots/:slug` | Pilot profile + stats + results |
 
 ---
-
-## Seed overlap notes (2026)
-
-Multi-series pilots (for overlap testing):
-
-- **James Deane, Conor Shanahan** — FD + DM + RDS
-- **Jack Shanahan** — FD + DM + Drift Kings
-- **Fredric Aasbo** — FD + D1
-- **Aurimas Bakchis** — FD + Drift Kings
-- Single-series: Yokoi, Saito (D1), Ilyuk (RDS), Papadakis (Royal DS)
-
-Example overlap result: FD hardness ≈ 18 (7 samples) — most cross-series comparisons.
 
 ---
 
@@ -238,13 +226,32 @@ Importer: `apps/api/src/importers/royal-ds.ts` · script: `apps/api/scripts/impo
 
 ---
 
+## Media storage
+
+Local filesystem at `storage/media/` (gitignored). Same layout on VPS: `/opt/driftindex/storage/media/`.
+
+| Env | Default |
+|-----|---------|
+| `MEDIA_ROOT` | `storage/media` (auto from repo root) |
+| `MEDIA_PUBLIC_BASE` | `/media` |
+
+Import mirrors portraits → `storage/media/pilots/{slug}.webp`, DB stores `/media/pilots/{slug}.webp`.
+
+**Serving:** nginx `/media/` on prod; API static + Vite proxy in dev.
+
+User/pilot uploads (phase 2) will write to the same storage tree.
+
+---
+
 ## Open / next tasks
 
 - [ ] Admin panel for manual data entry
-- [ ] Pilot photos (`photoUrl`), series logos
+- [x] Pilot photos mirrored locally (`/media/pilots/`)
+- [ ] Series logos
+- [ ] User/pilot upload API (verified accounts)
 - [ ] Import remaining series (FD, DM, D1, RDS, Drift Kings)
 - [ ] UI block for series prestige / overlap debug on homepage
-- [ ] More historical seed data for stronger overlap
+- [ ] More importers for overlap / P4P testing across series
 - [x] Deploy to driftindex.pro (VPS 178.172.236.133)
 - [x] Standardized env + db:setup workflow (local = prod)
 - [ ] Phase 2: auth + fan voting

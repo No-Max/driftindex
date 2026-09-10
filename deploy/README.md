@@ -8,6 +8,7 @@ App path: `/opt/driftindex`
 cd /opt/driftindex
 npm install
 cp apps/api/.env.production.example apps/api/.env
+mkdir -p storage/media
 
 npm run db:up
 npm run db:setup:prod

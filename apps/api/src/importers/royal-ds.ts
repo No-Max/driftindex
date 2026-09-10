@@ -21,7 +21,7 @@ export interface RoyalDsPilot {
   nameRu: string | null;
   country: string | null;
   number: number | null;
-  photoUrl: string | null;
+  photoSourceUrl: string | null;
   team: string | null;
   totalPoints: number;
   stages: RoyalDsStageResult[];
@@ -145,7 +145,7 @@ export function normalizeRoyalDsStandings(raw: StandingsPage): RoyalDsSeasonData
         nameRu: row.fullNameCn,
         country: row.countryCode,
         number: Number.parseInt(row.racingNumber, 10) || null,
-        photoUrl: row.photoPortraitUrl,
+        photoSourceUrl: row.photoPortraitUrl,
         team: row.team,
         totalPoints: row.totalPoints,
         stages,

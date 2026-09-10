@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import { fetchRoyalDsSeason } from '../src/importers/royal-ds.js';
+import { mirrorPilotPortrait } from '../src/lib/media/mirror.js';
 
 const prisma = new PrismaClient();
 const SERIES_SLUG = 'royal-ds';
@@ -87,7 +88,16 @@ async function main() {
   }
 
   let resultCount = 0;
+  let photosMirrored = 0;
+  let photosFailed = 0;
+
   for (const pilot of data.pilots) {
+    const photo = await mirrorPilotPortrait(pilot.slug, pilot.photoSourceUrl);
+    if (pilot.photoSourceUrl) {
+      if (photo.photoUrl) photosMirrored++;
+      else photosFailed++;
+    }
+
     const pilotRecord = await prisma.pilot.upsert({
       where: { slug: pilot.slug },
       update: {
@@ -96,7 +106,9 @@ async function main() {
         nameRu: pilot.nameRu,
         country: pilot.country,
         number: pilot.number,
-        photoUrl: pilot.photoUrl,
+        photoUrl: photo.photoUrl,
+        photoSourceUrl: photo.photoSourceUrl,
+        photoUpdatedAt: photo.photoUpdatedAt,
       },
       create: {
         slug: pilot.slug,
@@ -105,7 +117,9 @@ async function main() {
         nameRu: pilot.nameRu,
         country: pilot.country,
         number: pilot.number,
-        photoUrl: pilot.photoUrl,
+        photoUrl: photo.photoUrl,
+        photoSourceUrl: photo.photoSourceUrl,
+        photoUpdatedAt: photo.photoUpdatedAt,
       },
     });
 
@@ -138,7 +152,10 @@ async function main() {
     }
   }
 
-  console.log(`Import complete: ${data.pilots.length} pilots, ${resultCount} event results`);
+  console.log(
+    `Import complete: ${data.pilots.length} pilots, ${resultCount} event results, ` +
+      `${photosMirrored} photos mirrored${photosFailed ? `, ${photosFailed} failed` : ''}`,
+  );
 }
 
 main()

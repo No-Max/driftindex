@@ -90,9 +90,11 @@ model Pilot {
   lastName  String
   nameRu    String?
   country   String?
-  number    Int?
-  photoUrl  String?
-  results   EventResult[]
+  number           Int?
+  photoUrl         String?
+  photoSourceUrl   String?
+  photoUpdatedAt   DateTime?
+  results          EventResult[]
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
 }
