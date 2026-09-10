@@ -1,4 +1,9 @@
-import type { HomeResponse, PilotProfileResponse, SeasonStandingsResponse } from '@drift-index/shared';
+import type {
+  HomeResponse,
+  PilotProfileResponse,
+  PilotsListResponse,
+  SeasonStandingsResponse,
+} from '@drift-index/shared';
 
 async function getJson<T>(path: string): Promise<T> {
   const response = await fetch(path);
@@ -27,6 +32,11 @@ export function fetchSeriesList() {
 
 export function fetchStandings(slug: string, year: number) {
   return getJson<SeasonStandingsResponse>(`/api/series/${slug}/seasons/${year}/standings`);
+}
+
+export function fetchPilots(year?: number) {
+  const query = year ? `?year=${year}` : '';
+  return getJson<PilotsListResponse>(`/api/pilots${query}`);
 }
 
 export function fetchPilot(slug: string) {

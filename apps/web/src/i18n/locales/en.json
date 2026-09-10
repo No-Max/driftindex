@@ -3,6 +3,7 @@
   "tagline": "Drift standings, stats, and rankings",
   "nav": {
     "home": "Home",
+    "pilots": "Pilots",
     "series": "Series"
   },
   "lang": {
@@ -51,6 +52,15 @@
     "round": "R{n}",
     "eventsProgress": "{finished} / {total} rounds completed",
     "source": "Source"
+  },
+  "pilots": {
+    "title": "Pilots",
+    "subtitle": "Sorted by pound-for-pound score · {year}",
+    "search": "Search by name or number…",
+    "resultsCount": "{count} matches",
+    "rankedCount": "{count} pilots with P4P ranking",
+    "unranked": "Outside featured series",
+    "noResults": "No pilots match your search"
   },
   "pilot": {
     "title": "Pilot profile",

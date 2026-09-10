@@ -28,7 +28,7 @@ export interface P4PResult {
 /** P4P = max(S / P) × 1000 across series, S = series weight, P = standing place */
 export function computeP4P(
   seriesList: P4PInputSeries[],
-  limit = 10,
+  limit?: number,
   totalFeaturedSeries?: number,
 ): P4PResult[] {
   const totalSeries = totalFeaturedSeries ?? seriesList.length;
@@ -67,10 +67,11 @@ export function computeP4P(
     }
   }
 
-  return [...bestByPilot.values()]
-    .sort((a, b) => b.score - a.score || a.pilot.lastName.localeCompare(b.pilot.lastName))
-    .slice(0, limit)
-    .map((row, index) => ({
+  const sorted = [...bestByPilot.values()].sort(
+    (a, b) => b.score - a.score || a.pilot.lastName.localeCompare(b.pilot.lastName),
+  );
+
+  return (limit != null ? sorted.slice(0, limit) : sorted).map((row, index) => ({
       rank: index + 1,
       score: Math.round(row.score * 1000),
       pilot: row.pilot,

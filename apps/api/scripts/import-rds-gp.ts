@@ -178,7 +178,6 @@ async function upsertPilotsAndResults(
         firstName: english.firstName,
         lastName: english.lastName,
         nameRu: pilot.nameRu,
-        country: pilot.country,
         number: pilot.number,
       },
       create: {

@@ -12,7 +12,7 @@ const FEATURED = [
   { slug: 'drift-kings', nameEn: 'Drift Kings', nameRu: 'Drift Kings', country: 'INT', order: 6, weight: 0.85 },
 ] as const;
 
-const REAL_DATA_SERIES = ['royal-ds'] as const;
+const REAL_DATA_SERIES = ['royal-ds', 'drift-masters'] as const;
 
 async function upsertSeriesCatalog(year: number) {
   for (const s of FEATURED) {

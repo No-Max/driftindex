@@ -2,6 +2,7 @@
 import type { PilotSeriesPhoto, PilotSummary } from '@drift-index/shared';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import CountryFlagBadge from './CountryFlagBadge.vue';
 
 const props = defineProps<{
   pilot: PilotSummary;
@@ -36,33 +37,36 @@ function next() {
 
 <template>
   <div class="photo-slider" :class="[`photo-slider--${size ?? 'xl'}`, { 'photo-slider--multi': photos.length > 1 }]">
-    <div class="photo-slider__frame">
-      <img
-        v-if="current"
-        :key="current.photoUrl"
-        :src="current.photoUrl"
-        :alt="`${pilot.firstName} ${pilot.lastName}`"
-      />
-      <span v-else class="photo-slider__initials">{{ initials }}</span>
+    <div class="photo-slider__avatar-wrap">
+      <div class="photo-slider__frame">
+        <img
+          v-if="current"
+          :key="current.photoUrl"
+          :src="current.photoUrl"
+          :alt="`${pilot.firstName} ${pilot.lastName}`"
+        />
+        <span v-else class="photo-slider__initials">{{ initials }}</span>
 
-      <button
-        v-if="photos.length > 1"
-        type="button"
-        class="photo-slider__nav photo-slider__nav--prev"
-        :aria-label="$t('pilot.photoPrev')"
-        @click="prev"
-      >
-        ‹
-      </button>
-      <button
-        v-if="photos.length > 1"
-        type="button"
-        class="photo-slider__nav photo-slider__nav--next"
-        :aria-label="$t('pilot.photoNext')"
-        @click="next"
-      >
-        ›
-      </button>
+        <button
+          v-if="photos.length > 1"
+          type="button"
+          class="photo-slider__nav photo-slider__nav--prev"
+          :aria-label="$t('pilot.photoPrev')"
+          @click="prev"
+        >
+          ‹
+        </button>
+        <button
+          v-if="photos.length > 1"
+          type="button"
+          class="photo-slider__nav photo-slider__nav--next"
+          :aria-label="$t('pilot.photoNext')"
+          @click="next"
+        >
+          ›
+        </button>
+      </div>
+      <CountryFlagBadge v-if="pilot.country" :country="pilot.country" size="xl" />
     </div>
 
     <p v-if="current && photos.length > 1" class="photo-slider__caption">{{ seriesLabel }}</p>
@@ -84,6 +88,11 @@ function next() {
 <style scoped>
 .photo-slider {
   flex-shrink: 0;
+}
+
+.photo-slider__avatar-wrap {
+  position: relative;
+  display: inline-flex;
 }
 
 .photo-slider__frame {

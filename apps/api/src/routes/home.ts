@@ -1,6 +1,7 @@
 import type { HomeResponse } from '@drift-index/shared';
 import { Router } from 'express';
 import { computeP4P } from '../lib/p4p.js';
+import { loadP4PInputs } from '../lib/p4pData.js';
 import { toPilotCard } from '../lib/pilot.js';
 import { computePilotStats, toStatsInput } from '../lib/pilotStats.js';
 import { computePrestigeRanking } from '../lib/seriesOverlap.js';
@@ -36,7 +37,6 @@ homeRouter.get('/home', async (req, res) => {
   const championships = [];
   const superPodium = [];
   const qualWinners = [];
-  const p4pInputs = [];
 
   for (const series of featuredSeries) {
     const season = series.seasons[0];
@@ -45,14 +45,6 @@ homeRouter.get('/home', async (req, res) => {
     const events = season.events;
     const standings = computeStandings(events);
     const leader = standings[0];
-
-    p4pInputs.push({
-      slug: series.slug,
-      nameEn: series.nameEn,
-      nameRu: series.nameRu,
-      seriesOrder: prestige.orderBySlug.get(series.slug) ?? series.featuredOrder!,
-      standings: standings.map((row) => ({ rank: row.rank, pilot: row.pilot })),
-    });
 
     championships.push({
       series: {
@@ -130,6 +122,7 @@ homeRouter.get('/home', async (req, res) => {
     },
   });
 
+  const p4pInputs = await loadP4PInputs(prisma, year, prestige.orderBySlug);
   const p4pRows = computeP4P(p4pInputs, 10, prestige.totalSeries);
   const p4pPilotIds = p4pRows.map((row) => row.pilot.id);
   const p4pPilotResults = await prisma.pilot.findMany({
@@ -172,6 +165,9 @@ homeRouter.get('/home', async (req, res) => {
       year,
       totalSeries: prestige.totalSeries,
       overlapGroups: prestige.overlapGroups,
+      historyYears: prestige.historyYears,
+      historyFromYear: prestige.historyFromYear,
+      historyToYear: prestige.historyToYear,
       source: prestige.source,
       entries: prestige.entries,
     },

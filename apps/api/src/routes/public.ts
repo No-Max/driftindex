@@ -1,12 +1,17 @@
 import type {
   DataSource,
+  PilotListEntry,
   PilotProfileResponse,
+  PilotsListResponse,
   SeasonStandingsResponse,
   SeriesPrestigeResponse,
 } from '@drift-index/shared';
 import { Router } from 'express';
-import { prisma } from '../lib/prisma.js';
+import { computeP4P } from '../lib/p4p.js';
+import { loadP4PInputs } from '../lib/p4pData.js';
+import { toPilotCard } from '../lib/pilot.js';
 import { computePilotStats, toStatsInput } from '../lib/pilotStats.js';
+import { prisma } from '../lib/prisma.js';
 import { computePrestigeRanking, persistPrestigeRanking } from '../lib/seriesOverlap.js';
 import { computeStandings } from '../lib/standings.js';
 
@@ -24,6 +29,9 @@ publicRouter.get('/series/prestige', async (req, res) => {
     year: year ?? null,
     totalSeries: prestige.totalSeries,
     overlapGroups: prestige.overlapGroups,
+    historyYears: prestige.historyYears,
+    historyFromYear: prestige.historyFromYear,
+    historyToYear: prestige.historyToYear,
     source: prestige.source,
     entries: prestige.entries,
   };
@@ -39,6 +47,9 @@ publicRouter.post('/series/prestige/recalculate', async (req, res) => {
     year,
     totalSeries: prestige.totalSeries,
     overlapGroups: prestige.overlapGroups,
+    historyYears: prestige.historyYears,
+    historyFromYear: prestige.historyFromYear,
+    historyToYear: prestige.historyToYear,
     source: prestige.source,
     entries: prestige.entries,
   };
@@ -159,6 +170,68 @@ function seasonSource(season: {
     url: season.sourceUrl,
   };
 }
+
+publicRouter.get('/pilots', async (req, res) => {
+  const year = parseOptionalYear(req.query.year) ?? new Date().getFullYear();
+  const prestige = await computePrestigeRanking(prisma, year);
+  const p4pInputs = await loadP4PInputs(prisma, year, prestige.orderBySlug);
+  const p4pRows = computeP4P(p4pInputs, undefined, prestige.totalSeries);
+
+  const rankedPilotIds = p4pRows.map((row) => row.pilot.id);
+  const rankedPilotResults = await prisma.pilot.findMany({
+    where: { id: { in: rankedPilotIds } },
+    include: {
+      results: {
+        include: {
+          event: {
+            include: {
+              season: { include: { series: true } },
+            },
+          },
+        },
+      },
+    },
+  });
+  const statsByPilotId = new Map(
+    rankedPilotResults.map((pilot) => [pilot.id, computePilotStats(toStatsInput(pilot.results))]),
+  );
+
+  const rankedSlugs = new Set(p4pRows.map((row) => row.pilot.slug));
+  const unrankedPilots = await prisma.pilot.findMany({
+    where: { slug: { notIn: [...rankedSlugs] } },
+    orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
+  });
+
+  const ranked: PilotListEntry[] = p4pRows.map((row) => ({
+    rank: row.rank,
+    score: row.score,
+    pilot: {
+      ...toPilotCard(row.pilot),
+      stats: statsByPilotId.get(row.pilot.id),
+    },
+    bestSeries: {
+      slug: row.bestSeriesSlug,
+      nameEn: row.bestSeriesNameEn,
+      nameRu: row.bestSeriesNameRu,
+      weight: row.bestSeriesWeight,
+      place: row.bestSeriesPlace,
+    },
+  }));
+
+  const unranked: PilotListEntry[] = unrankedPilots.map((pilot) => ({
+    rank: null,
+    score: null,
+    pilot: toPilotCard(pilot),
+    bestSeries: null,
+  }));
+
+  const payload: PilotsListResponse = {
+    year,
+    pilots: [...ranked, ...unranked],
+  };
+
+  res.json(payload);
+});
 
 publicRouter.get('/pilots/:slug', async (req, res) => {
   const pilot = await prisma.pilot.findUnique({

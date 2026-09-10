@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { PilotSummary } from '@drift-index/shared';
 import { computed } from 'vue';
+import CountryFlagBadge from './CountryFlagBadge.vue';
 
 const props = defineProps<{
   pilot: PilotSummary;
@@ -13,13 +14,22 @@ const initials = computed(() =>
 </script>
 
 <template>
-  <div class="avatar" :class="`avatar--${size ?? 'md'}`">
-    <img v-if="pilot.photoUrl" :src="pilot.photoUrl" :alt="pilot.lastName" />
-    <span v-else>{{ initials }}</span>
+  <div class="avatar-wrap">
+    <div class="avatar" :class="`avatar--${size ?? 'md'}`">
+      <img v-if="pilot.photoUrl" :src="pilot.photoUrl" :alt="pilot.lastName" />
+      <span v-else>{{ initials }}</span>
+    </div>
+    <CountryFlagBadge v-if="pilot.country" :country="pilot.country" :size="size ?? 'md'" />
   </div>
 </template>
 
 <style scoped>
+.avatar-wrap {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
 .avatar {
   display: grid;
   place-items: center;

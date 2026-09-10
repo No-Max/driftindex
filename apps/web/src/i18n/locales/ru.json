@@ -3,6 +3,7 @@
   "tagline": "Турнирные таблицы и статистика дрифта",
   "nav": {
     "home": "Главная",
+    "pilots": "Пилоты",
     "series": "Серии"
   },
   "lang": {
@@ -51,6 +52,15 @@
     "round": "Э{n}",
     "eventsProgress": "Сыграно {finished} из {total} этапов",
     "source": "Источник"
+  },
+  "pilots": {
+    "title": "Пилоты",
+    "subtitle": "Сортировка по pound-for-pound · {year}",
+    "search": "Поиск по имени или номеру…",
+    "resultsCount": "Найдено: {count}",
+    "rankedCount": "В рейтинге P4P: {count} пилотов",
+    "unranked": "Вне featured-серий",
+    "noResults": "Ничего не найдено"
   },
   "pilot": {
     "title": "Профиль пилота",

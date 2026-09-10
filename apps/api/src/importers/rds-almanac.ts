@@ -1,5 +1,6 @@
 import * as cheerio from 'cheerio';
 import { englishNamesFromNameRu } from '../lib/transliterate.js';
+import { enrichPilotsWithAlmanacCountries } from './almanac-pilot.js';
 import type { RdsGpEvent, RdsGpPilot, RdsGpSeasonData, RdsGpStageResult } from './rds-gp.js';
 
 const BASE = 'https://driftalmanac.ru';
@@ -201,7 +202,7 @@ function parseStandingsTable(
       firstName,
       lastName,
       nameRu,
-      country: 'RU',
+      country: null,
       number,
       photoSourceUrl: null,
       team: null,
@@ -235,6 +236,7 @@ export async function fetchRdsAlmanacSeason(seasonYear: number): Promise<RdsGpSe
   }));
 
   const pilots = parseStandingsTable($, eventMetas);
+  await enrichPilotsWithAlmanacCountries(pilots);
 
   return {
     sourceUrl,

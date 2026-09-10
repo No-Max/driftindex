@@ -159,6 +159,9 @@ export interface SeriesPrestigeResponse {
   year: number | null;
   totalSeries: number;
   overlapGroups: number;
+  historyYears: number;
+  historyFromYear: number | null;
+  historyToYear: number | null;
   source: 'stored' | 'overlap' | 'manual';
   entries: SeriesPrestigeEntry[];
 }
@@ -182,6 +185,24 @@ export interface PilotSeriesPhoto {
   seriesNameEn: string;
   seriesNameRu: string;
   photoUrl: string;
+}
+
+export interface PilotListEntry {
+  rank: number | null;
+  score: number | null;
+  pilot: PilotSummary;
+  bestSeries: {
+    slug: string;
+    nameEn: string;
+    nameRu: string;
+    weight: number;
+    place: number;
+  } | null;
+}
+
+export interface PilotsListResponse {
+  year: number;
+  pilots: PilotListEntry[];
 }
 
 export interface PilotProfileResponse extends PilotSummary {

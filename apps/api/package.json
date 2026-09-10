@@ -20,7 +20,16 @@
     "db:merge-almanac-pilots": "tsx scripts/merge-almanac-pilots.ts",
     "db:dedupe-pilots": "tsx scripts/dedupe-pilots.ts",
     "db:import:tandem-battles": "tsx scripts/import-tandem-battles.ts",
-    "db:import:tandem-battles:all": "tsx scripts/import-tandem-battles.ts --all"
+    "db:import:tandem-battles:all": "tsx scripts/import-tandem-battles.ts --all",
+    "db:import:pilot-countries": "tsx scripts/import-pilot-countries.ts",
+    "db:import:pilot-countries:all": "tsx scripts/import-pilot-countries.ts --source=all",
+    "db:backfill:pilot-countries": "tsx scripts/backfill-pilot-countries.ts",
+    "db:import:drift-masters": "tsx scripts/import-drift-masters.ts",
+    "db:import:drift-masters:list": "tsx scripts/import-drift-masters.ts --list-seasons",
+    "db:import:drift-masters:archive": "tsx scripts/import-drift-masters-archive.ts",
+    "db:import:drift-masters:archive:list": "tsx scripts/import-drift-masters-archive.ts --list-seasons",
+    "db:import:drift-masters:archive:all": "tsx scripts/import-drift-masters-archive.ts",
+    "db:import:drift-masters:all": "tsx scripts/import-drift-masters-archive.ts && tsx scripts/import-drift-masters.ts --year 2023 2024 2025 2026"
   },
   "dependencies": {
     "@drift-index/shared": "*",

@@ -1,12 +1,20 @@
 import type { PrismaClient } from '@prisma/client';
 import { seriesCoefficient } from './p4p.js';
+import { buildNameKey } from './transliterate.js';
 import { computeStandings, type SeasonEventWithResults } from './standings.js';
+
+/** How many past seasons feed overlap prestige for a target year (inclusive). */
+export const PRESTIGE_HISTORY_YEARS = 5;
+/** Recency decay per year back from the target year (1.0 = current season). */
+export const PRESTIGE_YEAR_DECAY = 0.85;
 
 export interface PilotSeasonStanding {
   pilotId: string;
   pilotSlug: string;
   firstName: string;
   lastName: string;
+  nameRu: string | null;
+  identityKey: string;
   seriesSlug: string;
   seasonYear: number;
   place: number;
@@ -40,9 +48,27 @@ export interface SeriesPrestigeEntry {
 export interface PrestigeRankingResult {
   totalSeries: number;
   overlapGroups: number;
+  historyYears: number;
+  historyFromYear: number | null;
+  historyToYear: number | null;
   source: 'stored' | 'overlap' | 'manual';
   entries: SeriesPrestigeEntry[];
   orderBySlug: Map<string, number>;
+}
+
+function pilotIdentityKey(firstName: string, lastName: string, nameRu: string | null): string {
+  const key = buildNameKey(firstName, lastName, nameRu);
+  return key.split('|').length >= 2 ? key : '';
+}
+
+function overlapGroupKey(row: PilotSeasonStanding): string {
+  return row.identityKey ? row.identityKey : row.pilotId;
+}
+
+function recencyWeight(targetYear: number, seasonYear: number): number {
+  const age = targetYear - seasonYear;
+  if (age < 0 || age >= PRESTIGE_HISTORY_YEARS) return 0;
+  return PRESTIGE_YEAR_DECAY ** age;
 }
 
 export async function loadPilotSeasonStandings(prisma: PrismaClient): Promise<PilotSeasonStanding[]> {
@@ -75,6 +101,12 @@ export async function loadPilotSeasonStandings(prisma: PrismaClient): Promise<Pi
           pilotSlug: row.pilot.slug,
           firstName: row.pilot.firstName,
           lastName: row.pilot.lastName,
+          nameRu: row.pilot.nameRu,
+          identityKey: pilotIdentityKey(
+            row.pilot.firstName,
+            row.pilot.lastName,
+            row.pilot.nameRu,
+          ),
           seriesSlug: series.slug,
           seasonYear: season.year,
           place: row.rank,
@@ -93,6 +125,7 @@ export async function loadPilotSeasonStandings(prisma: PrismaClient): Promise<Pi
 export function computeHardnessScores(
   standings: PilotSeasonStanding[],
   seriesSlugs: string[],
+  targetYear?: number,
 ): {
   hardness: Map<string, number>;
   samples: Map<string, number>;
@@ -112,7 +145,9 @@ export function computeHardnessScores(
 
   const byPilotSeason = new Map<string, PilotSeasonStanding[]>();
   for (const row of standings) {
-    const key = `${row.pilotId}:${row.seasonYear}`;
+    if (targetYear != null && recencyWeight(targetYear, row.seasonYear) <= 0) continue;
+
+    const key = `${overlapGroupKey(row)}:${row.seasonYear}`;
     const group = byPilotSeason.get(key) ?? [];
     group.push(row);
     byPilotSeason.set(key, group);
@@ -121,19 +156,28 @@ export function computeHardnessScores(
   for (const group of byPilotSeason.values()) {
     if (group.length < 2) continue;
 
+    const uniqueSeries = new Set(group.map((row) => row.seriesSlug));
+    if (uniqueSeries.size < 2) continue;
+
     for (let i = 0; i < group.length; i++) {
       for (let j = i + 1; j < group.length; j++) {
         const a = group[i]!;
         const b = group[j]!;
 
+        if (a.seriesSlug === b.seriesSlug) continue;
         if (b.place === a.place) continue;
 
         const harder = b.place > a.place ? b : a;
         const easier = b.place > a.place ? a : b;
-        const delta = harder.place - easier.place;
+        const rawDelta = harder.place - easier.place;
+        const weight =
+          targetYear != null ? recencyWeight(targetYear, harder.seasonYear) : 1;
+        if (weight <= 0) continue;
+
+        const delta = rawDelta * weight;
 
         hardness.set(harder.seriesSlug, (hardness.get(harder.seriesSlug) ?? 0) + delta);
-        samples.set(harder.seriesSlug, (samples.get(harder.seriesSlug) ?? 0) + 1);
+        samples.set(harder.seriesSlug, (samples.get(harder.seriesSlug) ?? 0) + weight);
 
         const contribution: OverlapContribution = {
           pilotSlug: harder.pilotSlug,
@@ -144,7 +188,7 @@ export function computeHardnessScores(
           easierSeriesSlug: easier.seriesSlug,
           placeInHarder: harder.place,
           placeInEasier: easier.place,
-          delta,
+          delta: Math.round(delta * 100) / 100,
         };
 
         contributions.push(contribution);
@@ -166,6 +210,7 @@ export function buildPrestigeRanking(
   seriesList: Array<{ slug: string; nameEn: string; nameRu: string; featuredOrder: number | null }>,
   standings: PilotSeasonStanding[],
   storedRanks?: Map<string, number>,
+  targetYear?: number,
 ): PrestigeRankingResult {
   const featured = seriesList
     .filter((s) => s.featuredOrder != null)
@@ -173,14 +218,23 @@ export function buildPrestigeRanking(
 
   const slugs = featured.map((s) => s.slug);
   const totalSeries = slugs.length;
-  const { hardness, samples, contributionsBySeries } = computeHardnessScores(standings, slugs);
+  const { hardness, samples, contributionsBySeries } = computeHardnessScores(
+    standings,
+    slugs,
+    targetYear,
+  );
 
   const pilotSeasonCounts = standings.reduce((acc, row) => {
-    const key = `${row.pilotId}:${row.seasonYear}`;
+    if (targetYear != null && recencyWeight(targetYear, row.seasonYear) <= 0) return acc;
+    const key = `${overlapGroupKey(row)}:${row.seasonYear}`;
     acc.set(key, (acc.get(key) ?? 0) + 1);
     return acc;
   }, new Map<string, number>());
   const multiSeriesGroups = [...pilotSeasonCounts.values()].filter((count) => count >= 2).length;
+
+  const historyFromYear =
+    targetYear != null ? targetYear - PRESTIGE_HISTORY_YEARS + 1 : null;
+  const historyToYear = targetYear ?? null;
 
   const hasOverlap = [...samples.values()].some((n) => n > 0);
 
@@ -230,6 +284,9 @@ export function buildPrestigeRanking(
   return {
     totalSeries,
     overlapGroups: multiSeriesGroups,
+    historyYears: PRESTIGE_HISTORY_YEARS,
+    historyFromYear,
+    historyToYear,
     source,
     entries,
     orderBySlug,
@@ -257,7 +314,8 @@ export async function computePrestigeRanking(prisma: PrismaClient, year?: number
     }
   }
 
-  return buildPrestigeRanking(seriesList, standings, storedRanks);
+  const targetYear = year ?? new Date().getFullYear();
+  return buildPrestigeRanking(seriesList, standings, storedRanks, targetYear);
 }
 
 /** Persist overlap-based prestige for a year (end-of-season job). */
@@ -267,7 +325,7 @@ export async function persistPrestigeRanking(prisma: PrismaClient, year: number)
     orderBy: { featuredOrder: 'asc' },
   });
   const standings = await loadPilotSeasonStandings(prisma);
-  const result = buildPrestigeRanking(seriesList, standings);
+  const result = buildPrestigeRanking(seriesList, standings, undefined, year);
 
   for (const entry of result.entries) {
     const series = await prisma.series.findUnique({ where: { slug: entry.slug } });
