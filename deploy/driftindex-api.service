@@ -1,0 +1,15 @@
+[Unit]
+Description=Drift Index API
+After=network.target docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/driftindex/apps/api
+EnvironmentFile=/opt/driftindex/apps/api/.env
+ExecStart=/usr/bin/node dist/index.js
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

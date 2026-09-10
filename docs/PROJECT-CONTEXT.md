@@ -4,7 +4,7 @@
 
 **Repo:** https://github.com/No-Max/driftindex  
 **Domain (planned):** driftindex.pro  
-**Local folder:** `drift-pound` (rename optional)
+**Local folder:** `driftindex`
 
 ---
 
@@ -48,17 +48,35 @@ docker-compose.yml PostgreSQL :5433
 
 **Ports:** API `3221`, Web `3220` (Vite proxies `/api` → API)
 
+### Environment files
+
+| File | Use |
+|------|-----|
+| `apps/api/.env.example` | Local dev template |
+| `apps/api/.env.production.example` | VPS template |
+| `apps/api/.env` | Active config (gitignored) |
+
+Same PostgreSQL credentials everywhere (`docker-compose.yml` → port `5433`).
+
 ### Dev commands
 
 ```bash
 npm install
-cp .env.example apps/api/.env   # DATABASE_URL → localhost:5433
-npm run db:up
-npm run db:migrate
-npm run db:seed
-npm run dev:api    # terminal 1
-npm run dev:web    # terminal 2
+cp apps/api/.env.example apps/api/.env
+npm run db:setup          # docker + migrate + seed + Royal DS import
+npm run dev:api           # terminal 1
+npm run dev:web           # terminal 2
 ```
+
+### Production DB (same data as local)
+
+```bash
+cp apps/api/.env.production.example apps/api/.env
+npm run db:up
+npm run db:setup:prod     # migrate deploy + seed + Royal DS import
+```
+
+Deploy details: `deploy/README.md`
 
 ### Git remote (No-Max personal)
 
@@ -195,10 +213,17 @@ Example overlap result: FD hardness ≈ 18 (7 samples) — most cross-series com
 
 ## Data import
 
+Full database bootstrap (local or prod):
+
+```bash
+npm run db:setup        # local: includes docker up
+npm run db:setup:prod   # prod: assumes postgres already running
+```
+
 ### Royal Drift Series (`royalds.cn`)
 
 ```bash
-npm run db:import:royal-ds
+npm run db:import:royal-ds   # also runs as part of db:setup
 ```
 
 Source: SvelteKit `__data.json` from `https://royalds.cn/en/results`.
@@ -220,9 +245,10 @@ Importer: `apps/api/src/importers/royal-ds.ts` · script: `apps/api/scripts/impo
 - [ ] Import remaining series (FD, DM, D1, RDS, Drift Kings)
 - [ ] UI block for series prestige / overlap debug on homepage
 - [ ] More historical seed data for stronger overlap
-- [ ] Deploy to driftindex.pro
+- [x] Deploy to driftindex.pro (VPS 178.172.236.133)
+- [x] Standardized env + db:setup workflow (local = prod)
 - [ ] Phase 2: auth + fan voting
-- [ ] Rename local folder `drift-pound` → `drift-index` (optional)
+- [x] Rename local folder → `driftindex`
 
 ---
 
