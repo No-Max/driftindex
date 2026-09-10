@@ -136,6 +136,8 @@ model EventResult {
   qualPoints     Float?
   qualScore100   Float?
   tandemPosition Int?
+  tandemBattles  Int?
+  tandemWins     Int?
   points         Int        @default(0)
   dataStatus     DataStatus @default(UNVERIFIED)
   createdAt      DateTime   @default(now())

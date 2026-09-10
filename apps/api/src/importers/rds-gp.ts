@@ -96,7 +96,7 @@ function parseQualCell(text: string): { qualPoints: number | null; qualPosition:
 
 function parsePilotCell(
   $: cheerio.CheerioAPI,
-  cell: cheerio.Cheerio<cheerio.Element>,
+  cell: cheerio.Cheerio<any>,
 ): { slug: string; firstName: string; lastName: string; nameRu: string | null } | null {
   const link = cell.find('a[href*="/pilots/"]').first();
   const href = link.attr('href') ?? '';
@@ -195,7 +195,7 @@ interface ParsedEventRow {
 
 function parseEventRow(
   $: cheerio.CheerioAPI,
-  cells: cheerio.Cheerio<cheerio.Element>,
+  cells: cheerio.Cheerio<any>,
 ): ParsedEventRow | null {
   if (cells.length < 9) return null;
 

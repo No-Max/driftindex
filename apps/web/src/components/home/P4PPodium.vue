@@ -65,7 +65,11 @@ function isFeatured(rank: number) {
               {{ seriesName(item) }} · #{{ item.bestSeries.place }}
             </p>
             <p v-if="item.pilot.stats && isFeatured(item.rank)" class="p4p-list__meta">
-              <span>{{ item.pilot.stats.winRate ?? '—' }}% {{ t('pilot.stats.winsShort') }}</span>
+              <span v-if="item.pilot.stats.tandemBattles > 0">
+                {{ item.pilot.stats.tandemBattles }}/{{ item.pilot.stats.tandemWins }}
+                ({{ item.pilot.stats.tandemWinPct }}%) {{ t('pilot.stats.duelsShort') }}
+              </span>
+              <span v-else>— {{ t('pilot.stats.duelsShort') }}</span>
               <span>{{ item.pilot.stats.eventsCount }} {{ t('pilot.stats.eventsShort') }}</span>
               <span v-if="item.pilot.stats.avgQualScore != null">
                 {{ item.pilot.stats.avgQualScore.toFixed(1) }} {{ t('pilot.stats.qualShort') }}

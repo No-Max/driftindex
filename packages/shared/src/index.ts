@@ -50,8 +50,9 @@ export interface SeasonStandingsResponse {
 export interface PilotStats {
   eventsCount: number;
   seasonsCount: number;
-  winsCount: number;
-  winRate: number | null;
+  tandemBattles: number;
+  tandemWins: number;
+  tandemWinPct: number | null;
   avgQualScore: number | null;
 }
 
@@ -197,7 +198,9 @@ export interface PilotProfileResponse extends PilotSummary {
     roundNumber: number;
     qualPosition: number | null;
     qualPoints: number | null;
-    tandemPosition: number | null;
+    eventPlace: number | null;
+    tandemBattles: number | null;
+    tandemWins: number | null;
     points: number;
     source: DataSource | null;
   }>;

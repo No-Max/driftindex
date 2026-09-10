@@ -22,6 +22,8 @@
     "db:import:rds-almanac": "npm run db:import:rds-almanac --workspace=apps/api",
     "db:merge-almanac-pilots": "npm run db:merge-almanac-pilots --workspace=apps/api",
     "db:dedupe-pilots": "npm run db:dedupe-pilots --workspace=apps/api",
+    "db:import:tandem-battles": "npm run db:import:tandem-battles --workspace=apps/api",
+    "db:import:tandem-battles:all": "npm run db:import:tandem-battles --workspace=apps/api -- --all",
     "db:setup": "npm run db:up && npm run db:migrate && npm run db:seed && npm run db:import:royal-ds",
     "db:setup:prod": "npm run db:migrate:deploy && npm run db:seed && npm run db:import:royal-ds"
   }

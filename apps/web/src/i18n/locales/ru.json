@@ -59,16 +59,17 @@
     "event": "Этап",
     "points": "Очки",
     "qual": "Квал",
-    "tandem": "Пары",
+    "place": "Место",
+    "duels": "Парные",
     "photoPrev": "Предыдущее фото",
     "photoNext": "Следующее фото",
     "stats": {
       "title": "Статистика",
-      "winRate": "Процент побед",
+      "tandemRecord": "Парные заезды",
       "events": "Этапы",
       "seasons": "Сезоны",
       "avgQual": "Средний балл квалификации (/100)",
-      "winsShort": "побед",
+      "duelsShort": "парные",
       "eventsShort": "этапов",
       "qualShort": "/100"
     }

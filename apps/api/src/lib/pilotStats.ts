@@ -2,7 +2,8 @@ import { averageQualScore100 } from './qualScore.js';
 
 export interface PilotResultForStats {
   qualScore100: number | null;
-  tandemPosition: number | null;
+  tandemBattles: number | null;
+  tandemWins: number | null;
   eventStatus: string;
   seriesSlug: string;
   seasonYear: number;
@@ -11,30 +12,41 @@ export interface PilotResultForStats {
 export interface PilotStats {
   eventsCount: number;
   seasonsCount: number;
-  winsCount: number;
-  winRate: number | null;
+  tandemBattles: number;
+  tandemWins: number;
+  tandemWinPct: number | null;
   avgQualScore: number | null;
 }
 
 export function computePilotStats(results: PilotResultForStats[]): PilotStats {
   const finished = results.filter((r) => r.eventStatus === 'FINISHED');
   const seasons = new Set(finished.map((r) => `${r.seriesSlug}:${r.seasonYear}`));
-  const wins = finished.filter((r) => r.tandemPosition === 1).length;
+
+  const withBattles = finished.filter((r) => r.tandemBattles != null && r.tandemBattles > 0);
+  const tandemBattles = withBattles.reduce((sum, r) => sum + (r.tandemBattles ?? 0), 0);
+  const tandemWins = withBattles.reduce((sum, r) => sum + (r.tandemWins ?? 0), 0);
 
   return {
     eventsCount: finished.length,
     seasonsCount: seasons.size,
-    winsCount: wins,
-    winRate:
-      finished.length > 0 ? Math.round((wins / finished.length) * 1000) / 10 : null,
+    tandemBattles,
+    tandemWins,
+    tandemWinPct:
+      tandemBattles > 0 ? Math.round((tandemWins / tandemBattles) * 1000) / 10 : null,
     avgQualScore: averageQualScore100(finished.map((r) => r.qualScore100)),
   };
+}
+
+export function formatTandemRecord(stats: Pick<PilotStats, 'tandemBattles' | 'tandemWins' | 'tandemWinPct'>): string {
+  if (stats.tandemBattles <= 0 || stats.tandemWinPct == null) return '—';
+  return `${stats.tandemBattles}/${stats.tandemWins} (${stats.tandemWinPct}%)`;
 }
 
 export function toStatsInput(
   results: Array<{
     qualScore100: number | null;
-    tandemPosition: number | null;
+    tandemBattles: number | null;
+    tandemWins: number | null;
     event: {
       status: string;
       season: { year: number; series: { slug: string } };
@@ -43,7 +55,8 @@ export function toStatsInput(
 ): PilotResultForStats[] {
   return results.map((result) => ({
     qualScore100: result.qualScore100,
-    tandemPosition: result.tandemPosition,
+    tandemBattles: result.tandemBattles,
+    tandemWins: result.tandemWins,
     eventStatus: result.event.status,
     seriesSlug: result.event.season.series.slug,
     seasonYear: result.event.season.year,

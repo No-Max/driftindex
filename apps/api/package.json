@@ -18,7 +18,9 @@
     "db:import:rds-gp:all": "tsx scripts/import-rds-gp.ts --all --skip-photos",
     "db:import:rds-almanac": "tsx scripts/import-rds-almanac.ts",
     "db:merge-almanac-pilots": "tsx scripts/merge-almanac-pilots.ts",
-    "db:dedupe-pilots": "tsx scripts/dedupe-pilots.ts"
+    "db:dedupe-pilots": "tsx scripts/dedupe-pilots.ts",
+    "db:import:tandem-battles": "tsx scripts/import-tandem-battles.ts",
+    "db:import:tandem-battles:all": "tsx scripts/import-tandem-battles.ts --all"
   },
   "dependencies": {
     "@drift-index/shared": "*",

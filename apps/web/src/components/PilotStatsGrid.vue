@@ -9,9 +9,9 @@ defineProps<{
 
 const { t } = useI18n();
 
-function formatRate(value: number | null) {
-  if (value == null) return '—';
-  return `${value}%`;
+function formatTandem(stats: PilotStats) {
+  if (stats.tandemBattles <= 0 || stats.tandemWinPct == null) return '—';
+  return `${stats.tandemBattles}/${stats.tandemWins} (${stats.tandemWinPct}%)`;
 }
 
 function formatQual(value: number | null) {
@@ -23,8 +23,8 @@ function formatQual(value: number | null) {
 <template>
   <dl class="stats" :class="{ 'stats--compact': compact }">
     <div class="stats__item">
-      <dt>{{ t('pilot.stats.winRate') }}</dt>
-      <dd>{{ formatRate(stats.winRate) }}</dd>
+      <dt>{{ t('pilot.stats.tandemRecord') }}</dt>
+      <dd>{{ formatTandem(stats) }}</dd>
     </div>
     <div class="stats__item">
       <dt>{{ t('pilot.stats.events') }}</dt>

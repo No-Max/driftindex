@@ -46,6 +46,13 @@ function seriesName(result: PilotProfileResponse['results'][0]) {
 function eventName(result: PilotProfileResponse['results'][0]) {
   return locale.value === 'ru' ? result.eventNameRu : result.eventNameEn;
 }
+
+function formatEventDuels(result: PilotProfileResponse['results'][0]) {
+  if (result.tandemBattles == null || result.tandemBattles <= 0) return '—';
+  const wins = result.tandemWins ?? 0;
+  const pct = Math.round((wins / result.tandemBattles) * 1000) / 10;
+  return `${result.tandemBattles}/${wins} (${pct}%)`;
+}
 </script>
 
 <template>
@@ -82,7 +89,8 @@ function eventName(result: PilotProfileResponse['results'][0]) {
               <th>{{ t('pilot.series') }}</th>
               <th>{{ t('pilot.event') }}</th>
               <th>{{ t('pilot.qual') }}</th>
-              <th>{{ t('pilot.tandem') }}</th>
+              <th>{{ t('pilot.place') }}</th>
+              <th>{{ t('pilot.duels') }}</th>
               <th>{{ t('pilot.points') }}</th>
             </tr>
           </thead>
@@ -95,7 +103,8 @@ function eventName(result: PilotProfileResponse['results'][0]) {
               </td>
               <td>{{ eventName(result) }}</td>
               <td class="muted">{{ result.qualPosition ?? '—' }}</td>
-              <td class="muted">{{ result.tandemPosition ?? '—' }}</td>
+              <td class="muted">{{ result.eventPlace ?? '—' }}</td>
+              <td class="muted">{{ formatEventDuels(result) }}</td>
               <td><strong>{{ result.points }}</strong></td>
             </tr>
           </tbody>

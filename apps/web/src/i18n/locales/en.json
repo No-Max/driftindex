@@ -59,16 +59,17 @@
     "event": "Event",
     "points": "Points",
     "qual": "Qual",
-    "tandem": "Tandem",
+    "place": "Place",
+    "duels": "Tandem duels",
     "photoPrev": "Previous photo",
     "photoNext": "Next photo",
     "stats": {
       "title": "Statistics",
-      "winRate": "Win rate",
+      "tandemRecord": "Tandem duels",
       "events": "Events",
       "seasons": "Seasons",
       "avgQual": "Avg qual score (/100)",
-      "winsShort": "wins",
+      "duelsShort": "duels",
       "eventsShort": "events",
       "qualShort": "/100"
     }
