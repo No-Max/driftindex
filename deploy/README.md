@@ -44,6 +44,19 @@ rsync -avz storage/media/ driftindex:/opt/driftindex/storage/media/
 
 SSH host `driftindex` → `178.172.236.133` (see `~/.ssh/config`).
 
+## Deploy code (no git on VPS)
+
+```bash
+rsync -avz \
+  --exclude node_modules --exclude .git --exclude storage/media \
+  --exclude apps/api/.env --exclude apps/web/.env.development \
+  ./ driftindex:/opt/driftindex/
+
+ssh driftindex 'cd /opt/driftindex && npm install && npm run db:generate --workspace=apps/api && npm run build && systemctl restart driftindex-api'
+```
+
+Never rsync `apps/api/.env` — prod uses `apps/api/.env.production.example` values on the server.
+
 ## HTTPS (after DNS works)
 
 ```bash
