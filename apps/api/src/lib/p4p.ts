@@ -1,16 +1,11 @@
 import type { Pilot } from '@prisma/client';
 
-/** S = (N − seriesRank + 1) / N — top series = 1, last = 1/N */
-export function seriesCoefficient(seriesRank: number, totalSeries: number): number {
-  if (totalSeries <= 0 || seriesRank <= 0) return 1;
-  return (totalSeries - seriesRank + 1) / totalSeries;
-}
-
 export interface P4PInputSeries {
   slug: string;
   nameEn: string;
   nameRu: string;
-  seriesOrder: number;
+  /** Overlap hardness coefficient H = (raw + 32) / 32 */
+  seriesWeight: number;
   standings: Array<{ rank: number; pilot: Pilot }>;
 }
 
@@ -25,13 +20,11 @@ export interface P4PResult {
   bestSeriesPlace: number;
 }
 
-/** P4P = max(S / P) × 1000 across series, S = series weight, P = standing place */
+/** P4P = max(H / P) × 1000 across series, H = overlap coefficient, P = standing place */
 export function computeP4P(
   seriesList: P4PInputSeries[],
   limit?: number,
-  totalFeaturedSeries?: number,
 ): P4PResult[] {
-  const totalSeries = totalFeaturedSeries ?? seriesList.length;
   const bestByPilot = new Map<
     string,
     {
@@ -46,12 +39,12 @@ export function computeP4P(
   >();
 
   for (const series of seriesList) {
-    const s = seriesCoefficient(series.seriesOrder, totalSeries);
+    if (series.seriesWeight <= 0) continue;
 
     for (const row of series.standings) {
       if (row.rank <= 0) continue;
 
-      const score = s / row.rank;
+      const score = series.seriesWeight / row.rank;
       const existing = bestByPilot.get(row.pilot.id);
       if (!existing || score > existing.score) {
         bestByPilot.set(row.pilot.id, {
@@ -60,7 +53,7 @@ export function computeP4P(
           seriesSlug: series.slug,
           seriesNameEn: series.nameEn,
           seriesNameRu: series.nameRu,
-          weight: s,
+          weight: series.seriesWeight,
           place: row.rank,
         });
       }

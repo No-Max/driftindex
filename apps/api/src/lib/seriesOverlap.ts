@@ -1,7 +1,12 @@
 import type { PrismaClient } from '@prisma/client';
-import { seriesCoefficient } from './p4p.js';
+import { GRID_REFERENCE } from './stageCoefficient.js';
 import { buildNameKey } from './transliterate.js';
 import { computeStandings, type SeasonEventWithResults } from './standings.js';
+
+/** Map raw overlap hardness (−mean P) to a positive coefficient near 1. */
+export function hardnessToCoefficient(rawHardness: number): number {
+  return Math.round(((rawHardness + GRID_REFERENCE) / GRID_REFERENCE) * 1000) / 1000;
+}
 
 export interface PilotSeasonStanding {
   pilotId: string;
@@ -43,8 +48,10 @@ export interface SeriesPrestigeEntry {
   nameEn: string;
   nameRu: string;
   effectiveOrder: number;
-  coefficient: number;
-  hardnessScore: number;
+  /** Raw overlap hardness = −mean(P); null when no overlap data. */
+  hardnessScore: number | null;
+  /** Overlap coefficient H = (hardnessScore + 32) / 32; null when no overlap data. */
+  coefficient: number | null;
   overlapSamples: number;
   contributions: OverlapContribution[];
 }
@@ -58,6 +65,7 @@ export interface PrestigeRankingResult {
   source: 'overlap' | 'insufficient';
   entries: SeriesPrestigeEntry[];
   orderBySlug: Map<string, number>;
+  weightBySlug: Map<string, number>;
 }
 
 function pilotIdentityKey(firstName: string, lastName: string, nameRu: string | null): string {
@@ -206,24 +214,27 @@ function roundPlace(value: number): number {
 
 /**
  * Prestige overlap via career mean indexPoints per series.
- * For target series X: P = S_X − S_Y; prestige hardness = −mean(P) across all pairs.
+ * For target series X: P = S_X − S_Y; raw hardness = −mean(P); H = (hardness + 32) / 32.
  */
 export function computeIndexPointsHardnessScores(
   averages: PilotSeriesIndexAverage[],
   seriesSlugs: string[],
 ): {
-  hardness: Map<string, number>;
+  rawHardness: Map<string, number>;
+  hardnessCoefficient: Map<string, number>;
   samples: Map<string, number>;
   contributions: OverlapContribution[];
   contributionsBySeries: Map<string, OverlapContribution[]>;
   overlapPilotCount: number;
 } {
-  const hardness = new Map<string, number>();
+  const rawHardness = new Map<string, number>();
+  const hardnessCoefficient = new Map<string, number>();
   const samples = new Map<string, number>();
   const sumP = new Map<string, number>();
   const contributionsBySeries = new Map<string, OverlapContribution[]>();
   for (const slug of seriesSlugs) {
-    hardness.set(slug, 0);
+    rawHardness.set(slug, 0);
+    hardnessCoefficient.set(slug, 0);
     samples.set(slug, 0);
     sumP.set(slug, 0);
     contributionsBySeries.set(slug, []);
@@ -284,7 +295,9 @@ export function computeIndexPointsHardnessScores(
     const n = samples.get(slug) ?? 0;
     if (n > 0) {
       const meanP = (sumP.get(slug) ?? 0) / n;
-      hardness.set(slug, Math.round(-meanP * 100) / 100);
+      const raw = Math.round(-meanP * 100) / 100;
+      rawHardness.set(slug, raw);
+      hardnessCoefficient.set(slug, hardnessToCoefficient(raw));
     }
   }
 
@@ -294,7 +307,7 @@ export function computeIndexPointsHardnessScores(
 
   contributions.sort((a, b) => b.delta - a.delta || a.lastName.localeCompare(b.lastName));
 
-  return { hardness, samples, contributions, contributionsBySeries, overlapPilotCount };
+  return { rawHardness, hardnessCoefficient, samples, contributions, contributionsBySeries, overlapPilotCount };
 }
 
 export function buildPrestigeRanking(
@@ -307,12 +320,13 @@ export function buildPrestigeRanking(
 
   const slugs = featured.map((s) => s.slug);
   const totalSeries = slugs.length;
-  const { hardness, samples, contributionsBySeries, overlapPilotCount } =
+  const { rawHardness, hardnessCoefficient, samples, contributionsBySeries, overlapPilotCount } =
     computeIndexPointsHardnessScores(indexAverages, slugs);
 
   const ranked = featured.map((series) => ({
     ...series,
-    hardnessScore: hardness.get(series.slug) ?? 0,
+    hardnessScore: rawHardness.get(series.slug) ?? 0,
+    hardnessCoefficient: hardnessCoefficient.get(series.slug) ?? 0,
     overlapSamples: samples.get(series.slug) ?? 0,
   }));
 
@@ -320,7 +334,9 @@ export function buildPrestigeRanking(
   const withoutData = ranked.filter((series) => series.overlapSamples === 0);
 
   withData.sort((a, b) => {
-    if (b.hardnessScore !== a.hardnessScore) return b.hardnessScore - a.hardnessScore;
+    if (b.hardnessCoefficient !== a.hardnessCoefficient) {
+      return b.hardnessCoefficient - a.hardnessCoefficient;
+    }
     return a.slug.localeCompare(b.slug);
   });
   withoutData.sort(
@@ -333,14 +349,19 @@ export function buildPrestigeRanking(
       nameEn: series.nameEn,
       nameRu: series.nameRu,
       effectiveOrder: index + 1,
-      coefficient: seriesCoefficient(index + 1, totalSeries),
-      hardnessScore: series.hardnessScore,
+      hardnessScore: series.overlapSamples > 0 ? series.hardnessScore : null,
+      coefficient: series.overlapSamples > 0 ? series.hardnessCoefficient : null,
       overlapSamples: series.overlapSamples,
       contributions: contributionsBySeries.get(series.slug) ?? [],
     };
   });
 
   const orderBySlug = new Map(entries.map((e) => [e.slug, e.effectiveOrder]));
+  const weightBySlug = new Map(
+    entries.flatMap((entry) =>
+      entry.coefficient != null ? [[entry.slug, entry.coefficient] as const] : [],
+    ),
+  );
 
   const source: 'overlap' | 'insufficient' = withData.length > 0 ? 'overlap' : 'insufficient';
 
@@ -353,6 +374,7 @@ export function buildPrestigeRanking(
     source,
     entries,
     orderBySlug,
+    weightBySlug,
   };
 }
 
@@ -380,21 +402,20 @@ export async function persistPrestigeRanking(prisma: PrismaClient, year: number)
     const series = await prisma.series.findUnique({ where: { slug: entry.slug } });
     if (!series) continue;
 
-    const order = entry.effectiveOrder;
-    const coefficient = seriesCoefficient(order, result.totalSeries);
+    if (entry.coefficient == null) continue;
 
     await prisma.seriesWeight.upsert({
       where: { seriesId_year: { seriesId: series.id, year } },
       update: {
-        prestigeRank: order,
-        weight: coefficient,
+        prestigeRank: entry.effectiveOrder,
+        weight: entry.coefficient,
         calculatedAt: new Date(),
       },
       create: {
         seriesId: series.id,
         year,
-        prestigeRank: order,
-        weight: coefficient,
+        prestigeRank: entry.effectiveOrder,
+        weight: entry.coefficient,
       },
     });
   }

@@ -5,7 +5,7 @@ import { computeStandings } from './standings.js';
 export async function loadP4PInputs(
   prisma: PrismaClient,
   year: number,
-  orderBySlug: Map<string, number>,
+  weightBySlug: Map<string, number>,
 ): Promise<P4PInputSeries[]> {
   const featuredSeries = await prisma.series.findMany({
     where: { featuredOrder: { not: null } },
@@ -31,12 +31,15 @@ export async function loadP4PInputs(
     const season = series.seasons[0];
     if (!season) continue;
 
+    const seriesWeight = weightBySlug.get(series.slug);
+    if (seriesWeight == null || seriesWeight <= 0) continue;
+
     const standings = computeStandings(season.events);
     inputs.push({
       slug: series.slug,
       nameEn: series.nameEn,
       nameRu: series.nameRu,
-      seriesOrder: orderBySlug.get(series.slug) ?? featuredSeries.length + 1,
+      seriesWeight,
       standings: standings.map((row) => ({ rank: row.rank, pilot: row.pilot })),
     });
   }

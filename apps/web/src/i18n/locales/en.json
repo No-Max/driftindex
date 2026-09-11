@@ -30,7 +30,7 @@
       "calendar": "Calendar {year}",
       "calendarSub": "All rounds across featured championships",
       "p4p": "Pound-for-pound",
-      "p4pSub": "Best S/P score — S = series weight, P = standing place",
+      "p4pSub": "Best H/P score — H = series coefficient, P = standing place",
       "fanVotes": "Fan votes"
     },
     "eventStatus": {
@@ -57,15 +57,22 @@
     "title": "Series",
     "subtitle": "Prestige ranking and P4P weights · {year}",
     "prestigeTitle": "Series prestige",
-    "prestigeLead": "Featured championships ranked by how hard they are relative to each other. The coefficient S feeds directly into pound-for-pound (P4P) scores.",
+    "prestigeLead": "Featured championships ranked by how hard they are relative to each other. The coefficient H feeds directly into pound-for-pound (P4P) scores.",
     "historyWindow": "Overlap window: {from}–{to} ({years} seasons)",
     "overlapGroups": "{count} pilots in 2+ series",
     "col": {
       "rank": "Rank",
       "series": "Series",
-      "coefficient": "S",
       "hardness": "Hardness",
+      "coefficient": "Series coefficient",
       "samples": "Samples"
+    },
+    "colHelp": {
+      "rank": "Series position in the prestige ranking. Higher Hardness means a higher Rank.",
+      "series": "Featured championship included in prestige and P4P calculations.",
+      "hardness": "Reflects the average difference in places drivers take compared with other series; based on event-by-event places, not season standings.",
+      "coefficient": "Normalized series weight: (Hardness + 32) / 32. Used in the P4P formula.",
+      "samples": "Drivers who competed in multiple series; hardness is calculated from their results."
     },
     "showOverlap": "Examples",
     "hideOverlap": "Hide",
@@ -79,25 +86,21 @@
     "method": {
       "overlap": {
         "title": "1. Pilot overlap",
-        "body": "For drivers in 2+ featured series, S is the mean indexPoints across all events in that series. For target series X: P = S_X − S_Y. Hardness(X) = −mean(P) over all overlap pairs. Higher hardness means a tougher series."
-      },
-      "coefficient": {
-        "title": "2. Series coefficient S",
-        "body": "After ranking series by accumulated hardness, we convert rank to a weight. Top series gets S = 1.000, the last gets 1/N."
+        "body": "For drivers in 2+ featured series, we use mean indexPoints per event. For series X: P = S_X − S_Y, raw = −mean(P). Coefficient H = (raw + 32) / 32 — higher H means a tougher series."
       },
       "p4p": {
-        "title": "3. Pound-for-pound (P4P)",
-        "body": "Each pilot's best score across featured series standings:",
-        "note": "P = championship place in that series. Only the single best S/P counts."
+        "title": "2. Pound-for-pound (P4P)",
+        "body": "Each pilot's best score across featured series with overlap data:",
+        "note": "P = championship place in that series. Only the single best H/P counts."
       },
       "indexPoints": {
-        "title": "4. Event indexPoints",
+        "title": "3. Event indexPoints",
         "body": "Each event result is scored with a grid-strength factor k (Top32 reference).",
         "note": "k = 1 − 1/n + 1/32, where n is scoring drivers in the top-32 qual grid."
       },
       "noData": {
-        "title": "5. Series without overlap",
-        "body": "Featured series with no overlap pairs get no hardness score and are listed at the bottom — no manual ranking."
+        "title": "4. Series without overlap",
+        "body": "Featured series with no overlap pairs get no H coefficient and are excluded from P4P. They are listed at the bottom without a weight."
       }
     },
     "catalogTitle": "Championship catalog",

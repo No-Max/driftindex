@@ -174,8 +174,8 @@ function seasonSource(season: {
 publicRouter.get('/pilots', async (req, res) => {
   const year = parseOptionalYear(req.query.year) ?? new Date().getFullYear();
   const prestige = await computePrestigeRanking(prisma, year);
-  const p4pInputs = await loadP4PInputs(prisma, year, prestige.orderBySlug);
-  const p4pRows = computeP4P(p4pInputs, undefined, prestige.totalSeries);
+  const p4pInputs = await loadP4PInputs(prisma, year, prestige.weightBySlug);
+  const p4pRows = computeP4P(p4pInputs);
 
   const rankedPilotIds = p4pRows.map((row) => row.pilot.id);
   const rankedPilotResults = await prisma.pilot.findMany({

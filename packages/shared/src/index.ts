@@ -149,8 +149,10 @@ export interface SeriesPrestigeEntry {
   nameEn: string;
   nameRu: string;
   effectiveOrder: number;
-  coefficient: number;
-  hardnessScore: number;
+  /** Raw overlap hardness = −mean(P); null when no overlap data. */
+  hardnessScore: number | null;
+  /** Overlap coefficient H = (hardnessScore + 32) / 32; null when no overlap data. */
+  coefficient: number | null;
   overlapSamples: number;
   contributions: OverlapContribution[];
 }

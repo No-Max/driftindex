@@ -78,6 +78,8 @@ function contributionPilotName(row: OverlapContribution) {
 function latestSeasonYear(item: SeriesListItem) {
   return item.seasons[0]?.year;
 }
+
+const prestigeColumnKeys = ['rank', 'series', 'hardness', 'coefficient', 'samples'] as const;
 </script>
 
 <template>
@@ -111,8 +113,8 @@ function latestSeasonYear(item: SeriesListItem) {
               <tr>
                 <th>{{ t('seriesPage.col.rank') }}</th>
                 <th>{{ t('seriesPage.col.series') }}</th>
-                <th>{{ t('seriesPage.col.coefficient') }}</th>
                 <th>{{ t('seriesPage.col.hardness') }}</th>
+                <th>{{ t('seriesPage.col.coefficient') }}</th>
                 <th>{{ t('seriesPage.col.samples') }}</th>
                 <th />
               </tr>
@@ -125,10 +127,12 @@ function latestSeasonYear(item: SeriesListItem) {
                     <strong>{{ seriesName(entry) }}</strong>
                     <span class="muted series-code">{{ entry.slug }}</span>
                   </td>
+                  <td class="muted">{{ entry.hardnessScore != null ? entry.hardnessScore : '—' }}</td>
                   <td>
-                    <strong class="coef">S = {{ formatCoefficient(entry.coefficient) }}</strong>
+                    <strong class="coef">
+                      {{ entry.coefficient != null ? formatCoefficient(entry.coefficient) : '—' }}
+                    </strong>
                   </td>
-                  <td class="muted">{{ entry.overlapSamples ? entry.hardnessScore : '—' }}</td>
                   <td class="muted">{{ entry.overlapSamples ? formatSamples(entry.overlapSamples) : '—' }}</td>
                   <td>
                     <button
@@ -163,6 +167,13 @@ function latestSeasonYear(item: SeriesListItem) {
               </template>
             </tbody>
           </table>
+
+          <dl class="column-legend muted">
+            <div v-for="key in prestigeColumnKeys" :key="key" class="column-legend__row">
+              <dt>{{ t(`seriesPage.col.${key}`) }}</dt>
+              <dd>{{ t(`seriesPage.colHelp.${key}`) }}</dd>
+            </div>
+          </dl>
         </div>
       </section>
 
@@ -173,18 +184,13 @@ function latestSeasonYear(item: SeriesListItem) {
           <article class="card method-card">
             <h3>{{ t('seriesPage.method.overlap.title') }}</h3>
             <p>{{ t('seriesPage.method.overlap.body') }}</p>
-          </article>
-
-          <article class="card method-card">
-            <h3>{{ t('seriesPage.method.coefficient.title') }}</h3>
-            <p>{{ t('seriesPage.method.coefficient.body', { n: prestige.totalSeries }) }}</p>
-            <pre class="formula">S = (N − rank + 1) / N</pre>
+            <pre class="formula">H = (raw + 32) / 32</pre>
           </article>
 
           <article class="card method-card">
             <h3>{{ t('seriesPage.method.p4p.title') }}</h3>
             <p>{{ t('seriesPage.method.p4p.body') }}</p>
-            <pre class="formula">P4P = max(S / P) × 1000</pre>
+            <pre class="formula">P4P = max(H / P) × 1000</pre>
             <p class="muted method-note">{{ t('seriesPage.method.p4p.note') }}</p>
           </article>
 
@@ -328,6 +334,34 @@ function latestSeasonYear(item: SeriesListItem) {
   display: grid;
   gap: 0.35rem;
   font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.column-legend {
+  margin: 0;
+  padding: 1rem 1.15rem 0.2rem;
+  border-top: 1px solid var(--border);
+  display: grid;
+  gap: 0.55rem;
+}
+
+.column-legend__row {
+  display: grid;
+  grid-template-columns: minmax(7rem, 11rem) 1fr;
+  gap: 0.75rem 1rem;
+  align-items: start;
+}
+
+.column-legend dt {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.column-legend dd {
+  margin: 0;
+  font-size: 0.85rem;
   line-height: 1.45;
 }
 

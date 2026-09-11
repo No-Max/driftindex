@@ -122,8 +122,8 @@ homeRouter.get('/home', async (req, res) => {
     },
   });
 
-  const p4pInputs = await loadP4PInputs(prisma, year, prestige.orderBySlug);
-  const p4pRows = computeP4P(p4pInputs, 10, prestige.totalSeries);
+  const p4pInputs = await loadP4PInputs(prisma, year, prestige.weightBySlug);
+  const p4pRows = computeP4P(p4pInputs, 10);
   const p4pPilotIds = p4pRows.map((row) => row.pilot.id);
   const p4pPilotResults = await prisma.pilot.findMany({
     where: { id: { in: p4pPilotIds } },
