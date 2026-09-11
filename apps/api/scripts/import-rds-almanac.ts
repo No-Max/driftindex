@@ -8,6 +8,7 @@ import {
 import type { RdsGpPilot, RdsGpSeasonData } from '../src/importers/rds-gp.js';
 import { findMatchingPilot } from '../src/lib/pilotMatch.js';
 import { canonicalEnglishNames } from '../src/lib/pilotNames.js';
+import { refreshStageCoefficientsForSeason } from '../src/lib/stageCoefficient.js';
 
 const prisma = new PrismaClientCtor();
 const SERIES_SLUG = 'rds-gp';
@@ -172,7 +173,11 @@ async function importSeason(db: PrismaClient, seriesId: string, year: number) {
     }
   }
 
-  console.log(`Import complete: ${data.pilots.length} pilots, ${resultCount} event results`);
+  const stageCount = await refreshStageCoefficientsForSeason(db, season.id);
+
+  console.log(
+    `Import complete: ${data.pilots.length} pilots, ${resultCount} event results, ${stageCount} stage coefficients`,
+  );
   return true;
 }
 

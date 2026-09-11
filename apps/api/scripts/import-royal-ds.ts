@@ -4,6 +4,7 @@ import { fetchRoyalDsEventQualScores, fetchRoyalDsSeason } from '../src/importer
 import { upsertPilotSeriesPhoto } from '../src/lib/media/pilotPhoto.js';
 import { canonicalEnglishNames } from '../src/lib/pilotNames.js';
 import { toQualScore100 } from '../src/lib/qualScore.js';
+import { refreshStageCoefficientsForSeason } from '../src/lib/stageCoefficient.js';
 
 const prisma = new PrismaClient();
 const SERIES_SLUG = 'royal-ds';
@@ -166,9 +167,12 @@ async function main() {
     }
   }
 
+  const stageCount = await refreshStageCoefficientsForSeason(prisma, season.id);
+
   console.log(
     `Import complete: ${data.pilots.length} pilots, ${resultCount} event results, ` +
-      `${photosMirrored} photos mirrored${photosFailed ? `, ${photosFailed} failed` : ''}`,
+      `${photosMirrored} photos mirrored${photosFailed ? `, ${photosFailed} failed` : ''}, ` +
+      `${stageCount} stage coefficients`,
   );
 }
 

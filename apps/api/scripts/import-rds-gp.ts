@@ -11,6 +11,7 @@ import {
 import { upsertPilotSeriesPhoto } from '../src/lib/media/pilotPhoto.js';
 import { canonicalEnglishNames } from '../src/lib/pilotNames.js';
 import { findMatchingPilot } from '../src/lib/pilotMatch.js';
+import { refreshStageCoefficientsForSeason } from '../src/lib/stageCoefficient.js';
 
 const prisma = new PrismaClientCtor();
 const SERIES_SLUG = 'rds-gp';
@@ -118,9 +119,12 @@ async function importSeason(
     skipPhotos,
   );
 
+  const stageCount = await refreshStageCoefficientsForSeason(db, season.id);
+
   console.log(
     `Import complete: ${data.pilots.length} pilots, ${resultCount} event results` +
-      (skipPhotos ? '' : `, ${photosMirrored} photos mirrored${photosFailed ? `, ${photosFailed} failed` : ''}`),
+      (skipPhotos ? '' : `, ${photosMirrored} photos mirrored${photosFailed ? `, ${photosFailed} failed` : ''}`) +
+      `, ${stageCount} stage coefficients`,
   );
   return true;
 }

@@ -8,6 +8,7 @@ import type { DmPilot } from '../src/importers/drift-masters.js';
 import { upsertPilotSeriesPhoto } from '../src/lib/media/pilotPhoto.js';
 import { findMatchingPilot } from '../src/lib/pilotMatch.js';
 import { canonicalEnglishNames } from '../src/lib/pilotNames.js';
+import { refreshStageCoefficientsForSeason } from '../src/lib/stageCoefficient.js';
 
 const prisma = new PrismaClient();
 const SERIES_SLUG = 'drift-masters';
@@ -173,10 +174,12 @@ async function importSeason(year: number, seriesId: string) {
     }
   }
 
+  const stageCount = await refreshStageCoefficientsForSeason(prisma, season.id);
+
   console.log(
     `Import complete: ${data.pilots.length} pilots (${merged} merged with existing), ` +
       `${resultCount} results, ${photosMirrored} photos mirrored` +
-      `${photosFailed ? `, ${photosFailed} photo failures` : ''}`,
+      `${photosFailed ? `, ${photosFailed} photo failures` : ''}, ${stageCount} stage coefficients`,
   );
 }
 

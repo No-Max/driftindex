@@ -18,6 +18,11 @@ enum DataStatus {
   VERIFIED
 }
 
+enum GridSource {
+  QUAL
+  POINTS
+}
+
 model Series {
   id            String             @id @default(cuid())
   slug          String             @unique
@@ -75,9 +80,13 @@ model Event {
   nameRu      String
   trackEn     String?
   trackRu     String?
-  startsAt    DateTime?
-  status      EventStatus @default(SCHEDULED)
-  results     EventResult[]
+  startsAt          DateTime?
+  status            EventStatus @default(SCHEDULED)
+  gridActual        Int?
+  gridReference     Int         @default(32)
+  stageCoefficient  Float?
+  gridSource        GridSource?
+  results           EventResult[]
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
@@ -139,6 +148,7 @@ model EventResult {
   tandemBattles  Int?
   tandemWins     Int?
   points         Int        @default(0)
+  indexPoints    Float?
   dataStatus     DataStatus @default(UNVERIFIED)
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt

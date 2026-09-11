@@ -27,6 +27,7 @@
     "db:import:pilot-countries": "npm run db:import:pilot-countries --workspace=apps/api",
     "db:import:pilot-countries:all": "npm run db:import:pilot-countries:all --workspace=apps/api",
     "db:backfill:pilot-countries": "npm run db:backfill:pilot-countries --workspace=apps/api",
+    "db:backfill:stage-coefficients": "npm run db:backfill:stage-coefficients --workspace=apps/api",
     "db:import:drift-masters": "npm run db:import:drift-masters --workspace=apps/api",
     "db:import:drift-masters:list": "npm run db:import:drift-masters:list --workspace=apps/api",
     "db:import:drift-masters:archive": "npm run db:import:drift-masters:archive --workspace=apps/api",
