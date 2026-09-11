@@ -52,23 +52,32 @@ docker-compose.yml PostgreSQL :5433
 
 | File | Use |
 |------|-----|
-| `apps/api/.env.example` | Local dev template |
-| `apps/api/.env.production.example` | VPS template |
+| `apps/api/.env.example` | Local dev (default: **prod DB** on VPS) |
+| `apps/api/.env.local.example` | Offline dev (local docker postgres) |
+| `apps/api/.env.production.example` | VPS app server |
+| `apps/web/.env.development` | Dev media proxy → `https://driftindex.pro/media` |
 | `apps/api/.env` | Active config (gitignored) |
 
-Same PostgreSQL credentials everywhere (`docker-compose.yml` → port `5433`).
+**Default local dev** uses shared production DB and production pilot photos. App static assets (JS/CSS) are still served by Vite locally.
 
 ### Dev commands
 
 ```bash
 npm install
 cp apps/api/.env.example apps/api/.env
-npm run db:setup          # docker + migrate + seed + Royal DS import
 npm run dev:api           # terminal 1
 npm run dev:web           # terminal 2
 ```
 
-### Production DB (same data as local)
+### Offline local DB + media (optional)
+
+```bash
+cp apps/api/.env.local.example apps/api/.env
+npm run db:setup:local    # docker + migrate + seed + Royal DS import
+# In apps/web/.env.development set VITE_MEDIA_ORIGIN=http://localhost:5021
+```
+
+### VPS server bootstrap
 
 ```bash
 cp apps/api/.env.production.example apps/api/.env

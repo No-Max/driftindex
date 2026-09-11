@@ -113,7 +113,6 @@ function latestSeasonYear(item: SeriesListItem) {
                 <th>{{ t('seriesPage.col.series') }}</th>
                 <th>{{ t('seriesPage.col.coefficient') }}</th>
                 <th>{{ t('seriesPage.col.overlapOrder') }}</th>
-                <th>{{ t('seriesPage.col.manualOrder') }}</th>
                 <th>{{ t('seriesPage.col.hardness') }}</th>
                 <th>{{ t('seriesPage.col.samples') }}</th>
                 <th />
@@ -131,7 +130,6 @@ function latestSeasonYear(item: SeriesListItem) {
                     <strong class="coef">S = {{ formatCoefficient(entry.coefficient) }}</strong>
                   </td>
                   <td class="muted">{{ entry.overlapOrder ?? '—' }}</td>
-                  <td class="muted">{{ entry.manualOrder }}</td>
                   <td class="muted">{{ entry.hardnessScore || '—' }}</td>
                   <td class="muted">{{ entry.overlapSamples ? formatSamples(entry.overlapSamples) : '—' }}</td>
                   <td>
@@ -146,7 +144,7 @@ function latestSeasonYear(item: SeriesListItem) {
                   </td>
                 </tr>
                 <tr v-if="expandedSlug === entry.slug && entry.contributions.length > 0" class="contrib-row">
-                  <td colspan="8">
+                  <td colspan="7">
                     <p class="contrib-title">{{ t('seriesPage.overlapExamples') }}</p>
                     <ul class="contrib-list">
                       <li v-for="(row, index) in entry.contributions" :key="index">

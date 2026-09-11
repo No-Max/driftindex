@@ -65,7 +65,6 @@
       "series": "Series",
       "coefficient": "S",
       "overlapOrder": "Overlap",
-      "manualOrder": "Manual",
       "hardness": "Hardness",
       "samples": "Samples"
     },
