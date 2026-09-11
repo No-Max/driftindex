@@ -36,7 +36,7 @@ export async function loadP4PInputs(
       slug: series.slug,
       nameEn: series.nameEn,
       nameRu: series.nameRu,
-      seriesOrder: orderBySlug.get(series.slug) ?? series.featuredOrder!,
+      seriesOrder: orderBySlug.get(series.slug) ?? featuredSeries.length + 1,
       standings: standings.map((row) => ({ rank: row.rank, pilot: row.pilot })),
     });
   }

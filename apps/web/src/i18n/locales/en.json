@@ -59,29 +59,27 @@
     "prestigeTitle": "Series prestige",
     "prestigeLead": "Featured championships ranked by how hard they are relative to each other. The coefficient S feeds directly into pound-for-pound (P4P) scores.",
     "historyWindow": "Overlap window: {from}–{to} ({years} seasons)",
-    "overlapGroups": "{count} multi-series pilot groups in window",
+    "overlapGroups": "{count} pilots in 2+ series",
     "col": {
       "rank": "Rank",
       "series": "Series",
       "coefficient": "S",
-      "overlapOrder": "Overlap",
       "hardness": "Hardness",
       "samples": "Samples"
     },
     "showOverlap": "Examples",
     "hideOverlap": "Hide",
-    "overlapExamples": "Overlap signals (harder series listed first)",
-    "overlapLine": "{harder} #{hardPlace} vs {easier} #{easyPlace} · Δ{delta}",
+    "overlapExamples": "Average event place per series",
+    "overlapLine": "{target} {avgPlaceTarget} · {other} {avgPlaceOther}",
     "source": {
       "overlap": "Live overlap ranking",
-      "manual": "Default manual order",
-      "stored": "Stored season snapshot"
+      "insufficient": "Insufficient overlap data"
     },
     "methodTitle": "How we calculate it",
     "method": {
       "overlap": {
         "title": "1. Pilot overlap",
-        "body": "When the same driver competes in two featured series in the same season, we compare their championship places. If they rank lower in series B than in series A, B gets hardness points — it was tougher for them."
+        "body": "For drivers in 2+ featured series, S is the mean indexPoints across all events in that series. For target series X: P = S_X − S_Y. Hardness(X) = −mean(P) over all overlap pairs. Higher hardness means a tougher series."
       },
       "coefficient": {
         "title": "2. Series coefficient S",
@@ -92,14 +90,14 @@
         "body": "Each pilot's best score across featured series standings:",
         "note": "P = championship place in that series. Only the single best S/P counts."
       },
-      "history": {
-        "title": "4. Multi-year history",
-        "body": "Overlap signals from the last {years} seasons are combined. Recent seasons count more than older ones.",
-        "decay": "Each year back is weighted ×0.85 (2026 = 100%, 2025 = 85%, 2024 = 72%, …)."
+      "indexPoints": {
+        "title": "4. Event indexPoints",
+        "body": "Each event result is scored with a grid-strength factor k (Top32 reference).",
+        "note": "k = 1 − 1/n + 1/32, where n is scoring drivers in the top-32 qual grid."
       },
-      "fallback": {
-        "title": "5. Fallback order",
-        "body": "If there is not enough cross-series data yet, we fall back to a manual seed order until overlap samples appear."
+      "noData": {
+        "title": "5. Series without overlap",
+        "body": "Featured series with no overlap pairs get no hardness score and are listed at the bottom — no manual ranking."
       }
     },
     "catalogTitle": "Championship catalog",

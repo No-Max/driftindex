@@ -134,11 +134,13 @@ export interface OverlapContribution {
   pilotSlug: string;
   firstName: string;
   lastName: string;
-  seasonYear: number;
-  harderSeriesSlug: string;
-  easierSeriesSlug: string;
-  placeInHarder: number;
-  placeInEasier: number;
+  targetSeriesSlug: string;
+  otherSeriesSlug: string;
+  /** Mean event place in the target series (1 decimal). */
+  avgPlaceTarget: number;
+  /** Mean event place in the other series (1 decimal). */
+  avgPlaceOther: number;
+  /** Internal indexPoints delta; used for sorting, not shown in UI. */
   delta: number;
 }
 
@@ -146,8 +148,6 @@ export interface SeriesPrestigeEntry {
   slug: string;
   nameEn: string;
   nameRu: string;
-  manualOrder: number;
-  overlapOrder: number | null;
   effectiveOrder: number;
   coefficient: number;
   hardnessScore: number;
@@ -162,7 +162,7 @@ export interface SeriesPrestigeResponse {
   historyYears: number;
   historyFromYear: number | null;
   historyToYear: number | null;
-  source: 'stored' | 'overlap' | 'manual';
+  source: 'overlap' | 'insufficient';
   entries: SeriesPrestigeEntry[];
 }
 

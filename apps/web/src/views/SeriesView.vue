@@ -112,7 +112,6 @@ function latestSeasonYear(item: SeriesListItem) {
                 <th>{{ t('seriesPage.col.rank') }}</th>
                 <th>{{ t('seriesPage.col.series') }}</th>
                 <th>{{ t('seriesPage.col.coefficient') }}</th>
-                <th>{{ t('seriesPage.col.overlapOrder') }}</th>
                 <th>{{ t('seriesPage.col.hardness') }}</th>
                 <th>{{ t('seriesPage.col.samples') }}</th>
                 <th />
@@ -129,8 +128,7 @@ function latestSeasonYear(item: SeriesListItem) {
                   <td>
                     <strong class="coef">S = {{ formatCoefficient(entry.coefficient) }}</strong>
                   </td>
-                  <td class="muted">{{ entry.overlapOrder ?? '—' }}</td>
-                  <td class="muted">{{ entry.hardnessScore || '—' }}</td>
+                  <td class="muted">{{ entry.overlapSamples ? entry.hardnessScore : '—' }}</td>
                   <td class="muted">{{ entry.overlapSamples ? formatSamples(entry.overlapSamples) : '—' }}</td>
                   <td>
                     <button
@@ -144,20 +142,19 @@ function latestSeasonYear(item: SeriesListItem) {
                   </td>
                 </tr>
                 <tr v-if="expandedSlug === entry.slug && entry.contributions.length > 0" class="contrib-row">
-                  <td colspan="7">
+                  <td colspan="6">
                     <p class="contrib-title">{{ t('seriesPage.overlapExamples') }}</p>
                     <ul class="contrib-list">
                       <li v-for="(row, index) in entry.contributions" :key="index">
                         <RouterLink :to="`/pilots/${row.pilotSlug}`" class="pilot-link">
                           {{ contributionPilotName(row) }}
                         </RouterLink>
-                        · {{ row.seasonYear }} ·
+                        ·
                         {{ t('seriesPage.overlapLine', {
-                          harder: seriesNameBySlug(row.harderSeriesSlug),
-                          easier: seriesNameBySlug(row.easierSeriesSlug),
-                          hardPlace: row.placeInHarder,
-                          easyPlace: row.placeInEasier,
-                          delta: row.delta,
+                          target: seriesNameBySlug(row.targetSeriesSlug),
+                          other: seriesNameBySlug(row.otherSeriesSlug),
+                          avgPlaceTarget: row.avgPlaceTarget.toFixed(1),
+                          avgPlaceOther: row.avgPlaceOther.toFixed(1),
                         }) }}
                       </li>
                     </ul>
@@ -192,14 +189,15 @@ function latestSeasonYear(item: SeriesListItem) {
           </article>
 
           <article class="card method-card">
-            <h3>{{ t('seriesPage.method.history.title') }}</h3>
-            <p>{{ t('seriesPage.method.history.body', { years: prestige.historyYears }) }}</p>
-            <p class="muted method-note">{{ t('seriesPage.method.history.decay') }}</p>
+            <h3>{{ t('seriesPage.method.indexPoints.title') }}</h3>
+            <p>{{ t('seriesPage.method.indexPoints.body') }}</p>
+            <pre class="formula">indexPoints = (32 − place + 1) × k</pre>
+            <p class="muted method-note">{{ t('seriesPage.method.indexPoints.note') }}</p>
           </article>
 
           <article class="card method-card">
-            <h3>{{ t('seriesPage.method.fallback.title') }}</h3>
-            <p>{{ t('seriesPage.method.fallback.body') }}</p>
+            <h3>{{ t('seriesPage.method.noData.title') }}</h3>
+            <p>{{ t('seriesPage.method.noData.body') }}</p>
           </article>
         </div>
       </section>

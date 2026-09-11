@@ -3,11 +3,6 @@ import { seriesCoefficient } from './p4p.js';
 import { buildNameKey } from './transliterate.js';
 import { computeStandings, type SeasonEventWithResults } from './standings.js';
 
-/** How many past seasons feed overlap prestige for a target year (inclusive). */
-export const PRESTIGE_HISTORY_YEARS = 5;
-/** Recency decay per year back from the target year (1.0 = current season). */
-export const PRESTIGE_YEAR_DECAY = 0.85;
-
 export interface PilotSeasonStanding {
   pilotId: string;
   pilotSlug: string;
@@ -20,15 +15,26 @@ export interface PilotSeasonStanding {
   place: number;
 }
 
+export interface PilotSeriesIndexAverage {
+  pilotId: string;
+  pilotSlug: string;
+  firstName: string;
+  lastName: string;
+  identityKey: string;
+  seriesSlug: string;
+  avgIndexPoints: number;
+  avgPlace: number;
+  eventCount: number;
+}
+
 export interface OverlapContribution {
   pilotSlug: string;
   firstName: string;
   lastName: string;
-  seasonYear: number;
-  harderSeriesSlug: string;
-  easierSeriesSlug: string;
-  placeInHarder: number;
-  placeInEasier: number;
+  targetSeriesSlug: string;
+  otherSeriesSlug: string;
+  avgPlaceTarget: number;
+  avgPlaceOther: number;
   delta: number;
 }
 
@@ -36,8 +42,6 @@ export interface SeriesPrestigeEntry {
   slug: string;
   nameEn: string;
   nameRu: string;
-  manualOrder: number;
-  overlapOrder: number | null;
   effectiveOrder: number;
   coefficient: number;
   hardnessScore: number;
@@ -51,7 +55,7 @@ export interface PrestigeRankingResult {
   historyYears: number;
   historyFromYear: number | null;
   historyToYear: number | null;
-  source: 'stored' | 'overlap' | 'manual';
+  source: 'overlap' | 'insufficient';
   entries: SeriesPrestigeEntry[];
   orderBySlug: Map<string, number>;
 }
@@ -61,14 +65,8 @@ function pilotIdentityKey(firstName: string, lastName: string, nameRu: string | 
   return key.split('|').length >= 2 ? key : '';
 }
 
-function overlapGroupKey(row: PilotSeasonStanding): string {
+function overlapGroupKey(row: { identityKey: string; pilotId: string }): string {
   return row.identityKey ? row.identityKey : row.pilotId;
-}
-
-function recencyWeight(targetYear: number, seasonYear: number): number {
-  const age = targetYear - seasonYear;
-  if (age < 0 || age >= PRESTIGE_HISTORY_YEARS) return 0;
-  return PRESTIGE_YEAR_DECAY ** age;
 }
 
 export async function loadPilotSeasonStandings(prisma: PrismaClient): Promise<PilotSeasonStanding[]> {
@@ -118,82 +116,175 @@ export async function loadPilotSeasonStandings(prisma: PrismaClient): Promise<Pi
   return standings;
 }
 
+export async function loadPilotSeriesIndexAverages(
+  prisma: PrismaClient,
+): Promise<PilotSeriesIndexAverage[]> {
+  const rows = await prisma.eventResult.findMany({
+    where: {
+      indexPoints: { not: null },
+      event: {
+        status: 'FINISHED',
+        season: { series: { featuredOrder: { not: null } } },
+      },
+    },
+    select: {
+      indexPoints: true,
+      tandemPosition: true,
+      qualPosition: true,
+      pilot: {
+        select: {
+          id: true,
+          slug: true,
+          firstName: true,
+          lastName: true,
+          nameRu: true,
+        },
+      },
+      event: {
+        select: {
+          season: { select: { series: { select: { slug: true } } } },
+        },
+      },
+    },
+  });
+
+  const buckets = new Map<
+    string,
+    {
+      pilotId: string;
+      pilotSlug: string;
+      firstName: string;
+      lastName: string;
+      identityKey: string;
+      seriesSlug: string;
+      indexSum: number;
+      placeSum: number;
+      count: number;
+    }
+  >();
+
+  for (const row of rows) {
+    const place = row.tandemPosition ?? row.qualPosition;
+    if (place == null) continue;
+
+    const seriesSlug = row.event.season.series.slug;
+    const key = `${row.pilot.id}:${seriesSlug}`;
+    const identityKey = pilotIdentityKey(row.pilot.firstName, row.pilot.lastName, row.pilot.nameRu);
+    const bucket = buckets.get(key) ?? {
+      pilotId: row.pilot.id,
+      pilotSlug: row.pilot.slug,
+      firstName: row.pilot.firstName,
+      lastName: row.pilot.lastName,
+      identityKey,
+      seriesSlug,
+      indexSum: 0,
+      placeSum: 0,
+      count: 0,
+    };
+    bucket.indexSum += row.indexPoints!;
+    bucket.placeSum += place;
+    bucket.count += 1;
+    buckets.set(key, bucket);
+  }
+
+  return [...buckets.values()].map((bucket) => ({
+    pilotId: bucket.pilotId,
+    pilotSlug: bucket.pilotSlug,
+    firstName: bucket.firstName,
+    lastName: bucket.lastName,
+    identityKey: bucket.identityKey,
+    seriesSlug: bucket.seriesSlug,
+    avgIndexPoints: bucket.indexSum / bucket.count,
+    avgPlace: bucket.placeSum / bucket.count,
+    eventCount: bucket.count,
+  }));
+}
+
+function roundPlace(value: number): number {
+  return Math.round(value * 10) / 10;
+}
+
 /**
- * Overlap: pilots in 2+ series (same season year).
- * If place_B > place_A → pilot did worse in B → B is harder → B gets hardness points.
+ * Prestige overlap via career mean indexPoints per series.
+ * For target series X: P = S_X − S_Y; prestige hardness = −mean(P) across all pairs.
  */
-export function computeHardnessScores(
-  standings: PilotSeasonStanding[],
+export function computeIndexPointsHardnessScores(
+  averages: PilotSeriesIndexAverage[],
   seriesSlugs: string[],
-  targetYear?: number,
 ): {
   hardness: Map<string, number>;
   samples: Map<string, number>;
   contributions: OverlapContribution[];
   contributionsBySeries: Map<string, OverlapContribution[]>;
+  overlapPilotCount: number;
 } {
   const hardness = new Map<string, number>();
   const samples = new Map<string, number>();
+  const sumP = new Map<string, number>();
   const contributionsBySeries = new Map<string, OverlapContribution[]>();
   for (const slug of seriesSlugs) {
     hardness.set(slug, 0);
     samples.set(slug, 0);
+    sumP.set(slug, 0);
     contributionsBySeries.set(slug, []);
   }
 
   const contributions: OverlapContribution[] = [];
 
-  const byPilotSeason = new Map<string, PilotSeasonStanding[]>();
-  for (const row of standings) {
-    if (targetYear != null && recencyWeight(targetYear, row.seasonYear) <= 0) continue;
-
-    const key = `${overlapGroupKey(row)}:${row.seasonYear}`;
-    const group = byPilotSeason.get(key) ?? [];
+  const byPilot = new Map<string, PilotSeriesIndexAverage[]>();
+  for (const row of averages) {
+    const key = overlapGroupKey(row);
+    const group = byPilot.get(key) ?? [];
     group.push(row);
-    byPilotSeason.set(key, group);
+    byPilot.set(key, group);
   }
 
-  for (const group of byPilotSeason.values()) {
-    if (group.length < 2) continue;
-
+  const overlapPilotCount = [...byPilot.values()].filter((group) => {
     const uniqueSeries = new Set(group.map((row) => row.seriesSlug));
-    if (uniqueSeries.size < 2) continue;
+    return uniqueSeries.size >= 2;
+  }).length;
 
-    for (let i = 0; i < group.length; i++) {
-      for (let j = i + 1; j < group.length; j++) {
-        const a = group[i]!;
-        const b = group[j]!;
+  for (const group of byPilot.values()) {
+    const seriesSlugsForPilot = [...new Set(group.map((row) => row.seriesSlug))];
+    if (seriesSlugsForPilot.length < 2) continue;
 
-        if (a.seriesSlug === b.seriesSlug) continue;
-        if (b.place === a.place) continue;
+    for (const targetSlug of seriesSlugsForPilot) {
+      const targetRow = group.find((row) => row.seriesSlug === targetSlug);
+      if (!targetRow) continue;
 
-        const harder = b.place > a.place ? b : a;
-        const easier = b.place > a.place ? a : b;
-        const rawDelta = harder.place - easier.place;
-        const weight =
-          targetYear != null ? recencyWeight(targetYear, harder.seasonYear) : 1;
-        if (weight <= 0) continue;
+      for (const otherSlug of seriesSlugsForPilot) {
+        if (otherSlug === targetSlug) continue;
+        const otherRow = group.find((row) => row.seriesSlug === otherSlug);
+        if (!otherRow) continue;
 
-        const delta = rawDelta * weight;
+        const delta = targetRow.avgIndexPoints - otherRow.avgIndexPoints;
+        const roundedDelta = Math.round(delta * 100) / 100;
 
-        hardness.set(harder.seriesSlug, (hardness.get(harder.seriesSlug) ?? 0) + delta);
-        samples.set(harder.seriesSlug, (samples.get(harder.seriesSlug) ?? 0) + weight);
+        sumP.set(targetSlug, (sumP.get(targetSlug) ?? 0) + delta);
+        samples.set(targetSlug, (samples.get(targetSlug) ?? 0) + 1);
 
         const contribution: OverlapContribution = {
-          pilotSlug: harder.pilotSlug,
-          firstName: harder.firstName,
-          lastName: harder.lastName,
-          seasonYear: harder.seasonYear,
-          harderSeriesSlug: harder.seriesSlug,
-          easierSeriesSlug: easier.seriesSlug,
-          placeInHarder: harder.place,
-          placeInEasier: easier.place,
-          delta: Math.round(delta * 100) / 100,
+          pilotSlug: targetRow.pilotSlug,
+          firstName: targetRow.firstName,
+          lastName: targetRow.lastName,
+          targetSeriesSlug: targetSlug,
+          otherSeriesSlug: otherSlug,
+          avgPlaceTarget: roundPlace(targetRow.avgPlace),
+          avgPlaceOther: roundPlace(otherRow.avgPlace),
+          delta: roundedDelta,
         };
 
         contributions.push(contribution);
-        contributionsBySeries.get(harder.seriesSlug)!.push(contribution);
+        contributionsBySeries.get(targetSlug)!.push(contribution);
       }
+    }
+  }
+
+  for (const slug of seriesSlugs) {
+    const n = samples.get(slug) ?? 0;
+    if (n > 0) {
+      const meanP = (sumP.get(slug) ?? 0) / n;
+      hardness.set(slug, Math.round(-meanP * 100) / 100);
     }
   }
 
@@ -203,90 +294,62 @@ export function computeHardnessScores(
 
   contributions.sort((a, b) => b.delta - a.delta || a.lastName.localeCompare(b.lastName));
 
-  return { hardness, samples, contributions, contributionsBySeries };
+  return { hardness, samples, contributions, contributionsBySeries, overlapPilotCount };
 }
 
 export function buildPrestigeRanking(
   seriesList: Array<{ slug: string; nameEn: string; nameRu: string; featuredOrder: number | null }>,
-  standings: PilotSeasonStanding[],
-  storedRanks?: Map<string, number>,
-  targetYear?: number,
+  indexAverages: PilotSeriesIndexAverage[],
 ): PrestigeRankingResult {
   const featured = seriesList
     .filter((s) => s.featuredOrder != null)
-    .sort((a, b) => a.featuredOrder! - b.featuredOrder!);
+    .sort((a, b) => a.slug.localeCompare(b.slug));
 
   const slugs = featured.map((s) => s.slug);
   const totalSeries = slugs.length;
-  const { hardness, samples, contributionsBySeries } = computeHardnessScores(
-    standings,
-    slugs,
-    targetYear,
-  );
-
-  const pilotSeasonCounts = standings.reduce((acc, row) => {
-    if (targetYear != null && recencyWeight(targetYear, row.seasonYear) <= 0) return acc;
-    const key = `${overlapGroupKey(row)}:${row.seasonYear}`;
-    acc.set(key, (acc.get(key) ?? 0) + 1);
-    return acc;
-  }, new Map<string, number>());
-  const multiSeriesGroups = [...pilotSeasonCounts.values()].filter((count) => count >= 2).length;
-
-  const historyFromYear =
-    targetYear != null ? targetYear - PRESTIGE_HISTORY_YEARS + 1 : null;
-  const historyToYear = targetYear ?? null;
-
-  const hasOverlap = [...samples.values()].some((n) => n > 0);
+  const { hardness, samples, contributionsBySeries, overlapPilotCount } =
+    computeIndexPointsHardnessScores(indexAverages, slugs);
 
   const ranked = featured.map((series) => ({
     ...series,
-    manualOrder: series.featuredOrder!,
     hardnessScore: hardness.get(series.slug) ?? 0,
     overlapSamples: samples.get(series.slug) ?? 0,
   }));
 
-  let overlapOrderBySlug = new Map<string, number>();
+  const withData = ranked.filter((series) => series.overlapSamples > 0);
+  const withoutData = ranked.filter((series) => series.overlapSamples === 0);
 
-  if (hasOverlap) {
-    const sorted = [...ranked].sort((a, b) => {
-      if (b.hardnessScore !== a.hardnessScore) return b.hardnessScore - a.hardnessScore;
-      return a.manualOrder - b.manualOrder;
-    });
-    overlapOrderBySlug = new Map(sorted.map((s, index) => [s.slug, index + 1]));
-  }
+  withData.sort((a, b) => {
+    if (b.hardnessScore !== a.hardnessScore) return b.hardnessScore - a.hardnessScore;
+    return a.slug.localeCompare(b.slug);
+  });
+  withoutData.sort(
+    (a, b) => a.nameEn.localeCompare(b.nameEn) || a.slug.localeCompare(b.slug),
+  );
 
-  const entries: SeriesPrestigeEntry[] = ranked.map((series) => {
-    const overlapOrder = overlapOrderBySlug.get(series.slug) ?? null;
-    const storedOrder = storedRanks?.get(series.slug);
-    const effectiveOrder = storedOrder ?? overlapOrder ?? series.manualOrder;
+  const entries: SeriesPrestigeEntry[] = [...withData, ...withoutData].map((series, index) => {
     return {
       slug: series.slug,
       nameEn: series.nameEn,
       nameRu: series.nameRu,
-      manualOrder: series.manualOrder,
-      overlapOrder,
-      effectiveOrder,
-      coefficient: seriesCoefficient(effectiveOrder, totalSeries),
-      hardnessScore: Math.round(series.hardnessScore * 100) / 100,
+      effectiveOrder: index + 1,
+      coefficient: seriesCoefficient(index + 1, totalSeries),
+      hardnessScore: series.hardnessScore,
       overlapSamples: series.overlapSamples,
       contributions: contributionsBySeries.get(series.slug) ?? [],
     };
   });
 
-  entries.sort((a, b) => a.effectiveOrder - b.effectiveOrder);
-
   const orderBySlug = new Map(entries.map((e) => [e.slug, e.effectiveOrder]));
 
-  let source: 'stored' | 'overlap' | 'manual' = 'manual';
-  if (storedRanks && storedRanks.size > 0) source = 'stored';
-  else if (hasOverlap) source = 'overlap';
+  const source: 'overlap' | 'insufficient' = withData.length > 0 ? 'overlap' : 'insufficient';
 
   return {
     totalSeries,
-    overlapGroups: multiSeriesGroups,
-    historyYears: PRESTIGE_HISTORY_YEARS,
-    historyFromYear,
-    historyToYear,
+    overlapGroups: overlapPilotCount,
+    historyYears: 0,
+    historyFromYear: null,
+    historyToYear: null,
     source,
     entries,
     orderBySlug,
@@ -299,23 +362,9 @@ export async function computePrestigeRanking(prisma: PrismaClient, year?: number
     orderBy: { featuredOrder: 'asc' },
   });
 
-  const standings = await loadPilotSeasonStandings(prisma);
+  const indexAverages = await loadPilotSeriesIndexAverages(prisma);
 
-  let storedRanks: Map<string, number> | undefined;
-  if (year != null) {
-    const weights = await prisma.seriesWeight.findMany({
-      where: { year, prestigeRank: { not: null } },
-      include: { series: true },
-    });
-    if (weights.length > 0) {
-      storedRanks = new Map(
-        weights.filter((w) => w.prestigeRank != null).map((w) => [w.series.slug, w.prestigeRank!]),
-      );
-    }
-  }
-
-  const targetYear = year ?? new Date().getFullYear();
-  return buildPrestigeRanking(seriesList, standings, storedRanks, targetYear);
+  return buildPrestigeRanking(seriesList, indexAverages);
 }
 
 /** Persist overlap-based prestige for a year (end-of-season job). */
@@ -324,14 +373,14 @@ export async function persistPrestigeRanking(prisma: PrismaClient, year: number)
     where: { featuredOrder: { not: null } },
     orderBy: { featuredOrder: 'asc' },
   });
-  const standings = await loadPilotSeasonStandings(prisma);
-  const result = buildPrestigeRanking(seriesList, standings, undefined, year);
+  const indexAverages = await loadPilotSeriesIndexAverages(prisma);
+  const result = buildPrestigeRanking(seriesList, indexAverages);
 
   for (const entry of result.entries) {
     const series = await prisma.series.findUnique({ where: { slug: entry.slug } });
     if (!series) continue;
 
-    const order = entry.overlapOrder ?? entry.manualOrder;
+    const order = entry.effectiveOrder;
     const coefficient = seriesCoefficient(order, result.totalSeries);
 
     await prisma.seriesWeight.upsert({

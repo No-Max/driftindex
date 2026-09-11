@@ -59,29 +59,27 @@
     "prestigeTitle": "Престиж серий",
     "prestigeLead": "Featured-чемпионаты, отсортированные по «сложности» относительно друг друга. Коэффициент S напрямую влияет на pound-for-pound (P4P).",
     "historyWindow": "Окно overlap: {from}–{to} ({years} сезона)",
-    "overlapGroups": "{count} групп пилотов в 2+ сериях",
+    "overlapGroups": "{count} пилотов в 2+ сериях",
     "col": {
       "rank": "Место",
       "series": "Серия",
       "coefficient": "S",
-      "overlapOrder": "Overlap",
       "hardness": "Hardness",
       "samples": "Samples"
     },
     "showOverlap": "Примеры",
     "hideOverlap": "Скрыть",
-    "overlapExamples": "Сигналы overlap (сначала более «тяжёлая» серия)",
-    "overlapLine": "{harder} #{hardPlace} vs {easier} #{easyPlace} · Δ{delta}",
+    "overlapExamples": "Среднее место пилота на этапах",
+    "overlapLine": "{target} {avgPlaceTarget} · {other} {avgPlaceOther}",
     "source": {
       "overlap": "Расчёт по overlap",
-      "manual": "Ручной порядок по умолчанию",
-      "stored": "Сохранённый снимок сезона"
+      "insufficient": "Недостаточно overlap-данных"
     },
     "methodTitle": "Как считается",
     "method": {
       "overlap": {
         "title": "1. Пересечение пилотов",
-        "body": "Если один пилот выступает в двух featured-сериях в одном сезоне, сравниваем его места. Если в серии B он ниже, чем в A — B получает hardness-баллы: для него она была сложнее."
+        "body": "Для пилотов в 2+ featured-сериях считаем S — среднее indexPoints по всем этапам серии. Для целевой серии X: P = S_X − S_Y. Hardness(X) = −mean(P) по всем overlap-парам. Выше hardness — серия труднее."
       },
       "coefficient": {
         "title": "2. Коэффициент серии S",
@@ -92,14 +90,14 @@
         "body": "Лучший результат пилота среди featured-серий:",
         "note": "P = место в чемпионате серии. Учитывается только один лучший S/P."
       },
-      "history": {
-        "title": "4. История за несколько лет",
-        "body": "Overlap-сигналы за последние {years} сезонов суммируются. Более свежие сезоны важнее старых.",
-        "decay": "Каждый год назад умножается на 0.85 (2026 = 100%, 2025 = 85%, 2024 = 72%, …)."
+      "indexPoints": {
+        "title": "4. indexPoints на этапе",
+        "body": "Место на этапе нормализуется через коэффициент укомплектованности сетки k (Top32).",
+        "note": "k = 1 − 1/n + 1/32, где n — число пилотов с очками в топ‑32 квалификации этапа."
       },
-      "fallback": {
-        "title": "5. Fallback",
-        "body": "Если пересечений мало, используем ручной seed-порядок, пока не накопится достаточно overlap-данных."
+      "noData": {
+        "title": "5. Серии без overlap",
+        "body": "Featured-серии без overlap-пар не получают hardness и ставятся в конец таблицы без ручной оценки."
       }
     },
     "catalogTitle": "Каталог чемпионатов",
