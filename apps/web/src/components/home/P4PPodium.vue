@@ -21,6 +21,17 @@ function seriesName(item: HomeP4PEntry) {
 function isFeatured(rank: number) {
   return rank === 2 || rank === 3;
 }
+
+function bestSeriesSummary(item: HomeP4PEntry) {
+  const parts = [
+    seriesName(item),
+    t('home.p4pAvgPlace', { place: item.bestSeries.place.toFixed(1) }),
+  ];
+  if (item.bestSeries.avgQualScore != null) {
+    parts.push(t('home.p4pAvgQual', { score: item.bestSeries.avgQualScore.toFixed(1) }));
+  }
+  return parts.join(' · ');
+}
 </script>
 
 <template>
@@ -35,8 +46,8 @@ function isFeatured(rank: number) {
           <p class="muted">{{ leader.pilot.firstName }}</p>
           <p class="p4p-leader__score">{{ leader.score }} {{ t('home.p4pScore') }}</p>
           <p class="p4p-leader__series">
-            {{ seriesName(leader) }} · #{{ leader.bestSeries.place }}
-            <span class="muted">×{{ leader.bestSeries.weight }}</span>
+            {{ bestSeriesSummary(leader) }}
+            <span class="muted">· hardness {{ leader.bestSeries.weight }}</span>
           </p>
           <PilotStatsGrid
             v-if="leader.pilot.stats"
@@ -62,7 +73,7 @@ function isFeatured(rank: number) {
             <p class="p4p-list__name">{{ item.pilot.lastName }}</p>
             <p v-if="isFeatured(item.rank)" class="muted">{{ item.pilot.firstName }}</p>
             <p class="p4p-list__series">
-              {{ seriesName(item) }} · #{{ item.bestSeries.place }}
+              {{ bestSeriesSummary(item) }}
             </p>
             <p v-if="item.pilot.stats && isFeatured(item.rank)" class="p4p-list__meta">
               <span v-if="item.pilot.stats.tandemBattles > 0">

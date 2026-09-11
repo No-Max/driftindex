@@ -125,8 +125,11 @@ export interface HomeP4PEntry {
     slug: string;
     nameEn: string;
     nameRu: string;
+    /** Raw series Hardness used in P4P. */
     weight: number;
+    /** Mean event place in the season (1 decimal). */
     place: number;
+    avgQualScore: number | null;
   };
 }
 
@@ -199,6 +202,7 @@ export interface PilotListEntry {
     nameRu: string;
     weight: number;
     place: number;
+    avgQualScore: number | null;
   } | null;
 }
 

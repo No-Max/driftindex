@@ -66,6 +66,7 @@ export interface PrestigeRankingResult {
   entries: SeriesPrestigeEntry[];
   orderBySlug: Map<string, number>;
   weightBySlug: Map<string, number>;
+  hardnessBySlug: Map<string, number>;
 }
 
 function pilotIdentityKey(firstName: string, lastName: string, nameRu: string | null): string {
@@ -362,6 +363,11 @@ export function buildPrestigeRanking(
       entry.coefficient != null ? [[entry.slug, entry.coefficient] as const] : [],
     ),
   );
+  const hardnessBySlug = new Map(
+    entries.flatMap((entry) =>
+      entry.hardnessScore != null ? [[entry.slug, entry.hardnessScore] as const] : [],
+    ),
+  );
 
   const source: 'overlap' | 'insufficient' = withData.length > 0 ? 'overlap' : 'insufficient';
 
@@ -375,6 +381,7 @@ export function buildPrestigeRanking(
     entries,
     orderBySlug,
     weightBySlug,
+    hardnessBySlug,
   };
 }
 

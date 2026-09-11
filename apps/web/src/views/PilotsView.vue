@@ -61,6 +61,18 @@ function seriesName(entry: PilotListEntry) {
   if (!entry.bestSeries) return '';
   return locale.value === 'ru' ? entry.bestSeries.nameRu : entry.bestSeries.nameEn;
 }
+
+function bestSeriesSummary(entry: PilotListEntry) {
+  if (!entry.bestSeries) return '';
+  const parts = [
+    seriesName(entry),
+    t('home.p4pAvgPlace', { place: entry.bestSeries.place.toFixed(1) }),
+  ];
+  if (entry.bestSeries.avgQualScore != null) {
+    parts.push(t('home.p4pAvgQual', { score: entry.bestSeries.avgQualScore.toFixed(1) }));
+  }
+  return parts.join(' · ');
+}
 </script>
 
 <template>
@@ -102,8 +114,8 @@ function seriesName(entry: PilotListEntry) {
                 {{ pilotName(entry) }}
               </p>
               <p v-if="entry.bestSeries" class="pilots-list__series">
-                {{ seriesName(entry) }} · #{{ entry.bestSeries.place }}
-                <span class="muted">×{{ entry.bestSeries.weight }}</span>
+                {{ bestSeriesSummary(entry) }}
+                <span class="muted">· hardness {{ entry.bestSeries.weight }}</span>
               </p>
               <p v-else class="pilots-list__series muted">{{ t('pilots.unranked') }}</p>
             </div>

@@ -19,6 +19,8 @@
     "qualScore": "/100",
     "gap": "gap",
     "p4pScore": "P4P",
+    "p4pAvgPlace": "avg place {place}",
+    "p4pAvgQual": "avg qual {score}",
     "p4pLeader": "Pound-for-pound #1",
     "noEvents": "No events",
     "sections": {
@@ -30,7 +32,7 @@
       "calendar": "Calendar {year}",
       "calendarSub": "All rounds across featured championships",
       "p4p": "Pound-for-pound",
-      "p4pSub": "Best H/P score — H = series coefficient, P = standing place",
+      "p4pSub": "Season mean event place adjusted by Hardness",
       "fanVotes": "Fan votes"
     },
     "eventStatus": {
@@ -57,7 +59,7 @@
     "title": "Series",
     "subtitle": "Prestige ranking and P4P weights · {year}",
     "prestigeTitle": "Series prestige",
-    "prestigeLead": "Featured championships ranked by how hard they are relative to each other. The coefficient H feeds directly into pound-for-pound (P4P) scores.",
+    "prestigeLead": "Featured championships ranked by how hard they are relative to each other. Hardness feeds directly into pound-for-pound (P4P) scores.",
     "historyWindow": "Overlap window: {from}–{to} ({years} seasons)",
     "overlapGroups": "{count} pilots in 2+ series",
     "col": {
@@ -71,7 +73,7 @@
       "rank": "Series position in the prestige ranking. Higher Hardness means a higher Rank.",
       "series": "Featured championship included in prestige and P4P calculations.",
       "hardness": "Reflects the average difference in places drivers take compared with other series; based on event-by-event places, not season standings.",
-      "coefficient": "Normalized series weight: (Hardness + 32) / 32. Used in the P4P formula.",
+      "coefficient": "Normalized series weight: (Hardness + 32) / 32.",
       "samples": "Drivers who competed in multiple series; hardness is calculated from their results."
     },
     "showOverlap": "Examples",
@@ -91,7 +93,7 @@
       "p4p": {
         "title": "2. Pound-for-pound (P4P)",
         "body": "Each pilot's best score across featured series with overlap data:",
-        "note": "P = championship place in that series. Only the single best H/P counts."
+        "note": "P = mean event place, Q = mean qual score (0–100), Q contributes as Q/100. N = pilots in P4P. Lower P4P means a better result."
       },
       "indexPoints": {
         "title": "3. Event indexPoints",
