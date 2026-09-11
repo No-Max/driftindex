@@ -34,6 +34,16 @@ npm run build
 sudo systemctl restart driftindex-api
 ```
 
+## Sync media to VPS (from dev machine)
+
+After imports mirror new portraits into `storage/media/` locally, upload to the server:
+
+```bash
+rsync -avz storage/media/ driftindex:/opt/driftindex/storage/media/
+```
+
+SSH host `driftindex` → `178.172.236.133` (see `~/.ssh/config`).
+
 ## HTTPS (after DNS works)
 
 ```bash

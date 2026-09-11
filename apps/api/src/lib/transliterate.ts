@@ -78,7 +78,8 @@ export function buildNameKey(
   lastName: string,
   nameRu: string | null | undefined,
 ): string {
-  return nameTokens(firstName, lastName, nameRu).join('|');
+  const hasLatinNames = isLatinName(firstName) && isLatinName(lastName);
+  return nameTokens(firstName, lastName, hasLatinNames ? null : nameRu).join('|');
 }
 
 function titleCaseWord(value: string): string {
@@ -115,11 +116,6 @@ export function toEnglishPilotNames(input: {
   lastName: string;
   nameRu?: string | null;
 }): { firstName: string; lastName: string } {
-  // Russian «Фамилия Имя» is the canonical source for first/last order.
-  if (input.nameRu?.trim() && containsCyrillic(input.nameRu)) {
-    return englishNamesFromNameRu(input.nameRu);
-  }
-
   const firstLatin = isLatinName(input.firstName);
   const lastLatin = isLatinName(input.lastName);
 
@@ -128,6 +124,11 @@ export function toEnglishPilotNames(input: {
       firstName: titleCaseWord(input.firstName.trim()),
       lastName: titleCaseWord(input.lastName.trim()),
     };
+  }
+
+  // Russian «Фамилия Имя» is the canonical source when Latin names are missing.
+  if (input.nameRu?.trim() && containsCyrillic(input.nameRu)) {
+    return englishNamesFromNameRu(input.nameRu);
   }
 
   if (input.nameRu) {

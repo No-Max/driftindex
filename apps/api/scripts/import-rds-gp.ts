@@ -10,7 +10,7 @@ import {
 } from '../src/importers/rds-gp.js';
 import { upsertPilotSeriesPhoto } from '../src/lib/media/pilotPhoto.js';
 import { canonicalEnglishNames } from '../src/lib/pilotNames.js';
-import { findMatchingPilot } from '../src/lib/pilotMatch.js';
+import { findMatchingPilot, mergePilotInto } from '../src/lib/pilotMatch.js';
 import { refreshStageCoefficientsForSeason } from '../src/lib/stageCoefficient.js';
 
 const prisma = new PrismaClientCtor();
@@ -176,6 +176,14 @@ async function upsertPilotsAndResults(
     const english = canonicalEnglishNames(pilot);
     const existing = await findMatchingPilot(db, { ...pilot, ...english });
     const pilotSlug = existing?.slug ?? pilot.slug;
+
+    if (existing && existing.slug !== pilot.slug) {
+      const stub = await db.pilot.findUnique({ where: { slug: pilot.slug } });
+      if (stub && stub.id !== existing.id) {
+        await mergePilotInto(db, stub.id, existing.id);
+      }
+    }
+
     const pilotRecord = await db.pilot.upsert({
       where: { slug: pilotSlug },
       update: {
