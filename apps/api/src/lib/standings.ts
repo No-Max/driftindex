@@ -1,5 +1,21 @@
 import type { Pilot } from '@prisma/client';
 import { averageQualScore100 } from './qualScore.js';
+import { GRID_REFERENCE } from './stageCoefficient.js';
+
+/** Imputed place for a missed round when averaging over the full season. */
+export const MISSED_EVENT_PLACE = GRID_REFERENCE;
+
+export function computeSeasonAveragePlace(
+  placeSum: number,
+  participatedEvents: number,
+  totalFinishedEvents: number,
+): number | null {
+  if (totalFinishedEvents <= 0 || participatedEvents <= 0) return null;
+
+  const missed = Math.max(0, totalFinishedEvents - participatedEvents);
+  const adjustedSum = placeSum + missed * MISSED_EVENT_PLACE;
+  return Math.round((adjustedSum / totalFinishedEvents) * 10) / 10;
+}
 
 export interface SeasonEventWithResults {
   id: string;
@@ -41,6 +57,9 @@ export function eventResultPlace(result: {
 /** Season metrics for P4P: mean event place and mean qual score (0–100). */
 export function computeSeasonP4PMetrics(events: SeasonEventWithResults[]): SeasonP4PMetricsRow[] {
   const finishedEvents = events.filter((event) => event.status === 'FINISHED');
+  const totalEvents = finishedEvents.length;
+  if (totalEvents === 0) return [];
+
   const buckets = new Map<
     string,
     { pilot: Pilot; placeSum: number; eventCount: number; qualScores: number[] }
@@ -66,12 +85,18 @@ export function computeSeasonP4PMetrics(events: SeasonEventWithResults[]): Seaso
     }
   }
 
-  return [...buckets.values()].map((bucket) => ({
-    pilot: bucket.pilot,
-    avgPlace: Math.round((bucket.placeSum / bucket.eventCount) * 10) / 10,
-    avgQualScore: averageQualScore100(bucket.qualScores),
-    eventCount: bucket.eventCount,
-  }));
+  const rows: SeasonP4PMetricsRow[] = [];
+  for (const bucket of buckets.values()) {
+    const avgPlace = computeSeasonAveragePlace(bucket.placeSum, bucket.eventCount, totalEvents);
+    if (avgPlace == null) continue;
+    rows.push({
+      pilot: bucket.pilot,
+      avgPlace,
+      avgQualScore: averageQualScore100(bucket.qualScores),
+      eventCount: bucket.eventCount,
+    });
+  }
+  return rows;
 }
 
 export interface ComputedStandingRow {
