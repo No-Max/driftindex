@@ -4,7 +4,7 @@ import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { fetchSeriesList, fetchSeriesPrestige, type SeriesListItem } from '../api/client';
 
-const { t, locale } = useI18n();
+const { t } = useI18n();
 
 const prestige = ref<SeriesPrestigeResponse | null>(null);
 const seriesList = ref<SeriesListItem[]>([]);
@@ -49,7 +49,7 @@ const historyLabel = computed(() => {
 });
 
 function seriesName(entry: SeriesPrestigeEntry | SeriesListItem) {
-  return locale.value === 'ru' ? entry.nameRu : entry.nameEn;
+  return entry.name;
 }
 
 function seriesNameBySlug(slug: string) {

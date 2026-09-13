@@ -16,8 +16,8 @@ async function getJson<T>(path: string): Promise<T> {
 
 export interface SeriesListItem {
   slug: string;
-  nameEn: string;
-  nameRu: string;
+  name: string;
+  shortName: string | null;
   country: string | null;
   seasons: Array<{
     year: number;

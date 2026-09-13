@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n';
 import { fetchPilots } from '../api/client';
 import PilotAvatar from '../components/PilotAvatar.vue';
 
-const { t, locale } = useI18n();
+const { t } = useI18n();
 
 const data = ref<PilotsListResponse | null>(null);
 const loading = ref(true);
@@ -57,7 +57,7 @@ function pilotName(entry: PilotListEntry) {
 
 function seriesName(entry: PilotListEntry) {
   if (!entry.bestSeries) return '';
-  return locale.value === 'ru' ? entry.bestSeries.nameRu : entry.bestSeries.nameEn;
+  return entry.bestSeries.name;
 }
 
 function bestSeriesSummary(entry: PilotListEntry) {

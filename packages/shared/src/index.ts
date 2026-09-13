@@ -8,8 +8,8 @@ export interface DataSource {
 
 export interface SeriesSummary {
   slug: string;
-  nameEn: string;
-  nameRu: string;
+  name: string;
+  shortName: string | null;
   country: string | null;
 }
 
@@ -100,8 +100,8 @@ export interface HomeQualWinner {
 
 export interface HomeCalendarEvent {
   seriesSlug: string;
-  seriesNameEn: string;
-  seriesNameRu: string;
+  seriesName: string;
+  seriesShortName: string | null;
   logoUrl: string | null;
   seasonYear: number;
   eventSlug: string;
@@ -121,8 +121,8 @@ export interface HomeP4PEntry {
   pilot: PilotSummary;
   bestSeries: {
     slug: string;
-    nameEn: string;
-    nameRu: string;
+    name: string;
+    shortName: string | null;
     /** Raw series Hardness used in P4P. */
     weight: number;
     /** Mean event place in the season (1 decimal). */
@@ -147,8 +147,8 @@ export interface OverlapContribution {
 
 export interface SeriesPrestigeEntry {
   slug: string;
-  nameEn: string;
-  nameRu: string;
+  name: string;
+  shortName: string | null;
   effectiveOrder: number;
   /** Raw overlap hardness = −mean(P); null when no overlap data. */
   hardnessScore: number | null;
@@ -185,8 +185,8 @@ export interface HomeResponse {
 
 export interface PilotSeriesPhoto {
   seriesSlug: string;
-  seriesNameEn: string;
-  seriesNameRu: string;
+  seriesName: string;
+  seriesShortName: string | null;
   photoUrl: string;
 }
 
@@ -196,8 +196,8 @@ export interface PilotListEntry {
   pilot: PilotSummary;
   bestSeries: {
     slug: string;
-    nameEn: string;
-    nameRu: string;
+    name: string;
+    shortName: string | null;
     weight: number;
     place: number;
     avgQualScore: number | null;
@@ -214,8 +214,8 @@ export interface PilotProfileResponse extends PilotSummary {
   stats: PilotStats;
   results: Array<{
     seriesSlug: string;
-    seriesNameEn: string;
-    seriesNameRu: string;
+    seriesName: string;
+    seriesShortName: string | null;
     seasonYear: number;
     eventSlug: string;
     eventNameEn: string;

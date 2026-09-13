@@ -59,7 +59,7 @@ publicRouter.post('/series/prestige/recalculate', async (req, res) => {
 
 publicRouter.get('/series', async (_req, res) => {
   const series = await prisma.series.findMany({
-    orderBy: { nameEn: 'asc' },
+    orderBy: { name: 'asc' },
     include: {
       seasons: {
         orderBy: { year: 'desc' },
@@ -71,8 +71,8 @@ publicRouter.get('/series', async (_req, res) => {
   res.json(
     series.map((s) => ({
       slug: s.slug,
-      nameEn: s.nameEn,
-      nameRu: s.nameRu,
+      name: s.name,
+      shortName: s.shortName,
       country: s.country,
       seasons: s.seasons.map((season) => ({
         year: season.year,
@@ -132,8 +132,8 @@ publicRouter.get('/series/:slug/seasons/:year/standings', async (req, res) => {
   const payload: SeasonStandingsResponse = {
     series: {
       slug: series.slug,
-      nameEn: series.nameEn,
-      nameRu: series.nameRu,
+      name: series.name,
+      shortName: series.shortName,
       country: series.country,
     },
     season: {
@@ -210,8 +210,8 @@ publicRouter.get('/pilots', async (req, res) => {
     },
     bestSeries: {
       slug: row.bestSeriesSlug,
-      nameEn: row.bestSeriesNameEn,
-      nameRu: row.bestSeriesNameRu,
+      name: row.bestSeriesName,
+      shortName: row.bestSeriesShortName,
       weight: row.bestSeriesWeight,
       place: row.bestSeriesPlace,
       avgQualScore: row.bestSeriesAvgQual,
@@ -275,15 +275,15 @@ publicRouter.get('/pilots/:slug', async (req, res) => {
       .filter((entry) => entry.photoUrl)
       .map((entry) => ({
         seriesSlug: entry.series.slug,
-        seriesNameEn: entry.series.nameEn,
-        seriesNameRu: entry.series.nameRu,
+        seriesName: entry.series.name,
+        seriesShortName: entry.series.shortName,
         photoUrl: entry.photoUrl!,
       })),
     stats,
     results: pilot.results.map((result) => ({
       seriesSlug: result.event.season.series.slug,
-      seriesNameEn: result.event.season.series.nameEn,
-      seriesNameRu: result.event.season.series.nameRu,
+      seriesName: result.event.season.series.name,
+      seriesShortName: result.event.season.series.shortName,
       seasonYear: result.event.season.year,
       eventSlug: result.event.slug,
       eventNameEn: result.event.nameEn,

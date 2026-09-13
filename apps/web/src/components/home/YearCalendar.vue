@@ -30,7 +30,7 @@ function eventName(event: HomeCalendarEvent) {
 }
 
 function seriesName(event: HomeCalendarEvent) {
-  return locale.value === 'ru' ? event.seriesNameRu : event.seriesNameEn;
+  return event.seriesName;
 }
 
 function formatDay(iso: string) {

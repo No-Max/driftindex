@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { PilotSeriesPhoto, PilotSummary } from '@drift-index/shared';
 import { computed, ref } from 'vue';
-import { useI18n } from 'vue-i18n';
 import CountryFlagBadge from './CountryFlagBadge.vue';
 
 const props = defineProps<{
@@ -10,7 +9,6 @@ const props = defineProps<{
   size?: 'sm' | 'md' | 'lg' | 'xl';
 }>();
 
-const { locale } = useI18n();
 const index = ref(0);
 
 const initials = computed(() =>
@@ -21,7 +19,7 @@ const current = computed(() => props.photos[index.value] ?? null);
 
 const seriesLabel = computed(() => {
   if (!current.value) return '';
-  return locale.value === 'ru' ? current.value.seriesNameRu : current.value.seriesNameEn;
+  return current.value.seriesName;
 });
 
 function prev() {
@@ -78,7 +76,7 @@ function next() {
         type="button"
         class="photo-slider__dot"
         :class="{ 'photo-slider__dot--active': dotIndex === index }"
-        :aria-label="locale === 'ru' ? photo.seriesNameRu : photo.seriesNameEn"
+        :aria-label="photo.seriesName"
         @click="index = dotIndex"
       />
     </div>

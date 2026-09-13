@@ -10,7 +10,7 @@ defineProps<{
 const { locale, t } = useI18n();
 
 function seriesName(item: HomeQualWinner) {
-  return locale.value === 'ru' ? item.series.nameRu : item.series.nameEn;
+  return item.series.name;
 }
 
 function eventName(item: HomeQualWinner) {

@@ -44,8 +44,8 @@ export interface OverlapContribution {
 
 export interface SeriesPrestigeEntry {
   slug: string;
-  nameEn: string;
-  nameRu: string;
+  name: string;
+  shortName: string | null;
   effectiveOrder: number;
   /** Raw overlap hardness = −mean(P); null when no overlap data. */
   hardnessScore: number | null;
@@ -305,7 +305,7 @@ export function computeIndexPointsHardnessScores(
 }
 
 export function buildPrestigeRanking(
-  seriesList: Array<{ slug: string; nameEn: string; nameRu: string; featuredOrder: number | null }>,
+  seriesList: Array<{ slug: string; name: string; shortName: string | null; featuredOrder: number | null }>,
   indexAverages: PilotSeriesIndexAverage[],
 ): PrestigeRankingResult {
   const featured = seriesList
@@ -334,14 +334,14 @@ export function buildPrestigeRanking(
     return a.slug.localeCompare(b.slug);
   });
   withoutData.sort(
-    (a, b) => a.nameEn.localeCompare(b.nameEn) || a.slug.localeCompare(b.slug),
+    (a, b) => a.name.localeCompare(b.name) || a.slug.localeCompare(b.slug),
   );
 
   const entries: SeriesPrestigeEntry[] = [...withData, ...withoutData].map((series, index) => {
     return {
       slug: series.slug,
-      nameEn: series.nameEn,
-      nameRu: series.nameRu,
+      name: series.name,
+      shortName: series.shortName,
       effectiveOrder: index + 1,
       hardnessScore: series.overlapSamples > 0 ? series.hardnessScore : null,
       coefficient: series.overlapSamples > 0 ? series.hardnessCoefficient : null,

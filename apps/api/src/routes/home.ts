@@ -49,8 +49,8 @@ homeRouter.get('/home', async (req, res) => {
     championships.push({
       series: {
         slug: series.slug,
-        nameEn: series.nameEn,
-        nameRu: series.nameRu,
+        name: series.name,
+        shortName: series.shortName,
         country: series.country,
         logoUrl: series.logoUrl,
       },
@@ -65,8 +65,8 @@ homeRouter.get('/home', async (req, res) => {
         pilot: toPilotCard(leader.pilot),
         series: {
           slug: series.slug,
-          nameEn: series.nameEn,
-          nameRu: series.nameRu,
+          name: series.name,
+          shortName: series.shortName,
           country: series.country,
           logoUrl: series.logoUrl,
         },
@@ -91,8 +91,8 @@ homeRouter.get('/home', async (req, res) => {
           pilot: toPilotCard(qualWinner.pilot),
           series: {
             slug: series.slug,
-            nameEn: series.nameEn,
-            nameRu: series.nameRu,
+            name: series.name,
+            shortName: series.shortName,
             country: series.country,
             logoUrl: series.logoUrl,
           },
@@ -152,8 +152,8 @@ homeRouter.get('/home', async (req, res) => {
     },
     bestSeries: {
       slug: row.bestSeriesSlug,
-      nameEn: row.bestSeriesNameEn,
-      nameRu: row.bestSeriesNameRu,
+      name: row.bestSeriesName,
+      shortName: row.bestSeriesShortName,
       weight: row.bestSeriesWeight,
       place: row.bestSeriesPlace,
       avgQualScore: row.bestSeriesAvgQual,
@@ -177,8 +177,8 @@ homeRouter.get('/home', async (req, res) => {
     qualWinners,
     calendar: calendarEvents.map((event) => ({
       seriesSlug: event.season.series.slug,
-      seriesNameEn: event.season.series.nameEn,
-      seriesNameRu: event.season.series.nameRu,
+      seriesName: event.season.series.name,
+      seriesShortName: event.season.series.shortName,
       logoUrl: event.season.series.logoUrl,
       seasonYear: event.season.year,
       eventSlug: event.slug,

@@ -4,12 +4,12 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 const FEATURED = [
-  { slug: 'formula-drift-pro', nameEn: 'Formula Drift PRO', nameRu: 'Formula Drift PRO', country: 'US', order: 1, weight: 1.0 },
-  { slug: 'drift-masters', nameEn: 'Drift Masters', nameRu: 'Drift Masters', country: 'EU', order: 2, weight: 1.15 },
-  { slug: 'd1gp', nameEn: 'D1 Grand Prix', nameRu: 'D1 Grand Prix', country: 'JP', order: 3, weight: 1.1 },
-  { slug: 'rds-gp', nameEn: 'RDS GP', nameRu: 'RDS GP', country: 'RU', order: 4, weight: 0.95 },
-  { slug: 'royal-ds', nameEn: 'Royal Drift Series', nameRu: 'Royal Drift Series', country: 'CN', order: 5, weight: 0.9 },
-  { slug: 'drift-kings', nameEn: 'Drift Kings', nameRu: 'Drift Kings', country: 'INT', order: 6, weight: 0.85 },
+  { slug: 'formula-drift-pro', name: 'Formula Drift PRO', shortName: 'FD PRO', country: 'US', order: 1, weight: 1.0 },
+  { slug: 'drift-masters', name: 'Drift Masters', shortName: 'DM', country: 'EU', order: 2, weight: 1.15 },
+  { slug: 'd1gp', name: 'D1 Grand Prix', shortName: 'D1GP', country: 'JP', order: 3, weight: 1.1 },
+  { slug: 'rds-gp', name: 'RDS GP', shortName: 'RDS GP', country: 'RU', order: 4, weight: 0.95 },
+  { slug: 'royal-ds', name: 'Royal Drift Series', shortName: 'RDS', country: 'CN', order: 5, weight: 0.9 },
+  { slug: 'drift-kings', name: 'Drift Kings', shortName: 'DK', country: 'INT', order: 6, weight: 0.85 },
 ] as const;
 
 const REAL_DATA_SERIES = ['royal-ds', 'drift-masters'] as const;
@@ -18,14 +18,29 @@ async function upsertSeriesCatalog(year: number) {
   for (const s of FEATURED) {
     const row = await prisma.series.upsert({
       where: { slug: s.slug },
-      update: { featuredOrder: s.order, defaultWeight: s.weight },
+      update: { name: s.name, shortName: s.shortName, featuredOrder: s.order, defaultWeight: s.weight },
       create: {
         slug: s.slug,
-        nameEn: s.nameEn,
-        nameRu: s.nameRu,
+        name: s.name,
+        shortName: s.shortName,
         country: s.country,
         featuredOrder: s.order,
         defaultWeight: s.weight,
+      },
+    });
+
+    await prisma.seriesName.upsert({
+      where: {
+        seriesId_name: {
+          seriesId: row.id,
+          name: s.name,
+        },
+      },
+      update: { shortName: s.shortName },
+      create: {
+        seriesId: row.id,
+        name: s.name,
+        shortName: s.shortName,
       },
     });
 

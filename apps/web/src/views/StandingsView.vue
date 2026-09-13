@@ -17,7 +17,7 @@ const year = computed(() => Number(route.params.year));
 
 const seriesTitle = computed(() => {
   if (!data.value) return '';
-  return locale.value === 'ru' ? data.value.series.nameRu : data.value.series.nameEn;
+  return data.value.series.name;
 });
 
 const sourceLabel = computed(() => {

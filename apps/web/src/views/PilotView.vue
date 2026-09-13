@@ -39,7 +39,7 @@ onMounted(load);
 watch(() => route.fullPath, load);
 
 function seriesName(result: PilotProfileResponse['results'][0]) {
-  return locale.value === 'ru' ? result.seriesNameRu : result.seriesNameEn;
+  return result.seriesName;
 }
 
 function eventName(result: PilotProfileResponse['results'][0]) {
