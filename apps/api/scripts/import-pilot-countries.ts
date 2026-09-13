@@ -55,20 +55,20 @@ async function collectAlmanacPilotSlugs(): Promise<Set<string>> {
 
 async function resolvePilotForAlmanacSlug(
   almanacSlug: string,
-  nameRu: string | null,
+  nameAlias: string | null,
   number: number | null,
 ): Promise<string> {
   const daSlug = `da-${almanacSlug}`;
   const existing = await prisma.pilot.findUnique({ where: { slug: daSlug }, select: { slug: true } });
   if (existing) return existing.slug;
 
-  if (nameRu) {
-    const english = englishNamesFromNameRu(nameRu);
+  if (nameAlias) {
+    const english = englishNamesFromNameRu(nameAlias);
     const match = await findMatchingPilot(
       prisma,
       {
         slug: daSlug,
-        nameRu,
+        nameAlias,
         firstName: english.firstName,
         lastName: english.lastName,
         number,
@@ -98,8 +98,8 @@ async function importFromAlmanac(): Promise<void> {
 
     const country = parseAlmanacPilotCountryHtml(html);
 
-    const nameRu = parseAlmanacPilotNameHtml(html);
-    const pilotSlug = await resolvePilotForAlmanacSlug(almanacSlug, nameRu, null);
+    const nameAlias = parseAlmanacPilotNameHtml(html);
+    const pilotSlug = await resolvePilotForAlmanacSlug(almanacSlug, nameAlias, null);
     const pilot = await prisma.pilot.findUnique({ where: { slug: pilotSlug }, select: { id: true } });
     if (!pilot) {
       skipped++;

@@ -9,7 +9,7 @@ import PilotPhotoSlider from '../components/PilotPhotoSlider.vue';
 import PilotStatsGrid from '../components/PilotStatsGrid.vue';
 
 const route = useRoute();
-const { t, locale } = useI18n();
+const { t } = useI18n();
 
 const pilot = ref<PilotProfileResponse | null>(null);
 const loading = ref(true);
@@ -19,7 +19,6 @@ const slug = computed(() => String(route.params.slug));
 
 const displayName = computed(() => {
   if (!pilot.value) return '';
-  if (locale.value === 'ru' && pilot.value.nameRu) return pilot.value.nameRu;
   return `${pilot.value.firstName} ${pilot.value.lastName}`;
 });
 
@@ -40,11 +39,11 @@ onMounted(load);
 watch(() => route.fullPath, load);
 
 function seriesName(result: PilotProfileResponse['results'][0]) {
-  return locale.value === 'ru' ? result.seriesNameRu : result.seriesNameEn;
+  return result.seriesName;
 }
 
 function eventName(result: PilotProfileResponse['results'][0]) {
-  return locale.value === 'ru' ? result.eventNameRu : result.eventNameEn;
+  return result.eventName;
 }
 
 function formatEventDuels(result: PilotProfileResponse['results'][0]) {
@@ -101,7 +100,16 @@ function formatEventDuels(result: PilotProfileResponse['results'][0]) {
                   {{ seriesName(result) }} {{ result.seasonYear }}
                 </RouterLink>
               </td>
-              <td>{{ eventName(result) }}</td>
+              <td>
+                <span>{{ eventName(result) }}</span>
+                <RouterLink
+                  v-if="result.track"
+                  class="track-link"
+                  :to="`/tracks/${result.track.slug}`"
+                >
+                  {{ result.track.name }}
+                </RouterLink>
+              </td>
               <td class="muted">{{ result.qualPosition ?? '—' }}</td>
               <td class="muted">{{ result.eventPlace ?? '—' }}</td>
               <td class="muted">{{ formatEventDuels(result) }}</td>
@@ -135,5 +143,12 @@ function formatEventDuels(result: PilotProfileResponse['results'][0]) {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   margin: 2rem 0 1rem;
+}
+
+.track-link {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--accent);
+  font-size: 0.78rem;
 }
 </style>

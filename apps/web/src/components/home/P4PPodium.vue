@@ -9,13 +9,13 @@ const props = defineProps<{
   items: HomeP4PEntry[];
 }>();
 
-const { locale, t } = useI18n();
+const { t } = useI18n();
 
 const leader = computed(() => props.items.find((item) => item.rank === 1));
 const rest = computed(() => props.items.filter((item) => item.rank > 1));
 
 function seriesName(item: HomeP4PEntry) {
-  return locale.value === 'ru' ? item.bestSeries.nameRu : item.bestSeries.nameEn;
+  return item.bestSeries.name;
 }
 
 function isFeatured(rank: number) {

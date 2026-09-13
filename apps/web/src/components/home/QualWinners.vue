@@ -7,14 +7,14 @@ defineProps<{
   items: HomeQualWinner[];
 }>();
 
-const { locale, t } = useI18n();
+const { t } = useI18n();
 
 function seriesName(item: HomeQualWinner) {
-  return locale.value === 'ru' ? item.series.nameRu : item.series.nameEn;
+  return item.series.name;
 }
 
 function eventName(item: HomeQualWinner) {
-  return locale.value === 'ru' ? item.event.nameRu : item.event.nameEn;
+  return item.event.name;
 }
 </script>
 
@@ -32,7 +32,15 @@ function eventName(item: HomeQualWinner) {
 
       <div class="qual-card__meta">
         <p class="qual-card__series">{{ seriesName(item) }}</p>
-        <p class="muted">{{ eventName(item) }} · R{{ item.event.roundNumber }}</p>
+        <p class="muted">
+          {{ eventName(item) }} · R{{ item.event.roundNumber }}
+          <template v-if="item.event.track">
+            ·
+            <RouterLink class="track-link" :to="`/tracks/${item.event.track.slug}`">
+              {{ item.event.track.name }}
+            </RouterLink>
+          </template>
+        </p>
         <div v-if="item.qualScore != null" class="qual-card__stats">
           <span>{{ item.qualScore.toFixed(1) }} {{ t('home.qualScore') }}</span>
           <span v-if="item.gapToSecond != null" class="muted">
@@ -87,5 +95,13 @@ function eventName(item: HomeQualWinner) {
   gap: 0.75rem;
   margin-top: 0.5rem;
   font-size: 0.9rem;
+}
+
+.track-link {
+  color: var(--accent);
+}
+
+.track-link:hover {
+  text-decoration: underline;
 }
 </style>

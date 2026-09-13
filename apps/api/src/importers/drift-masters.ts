@@ -16,7 +16,7 @@ export interface DmPilot {
   slug: string;
   firstName: string;
   lastName: string;
-  nameRu: string | null;
+  nameAlias: string | null;
   country: string | null;
   number: number | null;
   photoSourceUrl: string | null;
@@ -28,10 +28,8 @@ export interface DmPilot {
 export interface DmEvent {
   slug: string;
   roundNumber: number;
-  nameEn: string;
-  nameRu: string;
-  trackEn: string;
-  trackRu: string;
+  name: string;
+  trackName: string;
   startsAt: string;
   status: 'FINISHED' | 'SCHEDULED' | 'CANCELLED';
 }
@@ -132,11 +130,11 @@ function mapEventStatus(endDate: string): DmEvent['status'] {
   return end < Date.now() ? 'FINISHED' : 'SCHEDULED';
 }
 
-function formatEventName(round: DmRoundMeta): { nameEn: string; trackEn: string } {
+function formatEventName(round: DmRoundMeta): { name: string; trackName: string } {
   const track = [round.circuitName, round.circuitCity].filter(Boolean).join(', ');
   return {
-    nameEn: `Round ${round.roundNumber} — ${track}`,
-    trackEn: track || round.circuitName,
+    name: `Round ${round.roundNumber} — ${track}`,
+    trackName: track || round.circuitName,
   };
 }
 
@@ -161,14 +159,12 @@ export async function fetchDriftMastersSeason(seasonYear: number): Promise<DmSea
   const events: DmEvent[] = rounds
     .sort((a, b) => a.roundNumber - b.roundNumber)
     .map((round) => {
-      const { nameEn, trackEn } = formatEventName(round);
+      const { name, trackName } = formatEventName(round);
       return {
         slug: eventSlug(round.roundNumber),
         roundNumber: round.roundNumber,
-        nameEn,
-        nameRu: nameEn,
-        trackEn,
-        trackRu: trackEn,
+        name,
+        trackName,
         startsAt: round.startDate,
         status: mapEventStatus(round.endDate),
       };
@@ -193,7 +189,7 @@ export async function fetchDriftMastersSeason(seasonYear: number): Promise<DmSea
         slug: pilotSlug(row.driverSlug),
         firstName,
         lastName,
-        nameRu: null,
+        nameAlias: row.fullName,
         country: alpha3ToAlpha2(row.nationality),
         number: row.startingNumber || null,
         photoSourceUrl: absoluteMediaUrl(row.imageUrl),

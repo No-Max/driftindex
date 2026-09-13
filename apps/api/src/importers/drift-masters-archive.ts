@@ -227,7 +227,7 @@ function buildSeasonFromTable(
       slug: `dm-${driverSlug}`,
       firstName,
       lastName,
-      nameRu: null,
+      nameAlias: rawName,
       country,
       number,
       photoSourceUrl: null,
@@ -247,10 +247,8 @@ function buildSeasonFromTable(
     return {
       slug: eventSlug(roundNumber),
       roundNumber,
-      nameEn: `Round ${roundNumber}`,
-      nameRu: `Round ${roundNumber}`,
-      trackEn: `Round ${roundNumber}`,
-      trackRu: `Round ${roundNumber}`,
+      name: `Round ${roundNumber}`,
+      trackName: `Round ${roundNumber}`,
       startsAt: new Date(Date.UTC(seasonYear, index, 1, 12, 0, 0)).toISOString(),
       status: 'FINISHED' as const,
     };

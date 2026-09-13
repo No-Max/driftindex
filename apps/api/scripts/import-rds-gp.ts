@@ -11,7 +11,9 @@ import {
 import { upsertPilotSeriesPhoto } from '../src/lib/media/pilotPhoto.js';
 import { canonicalEnglishNames } from '../src/lib/pilotNames.js';
 import { findMatchingPilot, mergePilotInto } from '../src/lib/pilotMatch.js';
+import { upsertPilotSeriesAlias } from '../src/lib/pilotSeriesAlias.js';
 import { refreshStageCoefficientsForSeason } from '../src/lib/stageCoefficient.js';
+import { findOrCreateTrack } from '../src/lib/track.js';
 
 const prisma = new PrismaClientCtor();
 const SERIES_SLUG = 'rds-gp';
@@ -132,14 +134,13 @@ async function importSeason(
 async function upsertEvents(db: PrismaClient, seasonId: string, data: RdsGpSeasonData) {
   const eventRecords = new Map<string, { id: string }>();
   for (const event of data.events) {
+    const track = await findOrCreateTrack(db, { name: event.trackName, sourceUrl: data.sourceUrl });
     const record = await db.event.upsert({
       where: { seasonId_slug: { seasonId, slug: event.slug } },
       update: {
         roundNumber: event.roundNumber,
-        nameEn: event.nameEn,
-        nameRu: event.nameRu,
-        trackEn: event.trackEn,
-        trackRu: event.trackRu,
+        name: event.name,
+        trackId: track?.id ?? null,
         startsAt: new Date(event.startsAt),
         status: event.status,
       },
@@ -147,10 +148,8 @@ async function upsertEvents(db: PrismaClient, seasonId: string, data: RdsGpSeaso
         seasonId,
         slug: event.slug,
         roundNumber: event.roundNumber,
-        nameEn: event.nameEn,
-        nameRu: event.nameRu,
-        trackEn: event.trackEn,
-        trackRu: event.trackRu,
+        name: event.name,
+        trackId: track?.id ?? null,
         startsAt: new Date(event.startsAt),
         status: event.status,
       },
@@ -174,7 +173,7 @@ async function upsertPilotsAndResults(
 
   for (const pilot of data.pilots) {
     const english = canonicalEnglishNames(pilot);
-    const existing = await findMatchingPilot(db, { ...pilot, ...english });
+    const existing = await findMatchingPilot(db, { ...pilot, ...english }, { seriesId });
     const pilotSlug = existing?.slug ?? pilot.slug;
 
     if (existing && existing.slug !== pilot.slug) {
@@ -189,18 +188,17 @@ async function upsertPilotsAndResults(
       update: {
         firstName: english.firstName,
         lastName: english.lastName,
-        nameRu: pilot.nameRu,
         number: pilot.number,
       },
       create: {
         slug: pilot.slug,
         firstName: english.firstName,
         lastName: english.lastName,
-        nameRu: pilot.nameRu,
         country: pilot.country,
         number: pilot.number,
       },
     });
+    await upsertPilotSeriesAlias(db, { pilotId: pilotRecord.id, seriesId, name: pilot.nameAlias });
 
     if (!skipPhotos) {
       const pilotId = rdsPilotIdFromSlug(pilot.slug);

@@ -34,7 +34,7 @@ export interface RdsGpPilot {
   slug: string;
   firstName: string;
   lastName: string;
-  nameRu: string | null;
+  nameAlias: string | null;
   country: string | null;
   number: number | null;
   photoSourceUrl: string | null;
@@ -45,10 +45,8 @@ export interface RdsGpPilot {
 export interface RdsGpEvent {
   slug: string;
   roundNumber: number;
-  nameEn: string;
-  nameRu: string;
-  trackEn: string;
-  trackRu: string;
+  name: string;
+  trackName: string;
   startsAt: string;
   status: 'FINISHED' | 'SCHEDULED' | 'CANCELLED';
 }
@@ -97,7 +95,7 @@ function parseQualCell(text: string): { qualPoints: number | null; qualPosition:
 function parsePilotCell(
   $: cheerio.CheerioAPI,
   cell: cheerio.Cheerio<any>,
-): { slug: string; firstName: string; lastName: string; nameRu: string | null } | null {
+): { slug: string; firstName: string; lastName: string; nameAlias: string | null } | null {
   const link = cell.find('a[href*="/pilots/"]').first();
   const href = link.attr('href') ?? '';
   const id = href.match(/\/pilots\/(\d+)/)?.[1];
@@ -115,7 +113,7 @@ function parsePilotCell(
   const ruLine = slashSplit?.[1]?.trim() ?? lines[0] ?? link.text().trim();
   const enLine = slashSplit?.[2]?.trim() ?? (lines.length > 1 ? lines.slice(1).join(' ') : null);
 
-  const nameRu = ruLine || null;
+  const nameAlias = ruLine || null;
   let firstName = ruLine;
   let lastName = ruLine;
 
@@ -128,13 +126,13 @@ function parsePilotCell(
       firstName = parts[0]!;
       lastName = parts[0]!;
     }
-  } else if (nameRu) {
-    const english = englishNamesFromNameRu(nameRu);
+  } else if (nameAlias) {
+    const english = englishNamesFromNameRu(nameAlias);
     firstName = english.firstName;
     lastName = english.lastName;
   }
 
-  return { slug: `rds-${id}`, firstName, lastName, nameRu };
+  return { slug: `rds-${id}`, firstName, lastName, nameAlias };
 }
 
 function parseEventDate(text: string): string {
@@ -181,7 +179,7 @@ interface ParsedEventRow {
   slug: string;
   firstName: string;
   lastName: string;
-  nameRu: string | null;
+  nameAlias: string | null;
   country: string | null;
   number: number | null;
   photoSourceUrl: string | null;
@@ -273,10 +271,8 @@ function parseEventResults(
   const event: RdsGpEvent = {
     slug: `rds-${meta.id}`,
     roundNumber: meta.roundNumber,
-    nameEn: meta.nameRu,
-    nameRu: `${meta.nameRu} — ${trackRu}`,
-    trackEn: trackRu,
-    trackRu,
+    name: meta.nameRu,
+    trackName: trackRu,
     startsAt,
     status: rows.length > 0 ? 'FINISHED' : 'SCHEDULED',
   };
@@ -318,7 +314,7 @@ export async function fetchRdsGpSeason(seasonYear: number): Promise<RdsGpSeasonD
           slug: row.slug,
           firstName: row.firstName,
           lastName: row.lastName,
-          nameRu: row.nameRu,
+          nameAlias: row.nameAlias,
           country: row.country,
           number: row.number,
           photoSourceUrl: row.photoSourceUrl,

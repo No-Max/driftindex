@@ -4,7 +4,8 @@
   "nav": {
     "home": "Home",
     "pilots": "Pilots",
-    "series": "Series"
+    "series": "Series",
+    "tracks": "Tracks"
   },
   "lang": {
     "en": "EN",
@@ -141,6 +142,18 @@
       "eventsShort": "events",
       "qualShort": "/100"
     }
+  },
+  "tracks": {
+    "title": "Tracks",
+    "subtitle": "Venues used by tracked drift championships.",
+    "noPhoto": "Photo pending",
+    "noDescription": "Description pending.",
+    "eventCount": "{count} events",
+    "back": "All tracks",
+    "eventsTitle": "Events on this track",
+    "date": "Date",
+    "round": "Round",
+    "noDate": "No date"
   },
   "states": {
     "loading": "Loading…",

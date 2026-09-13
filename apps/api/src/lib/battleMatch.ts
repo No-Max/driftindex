@@ -61,7 +61,7 @@ const SURNAME_ALIASES: string[][] = [
 ];
 
 function surnameOnlyMatch(
-  pilot: Pick<Pilot, 'firstName' | 'lastName' | 'nameRu'>,
+  pilot: BattlePilotCandidate,
   short: ParsedShortName,
 ): boolean {
   return lastNameMatches(pilotNameTokens(pilot), short);
@@ -111,8 +111,15 @@ export function tokensSimilar(a: string, b: string): boolean {
   return levenshtein(a, b) <= maxDistance;
 }
 
-function pilotNameTokens(pilot: Pick<Pilot, 'firstName' | 'lastName' | 'nameRu'>): string[] {
-  return buildNameKey(pilot.firstName, pilot.lastName, pilot.nameRu).split('|').filter(Boolean);
+export type BattlePilotCandidate = Pick<Pilot, 'firstName' | 'lastName'> & {
+  seriesAliases?: Array<{ name: string }>;
+};
+
+function pilotNameTokens(pilot: BattlePilotCandidate): string[] {
+  return [
+    ...buildNameKey(pilot.firstName, pilot.lastName, null).split('|'),
+    ...(pilot.seriesAliases ?? []).flatMap((alias) => buildNameKey('', alias.name, alias.name).split('|')),
+  ].filter(Boolean);
 }
 
 function lastNameMatches(tokens: string[], short: ParsedShortName): boolean {
@@ -124,14 +131,15 @@ function lastNameMatches(tokens: string[], short: ParsedShortName): boolean {
 }
 
 function firstInitialMatches(
-  pilot: Pick<Pilot, 'firstName' | 'lastName' | 'nameRu'>,
+  pilot: BattlePilotCandidate,
   initial: string,
 ): boolean {
   const init = normalizeToken(initial);
   if (!init) return true;
 
-  if (pilot.nameRu && containsCyrillic(pilot.nameRu)) {
-    const parts = pilot.nameRu.trim().split(/\s+/).filter(Boolean);
+  for (const alias of pilot.seriesAliases ?? []) {
+    if (!containsCyrillic(alias.name)) continue;
+    const parts = alias.name.trim().split(/\s+/).filter(Boolean);
     if (parts.length >= 2) {
       const firstNameRu = normalizeToken(parts.slice(1).join(''));
       if (firstNameRu.startsWith(init)) return true;
@@ -146,7 +154,7 @@ function firstInitialMatches(
 }
 
 function pilotMatchesShortName(
-  pilot: Pick<Pilot, 'firstName' | 'lastName' | 'nameRu'>,
+  pilot: BattlePilotCandidate,
   short: ParsedShortName,
 ): boolean {
   const tokens = pilotNameTokens(pilot);
@@ -156,7 +164,7 @@ function pilotMatchesShortName(
   return firstInitialMatches(pilot, short.firstInitial);
 }
 
-function pickBestMatch<T extends Pick<Pilot, 'id' | 'number' | 'firstName' | 'lastName' | 'nameRu'>>(
+function pickBestMatch<T extends Pick<Pilot, 'id' | 'number' | 'firstName' | 'lastName'> & BattlePilotCandidate>(
   matches: T[],
 ): T | null {
   if (matches.length === 1) return matches[0]!;
@@ -189,7 +197,7 @@ export function enrichBattleNumbers(duels: Array<[BattlePilotRef, BattlePilotRef
 }
 
 /** Match a battle row to an event participant by car number and/or abbreviated name. */
-export function matchBattlePilot<T extends Pick<Pilot, 'id' | 'number' | 'firstName' | 'lastName' | 'nameRu'>>(
+export function matchBattlePilot<T extends Pick<Pilot, 'id' | 'number' | 'firstName' | 'lastName'> & BattlePilotCandidate>(
   ref: Pick<BattlePilotRef, 'number' | 'name'>,
   participants: T[],
   context?: BattleMatchContext,

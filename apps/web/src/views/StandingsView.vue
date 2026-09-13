@@ -17,7 +17,7 @@ const year = computed(() => Number(route.params.year));
 
 const seriesTitle = computed(() => {
   if (!data.value) return '';
-  return locale.value === 'ru' ? data.value.series.nameRu : data.value.series.nameEn;
+  return data.value.series.name;
 });
 
 const sourceLabel = computed(() => {
@@ -42,7 +42,6 @@ onMounted(load);
 watch(() => route.fullPath, load);
 
 function pilotName(row: SeasonStandingsResponse['standings'][0]) {
-  if (locale.value === 'ru' && row.nameRu) return row.nameRu;
   return `${row.firstName} ${row.lastName}`;
 }
 

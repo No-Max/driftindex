@@ -2,8 +2,8 @@ import type { Pilot } from '@prisma/client';
 
 export interface P4PInputSeries {
   slug: string;
-  nameEn: string;
-  nameRu: string;
+  name: string;
+  shortName: string | null;
   /** Raw overlap hardness for the series. */
   seriesHardness: number;
   standings: Array<{ avgPlace: number; avgQualScore: number | null; pilot: Pilot }>;
@@ -19,8 +19,8 @@ export interface P4PResult {
   score: number;
   pilot: Pilot;
   bestSeriesSlug: string;
-  bestSeriesNameEn: string;
-  bestSeriesNameRu: string;
+  bestSeriesName: string;
+  bestSeriesShortName: string | null;
   bestSeriesWeight: number;
   bestSeriesPlace: number;
   bestSeriesAvgQual: number | null;
@@ -37,8 +37,8 @@ export function computeP4P(
       pilot: Pilot;
       adjusted: number;
       seriesSlug: string;
-      seriesNameEn: string;
-      seriesNameRu: string;
+      seriesName: string;
+      seriesShortName: string | null;
       hardness: number;
       place: number;
       avgQualScore: number | null;
@@ -57,8 +57,8 @@ export function computeP4P(
           pilot: row.pilot,
           adjusted,
           seriesSlug: series.slug,
-          seriesNameEn: series.nameEn,
-          seriesNameRu: series.nameRu,
+          seriesName: series.name,
+          seriesShortName: series.shortName,
           hardness: series.seriesHardness,
           place: row.avgPlace,
           avgQualScore: row.avgQualScore,
@@ -77,8 +77,8 @@ export function computeP4P(
       score: Math.round((row.adjusted + p4pPilotCount) * 100) / 100,
       pilot: row.pilot,
       bestSeriesSlug: row.seriesSlug,
-      bestSeriesNameEn: row.seriesNameEn,
-      bestSeriesNameRu: row.seriesNameRu,
+      bestSeriesName: row.seriesName,
+      bestSeriesShortName: row.seriesShortName,
       bestSeriesWeight: Math.round(row.hardness * 100) / 100,
       bestSeriesPlace: row.place,
       bestSeriesAvgQual: row.avgQualScore,

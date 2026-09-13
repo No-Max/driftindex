@@ -7,10 +7,10 @@ defineProps<{
   items: HomeChampionshipCard[];
 }>();
 
-const { locale, t } = useI18n();
+const { t } = useI18n();
 
 function seriesName(item: HomeChampionshipCard) {
-  return locale.value === 'ru' ? item.series.nameRu : item.series.nameEn;
+  return item.series.name;
 }
 </script>
 

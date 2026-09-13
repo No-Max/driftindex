@@ -55,10 +55,10 @@ function parsePilotNumber(raw: string | undefined): number | null {
   return match ? Number.parseInt(match[1]!, 10) : null;
 }
 
-function splitRussianName(fullName: string): { firstName: string; lastName: string; nameRu: string } {
-  const nameRu = fullName.trim();
-  const english = englishNamesFromNameRu(nameRu);
-  return { ...english, nameRu };
+function splitRussianName(fullName: string): { firstName: string; lastName: string; nameAlias: string } {
+  const nameAlias = fullName.trim();
+  const english = englishNamesFromNameRu(nameAlias);
+  return { ...english, nameAlias };
 }
 
 function parseResultCell(texts: string[]): { qualPosition: number | null; points: number | null } {
@@ -170,7 +170,7 @@ function parseStandingsTable(
 
     const slug = pilotSlugFromAlmanacId(almanacPilotSlug);
     const number = parsePilotNumber($(cells.eq(1)).text());
-    const { firstName, lastName, nameRu } = splitRussianName(pilotName);
+    const { firstName, lastName, nameAlias } = splitRussianName(pilotName);
 
     const stages: RdsGpStageResult[] = [];
     for (let index = 0; index < events.length; index += 1) {
@@ -201,7 +201,7 @@ function parseStandingsTable(
       slug,
       firstName,
       lastName,
-      nameRu,
+      nameAlias,
       country: null,
       number,
       photoSourceUrl: null,
@@ -227,10 +227,8 @@ export async function fetchRdsAlmanacSeason(seasonYear: number): Promise<RdsGpSe
   const events: RdsGpEvent[] = eventMetas.map((meta) => ({
     slug: eventSlugFromAlmanacId(meta.id),
     roundNumber: meta.roundNumber,
-    nameEn: meta.nameRu,
-    nameRu: `${meta.nameRu} — ${meta.trackRu}`,
-    trackEn: meta.trackEn,
-    trackRu: meta.trackRu,
+    name: meta.nameRu,
+    trackName: meta.trackEn,
     startsAt: meta.startsAt,
     status: meta.status,
   }));

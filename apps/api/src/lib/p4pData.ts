@@ -37,8 +37,8 @@ export async function loadP4PInputs(
     const metrics = computeSeasonP4PMetrics(season.events);
     inputs.push({
       slug: series.slug,
-      nameEn: series.nameEn,
-      nameRu: series.nameRu,
+      name: series.name,
+      shortName: series.shortName,
       seriesHardness,
       standings: metrics.map((row) => ({
         avgPlace: row.avgPlace,

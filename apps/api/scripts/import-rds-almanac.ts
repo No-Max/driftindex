@@ -8,7 +8,9 @@ import {
 import type { RdsGpPilot, RdsGpSeasonData } from '../src/importers/rds-gp.js';
 import { findMatchingPilot } from '../src/lib/pilotMatch.js';
 import { canonicalEnglishNames } from '../src/lib/pilotNames.js';
+import { upsertPilotSeriesAlias } from '../src/lib/pilotSeriesAlias.js';
 import { refreshStageCoefficientsForSeason } from '../src/lib/stageCoefficient.js';
+import { findOrCreateTrack } from '../src/lib/track.js';
 
 const prisma = new PrismaClientCtor();
 const SERIES_SLUG = 'rds-gp';
@@ -63,17 +65,17 @@ async function upsertSeason(db: PrismaClient, seriesId: string, data: RdsGpSeaso
   });
 }
 
-async function resolvePilotSlug(db: PrismaClient, pilot: RdsGpPilot): Promise<string> {
+async function resolvePilotSlug(db: PrismaClient, pilot: RdsGpPilot, seriesId: string): Promise<string> {
   const match = await findMatchingPilot(
     db,
     {
       slug: pilot.slug,
-      nameRu: pilot.nameRu,
+      nameAlias: pilot.nameAlias,
       firstName: pilot.firstName,
       lastName: pilot.lastName,
       number: pilot.number,
     },
-    { excludeSlugPrefix: 'da-' },
+    { excludeSlugPrefix: 'da-', seriesId },
   );
   return match?.slug ?? pilot.slug;
 }
@@ -95,14 +97,13 @@ async function importSeason(db: PrismaClient, seriesId: string, year: number) {
   const eventRecords = new Map<string, { id: string }>();
 
   for (const event of data.events) {
+    const track = await findOrCreateTrack(db, { name: event.trackName, sourceUrl: data.sourceUrl });
     const record = await db.event.upsert({
       where: { seasonId_slug: { seasonId: season.id, slug: event.slug } },
       update: {
         roundNumber: event.roundNumber,
-        nameEn: event.nameEn,
-        nameRu: event.nameRu,
-        trackEn: event.trackEn,
-        trackRu: event.trackRu,
+        name: event.name,
+        trackId: track?.id ?? null,
         startsAt: new Date(event.startsAt),
         status: event.status,
       },
@@ -110,10 +111,8 @@ async function importSeason(db: PrismaClient, seriesId: string, year: number) {
         seasonId: season.id,
         slug: event.slug,
         roundNumber: event.roundNumber,
-        nameEn: event.nameEn,
-        nameRu: event.nameRu,
-        trackEn: event.trackEn,
-        trackRu: event.trackRu,
+        name: event.name,
+        trackId: track?.id ?? null,
         startsAt: new Date(event.startsAt),
         status: event.status,
       },
@@ -123,14 +122,13 @@ async function importSeason(db: PrismaClient, seriesId: string, year: number) {
 
   let resultCount = 0;
   for (const pilot of data.pilots) {
-    const pilotSlug = await resolvePilotSlug(db, pilot);
+    const pilotSlug = await resolvePilotSlug(db, pilot, seriesId);
     const english = canonicalEnglishNames(pilot);
     const pilotRecord = await db.pilot.upsert({
       where: { slug: pilotSlug },
       update: {
         firstName: english.firstName,
         lastName: english.lastName,
-        nameRu: pilot.nameRu,
         country: pilot.country,
         number: pilot.number,
       },
@@ -138,11 +136,11 @@ async function importSeason(db: PrismaClient, seriesId: string, year: number) {
         slug: pilotSlug,
         firstName: english.firstName,
         lastName: english.lastName,
-        nameRu: pilot.nameRu,
         country: pilot.country,
         number: pilot.number,
       },
     });
+    await upsertPilotSeriesAlias(db, { pilotId: pilotRecord.id, seriesId, name: pilot.nameAlias });
 
     for (const stage of pilot.stages) {
       const event = eventRecords.get(stage.eventSlug);

@@ -26,17 +26,35 @@ enum GridSource {
 model Series {
   id            String             @id @default(cuid())
   slug          String             @unique
-  nameEn        String
-  nameRu        String
+  name          String
+  shortName     String?
   country       String?
   logoUrl       String?
   featuredOrder Int?
   defaultWeight Float              @default(1.0)
   seasons       Season[]
   weights       SeriesWeight[]
+  names         SeriesName[]
   pilotPhotos   PilotSeriesPhoto[]
+  pilotAliases  PilotSeriesAlias[]
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
+}
+
+model SeriesName {
+  id        String   @id @default(cuid())
+  seriesId  String
+  series    Series   @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  name      String
+  shortName String?
+  yearFrom  Int?
+  yearTo    Int?
+  sourceUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([seriesId, name])
+  @@index([seriesId, yearFrom, yearTo])
 }
 
 model SeriesWeight {
@@ -64,50 +82,82 @@ model Season {
   sourceLabelRu String?
   sourceUrl     String?
   events        Event[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@unique([seriesId, year])
 }
 
 model Event {
-  id          String      @id @default(cuid())
-  seasonId    String
-  season      Season      @relation(fields: [seasonId], references: [id], onDelete: Cascade)
-  slug        String
-  roundNumber Int
-  nameEn      String
-  nameRu      String
-  trackEn     String?
-  trackRu     String?
-  startsAt          DateTime?
-  status            EventStatus @default(SCHEDULED)
-  gridActual        Int?
-  gridReference     Int         @default(32)
-  stageCoefficient  Float?
-  gridSource        GridSource?
-  results           EventResult[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id               String        @id @default(cuid())
+  seasonId         String
+  season           Season        @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  trackId          String?
+  track            Track?        @relation(fields: [trackId], references: [id], onDelete: SetNull)
+  slug             String
+  roundNumber      Int
+  name             String
+  startsAt         DateTime?
+  status           EventStatus   @default(SCHEDULED)
+  gridActual       Int?
+  gridReference    Int           @default(32)
+  stageCoefficient Float?
+  gridSource       GridSource?
+  results          EventResult[]
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
   @@unique([seasonId, slug])
+  @@index([trackId])
+}
+
+model Track {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  country     String?
+  city        String?
+  description String?
+  photoUrl    String?
+  sourceUrl   String?
+  events      Event[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([name])
 }
 
 model Pilot {
-  id               String             @id @default(cuid())
-  slug             String             @unique
-  firstName        String
-  lastName         String
-  nameRu           String?
-  country          String?
-  number           Int?
-  photoUrl         String?
-  photoSourceUrl   String?
-  photoUpdatedAt   DateTime?
-  results          EventResult[]
-  seriesPhotos     PilotSeriesPhoto[]
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
+  id             String             @id @default(cuid())
+  slug           String             @unique
+  firstName      String
+  lastName       String
+  country        String?
+  number         Int?
+  photoUrl       String?
+  photoSourceUrl String?
+  photoUpdatedAt DateTime?
+  results        EventResult[]
+  seriesPhotos   PilotSeriesPhoto[]
+  seriesAliases  PilotSeriesAlias[]
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+}
+
+model PilotSeriesAlias {
+  id        String   @id @default(cuid())
+  pilotId   String
+  pilot     Pilot    @relation(fields: [pilotId], references: [id], onDelete: Cascade)
+  seriesId  String
+  series    Series   @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  name      String
+  nameKey   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([seriesId, name])
+  @@index([seriesId, nameKey])
+  @@index([pilotId])
 }
 
 model PilotSeriesPhoto {

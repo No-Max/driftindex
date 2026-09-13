@@ -3,8 +3,11 @@ import { PrismaClient } from '@prisma/client';
 import { fetchRoyalDsEventQualScores, fetchRoyalDsSeason } from '../src/importers/royal-ds.js';
 import { upsertPilotSeriesPhoto } from '../src/lib/media/pilotPhoto.js';
 import { canonicalEnglishNames } from '../src/lib/pilotNames.js';
+import { findMatchingPilot } from '../src/lib/pilotMatch.js';
+import { upsertPilotSeriesAlias } from '../src/lib/pilotSeriesAlias.js';
 import { toQualScore100 } from '../src/lib/qualScore.js';
 import { refreshStageCoefficientsForSeason } from '../src/lib/stageCoefficient.js';
+import { findOrCreateTrack } from '../src/lib/track.js';
 
 const prisma = new PrismaClient();
 const SERIES_SLUG = 'royal-ds';
@@ -59,14 +62,17 @@ async function main() {
 
   const eventRecords = new Map<string, { id: string }>();
   for (const event of data.events) {
+    const track = await findOrCreateTrack(prisma, {
+      name: event.trackName,
+      city: event.cityEn,
+      sourceUrl: data.sourceUrl,
+    });
     const record = await prisma.event.upsert({
       where: { seasonId_slug: { seasonId: season.id, slug: event.slug } },
       update: {
         roundNumber: event.roundNumber,
-        nameEn: event.nameEn,
-        nameRu: event.nameRu,
-        trackEn: event.trackEn,
-        trackRu: event.nameRu,
+        name: event.name,
+        trackId: track?.id ?? null,
         startsAt: new Date(event.startsAt),
         status: event.status,
       },
@@ -74,10 +80,8 @@ async function main() {
         seasonId: season.id,
         slug: event.slug,
         roundNumber: event.roundNumber,
-        nameEn: event.nameEn,
-        nameRu: event.nameRu,
-        trackEn: event.trackEn,
-        trackRu: event.nameRu,
+        name: event.name,
+        trackId: track?.id ?? null,
         startsAt: new Date(event.startsAt),
         status: event.status,
       },
@@ -102,24 +106,36 @@ async function main() {
 
   for (const pilot of data.pilots) {
     const english = canonicalEnglishNames(pilot);
+    const existing = await findMatchingPilot(
+      prisma,
+      {
+        slug: pilot.slug,
+        nameAlias: pilot.nameAlias,
+        firstName: english.firstName,
+        lastName: english.lastName,
+        number: pilot.number,
+      },
+      { seriesId: series.id },
+    );
+    const pilotSlug = existing?.slug ?? pilot.slug;
+
     const pilotRecord = await prisma.pilot.upsert({
-      where: { slug: pilot.slug },
+      where: { slug: pilotSlug },
       update: {
         firstName: english.firstName,
         lastName: english.lastName,
-        nameRu: pilot.nameRu,
         country: pilot.country,
         number: pilot.number,
       },
       create: {
-        slug: pilot.slug,
+        slug: pilotSlug,
         firstName: english.firstName,
         lastName: english.lastName,
-        nameRu: pilot.nameRu,
         country: pilot.country,
         number: pilot.number,
       },
     });
+    await upsertPilotSeriesAlias(prisma, { pilotId: pilotRecord.id, seriesId: series.id, name: pilot.nameAlias });
 
     if (pilot.photoSourceUrl) {
       const { mirrored } = await upsertPilotSeriesPhoto(prisma, {

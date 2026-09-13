@@ -9,7 +9,9 @@ import {
 import { upsertPilotSeriesPhoto } from '../src/lib/media/pilotPhoto.js';
 import { findMatchingPilot, mergePilotInto } from '../src/lib/pilotMatch.js';
 import { canonicalEnglishNames } from '../src/lib/pilotNames.js';
+import { upsertPilotSeriesAlias } from '../src/lib/pilotSeriesAlias.js';
 import { refreshStageCoefficientsForSeason } from '../src/lib/stageCoefficient.js';
+import { findOrCreateTrack } from '../src/lib/track.js';
 
 const prisma = new PrismaClient();
 const SERIES_SLUG = 'formula-drift-pro';
@@ -30,17 +32,17 @@ function parseYears(): number[] {
   return [new Date().getFullYear()];
 }
 
-async function resolvePilotSlug(pilot: FdPilot): Promise<{ slug: string; merged: boolean }> {
+async function resolvePilotSlug(pilot: FdPilot, seriesId: string): Promise<{ slug: string; merged: boolean }> {
   const match = await findMatchingPilot(
     prisma,
     {
       slug: pilot.slug,
-      nameRu: pilot.nameRu,
+      nameAlias: pilot.nameAlias,
       firstName: pilot.firstName,
       lastName: pilot.lastName,
       number: pilot.number,
     },
-    { excludeSlugPrefix: 'fd-' },
+    { excludeSlugPrefix: 'fd-', seriesId },
   );
   const slug = match?.slug ?? pilot.slug;
 
@@ -90,14 +92,13 @@ async function importSeason(year: number, seriesId: string) {
 
   const eventRecords = new Map<string, { id: string }>();
   for (const event of data.events) {
+    const track = await findOrCreateTrack(prisma, { name: event.trackName, sourceUrl: data.sourceUrl });
     const record = await prisma.event.upsert({
       where: { seasonId_slug: { seasonId: season.id, slug: event.slug } },
       update: {
         roundNumber: event.roundNumber,
-        nameEn: event.nameEn,
-        nameRu: event.nameRu,
-        trackEn: event.trackEn,
-        trackRu: event.trackRu,
+        name: event.name,
+        trackId: track?.id ?? null,
         startsAt: new Date(event.startsAt),
         status: event.status,
       },
@@ -105,10 +106,8 @@ async function importSeason(year: number, seriesId: string) {
         seasonId: season.id,
         slug: event.slug,
         roundNumber: event.roundNumber,
-        nameEn: event.nameEn,
-        nameRu: event.nameRu,
-        trackEn: event.trackEn,
-        trackRu: event.trackRu,
+        name: event.name,
+        trackId: track?.id ?? null,
         startsAt: new Date(event.startsAt),
         status: event.status,
       },
@@ -123,7 +122,7 @@ async function importSeason(year: number, seriesId: string) {
 
   for (const pilot of data.pilots) {
     const english = canonicalEnglishNames(pilot);
-    const { slug: pilotSlug, merged: wasMerged } = await resolvePilotSlug(pilot);
+    const { slug: pilotSlug, merged: wasMerged } = await resolvePilotSlug(pilot, seriesId);
     if (wasMerged) merged++;
 
     const pilotRecord = await prisma.pilot.upsert({
@@ -131,7 +130,6 @@ async function importSeason(year: number, seriesId: string) {
       update: {
         firstName: english.firstName,
         lastName: english.lastName,
-        nameRu: pilot.nameRu,
         country: pilot.country,
         number: pilot.number,
       },
@@ -139,11 +137,11 @@ async function importSeason(year: number, seriesId: string) {
         slug: pilotSlug,
         firstName: english.firstName,
         lastName: english.lastName,
-        nameRu: pilot.nameRu,
         country: pilot.country,
         number: pilot.number,
       },
     });
+    await upsertPilotSeriesAlias(prisma, { pilotId: pilotRecord.id, seriesId, name: pilot.nameAlias });
 
     if (pilot.photoSourceUrl) {
       const { mirrored } = await upsertPilotSeriesPhoto(prisma, {

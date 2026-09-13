@@ -18,7 +18,7 @@ export interface RoyalDsPilot {
   slug: string;
   firstName: string;
   lastName: string;
-  nameRu: string | null;
+  nameAlias: string | null;
   country: string | null;
   number: number | null;
   photoSourceUrl: string | null;
@@ -30,11 +30,10 @@ export interface RoyalDsPilot {
 export interface RoyalDsEvent {
   slug: string;
   roundNumber: number;
-  nameEn: string;
-  nameRu: string;
+  name: string;
   nameCn: string | null;
   cityEn: string;
-  trackEn: string;
+  trackName: string;
   startsAt: string;
   status: 'FINISHED' | 'SCHEDULED' | 'CANCELLED';
 }
@@ -111,11 +110,10 @@ export function normalizeRoyalDsStandings(raw: StandingsPage): RoyalDsSeasonData
   const mappedEvents: RoyalDsEvent[] = events.map((event) => ({
     slug: event.slug,
     roundNumber: event.roundNumber,
-    nameEn: event.titleEn,
-    nameRu: event.titleRu,
+    name: event.titleEn,
     nameCn: event.titleCn,
     cityEn: event.cityEn,
-    trackEn: event.trackEn,
+    trackName: event.trackEn,
     startsAt: event.startsAt,
     status: mapEventStatus(event.phase),
   }));
@@ -142,7 +140,7 @@ export function normalizeRoyalDsStandings(raw: StandingsPage): RoyalDsSeasonData
         slug: row.driverSlug,
         firstName,
         lastName,
-        nameRu: row.fullNameCn,
+        nameAlias: row.fullNameCn,
         country: row.countryCode,
         number: Number.parseInt(row.racingNumber, 10) || null,
         photoSourceUrl: row.photoPortraitUrl,

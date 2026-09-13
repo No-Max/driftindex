@@ -1,11 +1,13 @@
 import type { Pilot, PrismaClient } from '@prisma/client';
 import { canonicalEnglishNames, canonicalPilotSlugPriority, pilotNameKey } from './pilotNames.js';
+import { findPilotBySeriesAlias, pilotAliasKey } from './pilotSeriesAlias.js';
 import { syncPilotPrimaryPhoto } from './media/pilotPhoto.js';
 import { buildNameKey, nameTokens } from './transliterate.js';
 
 export interface PilotIdentity {
   slug?: string;
-  nameRu: string | null;
+  nameAlias?: string | null;
+  aliases?: Array<string | null | undefined>;
   firstName: string;
   lastName: string;
   number: number | null;
@@ -14,19 +16,19 @@ export interface PilotIdentity {
 export type MatchConfidence = 'exact' | 'weak' | 'none';
 
 export function matchConfidence(a: PilotIdentity, b: PilotIdentity): MatchConfidence {
-  const keyA = buildNameKey(a.firstName, a.lastName, a.nameRu);
-  const keyB = buildNameKey(b.firstName, b.lastName, b.nameRu);
-  if (!keyA || !keyB) return 'none';
+  for (const keyA of identityKeys(a)) {
+    for (const keyB of identityKeys(b)) {
+      const tokensA = keyA.split('|');
+      const tokensB = keyB.split('|');
+      if (tokensA.length < 2 || tokensB.length < 2) continue;
 
-  const tokensA = keyA.split('|');
-  const tokensB = keyB.split('|');
-  if (tokensA.length < 2 || tokensB.length < 2) return 'none';
+      if (keyA === keyB) return 'exact';
 
-  if (keyA === keyB) return 'exact';
-
-  const overlap = tokensA.filter((token) => tokensB.includes(token));
-  if (overlap.length >= 2 && overlap.length === tokensA.length && overlap.length === tokensB.length) {
-    return 'exact';
+      const overlap = tokensA.filter((token) => tokensB.includes(token));
+      if (overlap.length >= 2 && overlap.length === tokensA.length && overlap.length === tokensB.length) {
+        return 'exact';
+      }
+    }
   }
 
   return 'none';
@@ -39,17 +41,33 @@ export function namesMatch(a: PilotIdentity, b: PilotIdentity): boolean {
 export async function findMatchingPilot(
   prisma: PrismaClient,
   identity: PilotIdentity,
-  options?: { excludeSlugPrefix?: string },
+  options?: { excludeSlugPrefix?: string; seriesId?: string },
 ): Promise<Pilot | null> {
   const excludePrefix = options?.excludeSlugPrefix;
-  const key = buildNameKey(identity.firstName, identity.lastName, identity.nameRu);
+  const key = buildNameKey(identity.firstName, identity.lastName, identity.nameAlias);
   if (!key || key.split('|').length < 2) return null;
+
+  if (options?.seriesId) {
+    const aliasMatch = await findPilotBySeriesAlias(prisma, options.seriesId, [
+      identity.nameAlias,
+      `${identity.firstName} ${identity.lastName}`,
+      ...(identity.aliases ?? []),
+    ]);
+    if (
+      aliasMatch &&
+      (!excludePrefix || !aliasMatch.slug.startsWith(excludePrefix)) &&
+      (!identity.slug || aliasMatch.slug !== identity.slug)
+    ) {
+      return aliasMatch;
+    }
+  }
 
   const candidates = await prisma.pilot.findMany({
     where: {
       ...(excludePrefix ? { NOT: { slug: { startsWith: excludePrefix } } } : {}),
       ...(identity.slug ? { slug: { not: identity.slug } } : {}),
     },
+    include: { seriesAliases: true },
   });
 
   const matched = candidates.filter((candidate) => namesMatch(candidate, identity));
@@ -106,6 +124,21 @@ export async function mergePilotInto(
     }
   }
 
+  const fromAliases = await prisma.pilotSeriesAlias.findMany({ where: { pilotId: fromPilotId } });
+  for (const alias of fromAliases) {
+    const existing = await prisma.pilotSeriesAlias.findUnique({
+      where: { seriesId_name: { seriesId: alias.seriesId, name: alias.name } },
+    });
+    if (existing && existing.id !== alias.id) {
+      await prisma.pilotSeriesAlias.delete({ where: { id: alias.id } });
+      continue;
+    }
+    await prisma.pilotSeriesAlias.update({
+      where: { id: alias.id },
+      data: { pilotId: toPilotId },
+    });
+  }
+
   await prisma.pilotSeriesPhoto.deleteMany({ where: { pilotId: fromPilotId } });
   await prisma.pilot.delete({ where: { id: fromPilotId } });
   await syncPilotPrimaryPhoto(prisma, toPilotId);
@@ -152,7 +185,7 @@ export function groupPilotsByNameKey(pilots: Pilot[]): PilotMergeGroup[] {
     .filter(([, list]) => list.length > 1)
     .map(([nameKey, list]) => ({
       nameKey,
-      tokens: nameTokens(list[0]!.firstName, list[0]!.lastName, list[0]!.nameRu),
+      tokens: nameTokens(list[0]!.firstName, list[0]!.lastName),
       pilots: list,
     }));
 }
@@ -233,4 +266,27 @@ export async function mergeAlmanacPilotDuplicates(prisma: PrismaClient): Promise
   }
 
   return merged;
+}
+
+type PilotIdentityLike = PilotIdentity & {
+  seriesAliases?: Array<{ name: string }>;
+};
+
+function identityKeys(identity: PilotIdentityLike): string[] {
+  const keys = new Set<string>();
+  const primary = buildNameKey(identity.firstName, identity.lastName, identity.nameAlias);
+  if (primary) keys.add(primary);
+
+  for (const alias of [identity.nameAlias, ...(identity.aliases ?? [])]) {
+    if (!alias) continue;
+    const key = pilotAliasKey(alias);
+    if (key) keys.add(key);
+  }
+
+  for (const alias of identity.seriesAliases ?? []) {
+    const key = pilotAliasKey(alias.name);
+    if (key) keys.add(key);
+  }
+
+  return [...keys];
 }

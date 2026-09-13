@@ -76,10 +76,10 @@ export function nameTokens(...parts: Array<string | null | undefined>): string[]
 export function buildNameKey(
   firstName: string,
   lastName: string,
-  nameRu: string | null | undefined,
+  nameAlias: string | null | undefined,
 ): string {
   const hasLatinNames = isLatinName(firstName) && isLatinName(lastName);
-  return nameTokens(firstName, lastName, hasLatinNames ? null : nameRu).join('|');
+  return nameTokens(firstName, lastName, hasLatinNames ? null : nameAlias).join('|');
 }
 
 function titleCaseWord(value: string): string {
@@ -114,7 +114,7 @@ export function isLatinName(value: string): boolean {
 export function toEnglishPilotNames(input: {
   firstName: string;
   lastName: string;
-  nameRu?: string | null;
+  nameAlias?: string | null;
 }): { firstName: string; lastName: string } {
   const firstLatin = isLatinName(input.firstName);
   const lastLatin = isLatinName(input.lastName);
@@ -127,12 +127,12 @@ export function toEnglishPilotNames(input: {
   }
 
   // Russian «Фамилия Имя» is the canonical source when Latin names are missing.
-  if (input.nameRu?.trim() && containsCyrillic(input.nameRu)) {
-    return englishNamesFromNameRu(input.nameRu);
+  if (input.nameAlias?.trim() && containsCyrillic(input.nameAlias)) {
+    return englishNamesFromNameRu(input.nameAlias);
   }
 
-  if (input.nameRu) {
-    return englishNamesFromNameRu(input.nameRu);
+  if (input.nameAlias) {
+    return englishNamesFromNameRu(input.nameAlias);
   }
 
   if (firstLatin || lastLatin) {

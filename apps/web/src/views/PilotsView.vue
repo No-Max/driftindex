@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n';
 import { fetchPilots } from '../api/client';
 import PilotAvatar from '../components/PilotAvatar.vue';
 
-const { t, locale } = useI18n();
+const { t } = useI18n();
 
 const data = ref<PilotsListResponse | null>(null);
 const loading = ref(true);
@@ -37,7 +37,6 @@ const filtered = computed(() => {
     const haystack = [
       pilot.firstName,
       pilot.lastName,
-      pilot.nameRu,
       pilot.number?.toString(),
       pilot.country,
     ]
@@ -53,13 +52,12 @@ const rankedCount = computed(
 );
 
 function pilotName(entry: PilotListEntry) {
-  if (locale.value === 'ru' && entry.pilot.nameRu) return entry.pilot.nameRu;
   return `${entry.pilot.firstName} ${entry.pilot.lastName}`;
 }
 
 function seriesName(entry: PilotListEntry) {
   if (!entry.bestSeries) return '';
-  return locale.value === 'ru' ? entry.bestSeries.nameRu : entry.bestSeries.nameEn;
+  return entry.bestSeries.name;
 }
 
 function bestSeriesSummary(entry: PilotListEntry) {

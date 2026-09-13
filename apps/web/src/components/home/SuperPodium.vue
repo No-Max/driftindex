@@ -1,16 +1,13 @@
 <script setup lang="ts">
 import type { HomeSuperPodiumEntry } from '@drift-index/shared';
-import { useI18n } from 'vue-i18n';
 import PilotAvatar from '../PilotAvatar.vue';
 
 defineProps<{
   items: HomeSuperPodiumEntry[];
 }>();
 
-const { locale } = useI18n();
-
 function seriesName(item: HomeSuperPodiumEntry) {
-  return locale.value === 'ru' ? item.series.nameRu : item.series.nameEn;
+  return item.series.name;
 }
 </script>
 
