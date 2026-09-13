@@ -12,8 +12,6 @@ const FEATURED = [
   { slug: 'drift-kings', name: 'Drift Kings', shortName: 'DK', country: 'INT', order: 6, weight: 0.85 },
 ] as const;
 
-const REAL_DATA_SERIES = ['royal-ds', 'drift-masters'] as const;
-
 async function upsertSeriesCatalog(year: number) {
   for (const s of FEATURED) {
     const row = await prisma.series.upsert({
@@ -52,46 +50,12 @@ async function upsertSeriesCatalog(year: number) {
   }
 }
 
-/** Remove placeholder seasons/events and pilots not tied to imported data. */
-async function removeMockData() {
-  const realSeries = await prisma.series.findMany({
-    where: { slug: { in: [...REAL_DATA_SERIES] } },
-    select: { id: true },
-  });
-  const realSeriesIds = realSeries.map((s) => s.id);
-
-  const removedSeasons = await prisma.season.deleteMany({
-    where: { seriesId: { notIn: realSeriesIds } },
-  });
-
-  const pilotIdsWithResults = (
-    await prisma.eventResult.findMany({
-      select: { pilotId: true },
-      distinct: ['pilotId'],
-    })
-  ).map((row) => row.pilotId);
-
-  const removedPilots = await prisma.pilot.deleteMany({
-    where: pilotIdsWithResults.length
-      ? { id: { notIn: pilotIdsWithResults } }
-      : {},
-  });
-
-  const removedTeams = await prisma.team.deleteMany({
-    where: { results: { none: {} } },
-  });
-
-  return { removedSeasons: removedSeasons.count, removedPilots: removedPilots.count, removedTeams: removedTeams.count };
-}
-
 async function main() {
   const year = new Date().getFullYear();
   await upsertSeriesCatalog(year);
-  const cleanup = await removeMockData();
 
   console.log(
-    `Seed complete: ${FEATURED.length} featured series (catalog only). ` +
-      `Removed ${cleanup.removedSeasons} mock seasons, ${cleanup.removedPilots} orphan pilots, ${cleanup.removedTeams} orphan teams. ` +
+    `Seed complete: ${FEATURED.length} featured series catalog entries. ` +
       `Import real data with: npm run db:import:royal-ds`,
   );
 }
