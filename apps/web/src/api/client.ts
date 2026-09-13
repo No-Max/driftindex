@@ -4,6 +4,8 @@ import type {
   PilotsListResponse,
   SeasonStandingsResponse,
   SeriesPrestigeResponse,
+  TrackProfileResponse,
+  TracksListResponse,
 } from '@drift-index/shared';
 
 async function getJson<T>(path: string): Promise<T> {
@@ -34,6 +36,14 @@ export function fetchSeriesList() {
 export function fetchSeriesPrestige(year?: number) {
   const query = year ? `?year=${year}` : '';
   return getJson<SeriesPrestigeResponse>(`/api/series/prestige${query}`);
+}
+
+export function fetchTracks() {
+  return getJson<TracksListResponse>('/api/tracks');
+}
+
+export function fetchTrack(slug: string) {
+  return getJson<TrackProfileResponse>(`/api/tracks/${slug}`);
 }
 
 export function fetchStandings(slug: string, year: number) {

@@ -227,10 +227,8 @@ export async function fetchRdsAlmanacSeason(seasonYear: number): Promise<RdsGpSe
   const events: RdsGpEvent[] = eventMetas.map((meta) => ({
     slug: eventSlugFromAlmanacId(meta.id),
     roundNumber: meta.roundNumber,
-    nameEn: meta.nameRu,
-    nameRu: `${meta.nameRu} — ${meta.trackRu}`,
-    trackEn: meta.trackEn,
-    trackRu: meta.trackRu,
+    name: meta.nameRu,
+    trackName: meta.trackEn,
     startsAt: meta.startsAt,
     status: meta.status,
   }));

@@ -4,6 +4,8 @@ import PilotView from '../views/PilotView.vue';
 import PilotsView from '../views/PilotsView.vue';
 import SeriesView from '../views/SeriesView.vue';
 import StandingsView from '../views/StandingsView.vue';
+import TrackView from '../views/TrackView.vue';
+import TracksView from '../views/TracksView.vue';
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -15,6 +17,8 @@ export const router = createRouter({
       component: StandingsView,
     },
     { path: '/series', name: 'series', component: SeriesView },
+    { path: '/tracks', name: 'tracks', component: TracksView },
+    { path: '/tracks/:slug', name: 'track', component: TrackView },
     { path: '/pilots', name: 'pilots', component: PilotsView },
     { path: '/pilots/:slug', name: 'pilot', component: PilotView },
   ],

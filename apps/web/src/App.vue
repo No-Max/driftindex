@@ -29,6 +29,7 @@ function setLocale(next: 'en' | 'ru') {
           <RouterLink to="/">{{ t('nav.home') }}</RouterLink>
           <RouterLink to="/pilots">{{ t('nav.pilots') }}</RouterLink>
           <RouterLink to="/series">{{ t('nav.series') }}</RouterLink>
+          <RouterLink to="/tracks">{{ t('nav.tracks') }}</RouterLink>
           <div class="lang-switch">
             <button :class="{ active: !isRu }" type="button" @click="setLocale('en')">{{ t('lang.en') }}</button>
             <button :class="{ active: isRu }" type="button" @click="setLocale('ru')">{{ t('lang.ru') }}</button>

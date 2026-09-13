@@ -7,6 +7,7 @@ import { findMatchingPilot } from '../src/lib/pilotMatch.js';
 import { upsertPilotSeriesAlias } from '../src/lib/pilotSeriesAlias.js';
 import { toQualScore100 } from '../src/lib/qualScore.js';
 import { refreshStageCoefficientsForSeason } from '../src/lib/stageCoefficient.js';
+import { findOrCreateTrack } from '../src/lib/track.js';
 
 const prisma = new PrismaClient();
 const SERIES_SLUG = 'royal-ds';
@@ -61,14 +62,17 @@ async function main() {
 
   const eventRecords = new Map<string, { id: string }>();
   for (const event of data.events) {
+    const track = await findOrCreateTrack(prisma, {
+      name: event.trackName,
+      city: event.cityEn,
+      sourceUrl: data.sourceUrl,
+    });
     const record = await prisma.event.upsert({
       where: { seasonId_slug: { seasonId: season.id, slug: event.slug } },
       update: {
         roundNumber: event.roundNumber,
-        nameEn: event.nameEn,
-        nameRu: event.nameRu,
-        trackEn: event.trackEn,
-        trackRu: event.nameRu,
+        name: event.name,
+        trackId: track?.id ?? null,
         startsAt: new Date(event.startsAt),
         status: event.status,
       },
@@ -76,10 +80,8 @@ async function main() {
         seasonId: season.id,
         slug: event.slug,
         roundNumber: event.roundNumber,
-        nameEn: event.nameEn,
-        nameRu: event.nameRu,
-        trackEn: event.trackEn,
-        trackRu: event.nameRu,
+        name: event.name,
+        trackId: track?.id ?? null,
         startsAt: new Date(event.startsAt),
         status: event.status,
       },

@@ -11,6 +11,7 @@ async function main() {
   const events = await prisma.event.findMany({
     where: { status: 'FINISHED' },
     include: {
+      track: true,
       season: { include: { series: true } },
     },
     orderBy: [
@@ -24,8 +25,8 @@ async function main() {
   console.log('| --- | ---: | ---: | --- | ---: | ---: | --- |');
 
   for (const event of events) {
-    const label = event.trackEn || event.nameEn;
-    const shortLabel = label.length > 36 ? `${label.slice(0, 34)}…` : label;
+    const label = event.track?.name || event.name;
+    const shortLabel = label.length > 36 ? `${label.slice(0, 34)}...` : label;
     const k =
       event.stageCoefficient != null ? event.stageCoefficient.toFixed(4) : '—';
     const n = event.gridActual ?? '—';
@@ -48,6 +49,7 @@ async function main() {
       pilot: { select: { firstName: true, lastName: true } },
       event: {
         include: {
+          track: true,
           season: { include: { series: true } },
         },
       },

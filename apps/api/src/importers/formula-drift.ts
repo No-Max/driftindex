@@ -42,10 +42,8 @@ export interface FdEvent {
   fdEventId: number;
   slug: string;
   roundNumber: number;
-  nameEn: string;
-  nameRu: string;
-  trackEn: string;
-  trackRu: string;
+  name: string;
+  trackName: string;
   startsAt: string;
   status: 'FINISHED' | 'SCHEDULED' | 'CANCELLED';
 }
@@ -576,10 +574,8 @@ export function parseArchiveStandingsHtml(html: string, seasonYear: number): FdS
       fdEventId: column.roundNumber,
       slug: eventSlug(column.slug),
       roundNumber: column.roundNumber,
-      nameEn: column.name,
-      nameRu: column.name,
-      trackEn: column.name,
-      trackRu: column.name,
+      name: column.name,
+      trackName: column.name,
       startsAt: new Date(`${seasonYear}-${String(column.roundNumber).padStart(2, '0')}-01T12:00:00Z`).toISOString(),
       status: 'FINISHED',
     });
@@ -795,10 +791,8 @@ async function fetchFormulaDriftSeasonFromApi(seasonYear: number, standings: FdS
       fdEventId: meta.fdEventId,
       slug: eventSlug(meta.slug),
       roundNumber: meta.roundNumber,
-      nameEn: meta.roundName,
-      nameRu: meta.roundName,
-      trackEn: meta.location,
-      trackRu: meta.location,
+      name: meta.roundName,
+      trackName: meta.location,
       startsAt: meta.startDate,
       status: mapEventStatus(meta.status, meta.endDate),
     });

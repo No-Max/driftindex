@@ -21,12 +21,9 @@ export interface SeasonEventWithResults {
   id: string;
   slug: string;
   roundNumber: number;
-  nameEn: string;
-  nameRu: string;
+  name: string;
   status: string;
   startsAt: Date | null;
-  trackEn: string | null;
-  trackRu: string | null;
   results: Array<{
     pilotId: string;
     points: number;

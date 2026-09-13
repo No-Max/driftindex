@@ -26,7 +26,7 @@ const months = computed(() => {
 });
 
 function eventName(event: HomeCalendarEvent) {
-  return locale.value === 'ru' ? event.nameRu : event.nameEn;
+  return event.name;
 }
 
 function seriesName(event: HomeCalendarEvent) {
@@ -52,7 +52,15 @@ function statusClass(status: HomeCalendarEvent['status']) {
             <span class="event-row__day">{{ formatDay(event.startsAt) }}</span>
             <span class="event-row__body">
               <strong>{{ eventName(event) }}</strong>
-              <span class="muted">{{ seriesName(event) }} · R{{ event.roundNumber }}</span>
+              <span class="muted">
+                {{ seriesName(event) }} · R{{ event.roundNumber }}
+                <template v-if="event.track">
+                  ·
+                  <RouterLink class="track-link" :to="`/tracks/${event.track.slug}`">
+                    {{ event.track.name }}
+                  </RouterLink>
+                </template>
+              </span>
             </span>
             <span class="event-row__status" :class="statusClass(event.status)">
               {{ t(`home.eventStatus.${event.status.toLowerCase()}`) }}
@@ -150,5 +158,13 @@ function statusClass(status: HomeCalendarEvent['status']) {
 .month-empty {
   margin: 0;
   font-size: 0.85rem;
+}
+
+.track-link {
+  color: var(--accent);
+}
+
+.track-link:hover {
+  text-decoration: underline;
 }
 </style>

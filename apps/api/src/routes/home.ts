@@ -7,6 +7,7 @@ import { computePilotStats, toStatsInput } from '../lib/pilotStats.js';
 import { computePrestigeRanking } from '../lib/seriesOverlap.js';
 import { computeStandings } from '../lib/standings.js';
 import { prisma } from '../lib/prisma.js';
+import { toTrackSummary } from '../lib/trackDto.js';
 
 export const homeRouter = Router();
 
@@ -24,6 +25,7 @@ homeRouter.get('/home', async (req, res) => {
           events: {
             orderBy: { roundNumber: 'asc' },
             include: {
+              track: true,
               results: { include: { pilot: true } },
             },
           },
@@ -99,8 +101,8 @@ homeRouter.get('/home', async (req, res) => {
           event: {
             slug: lastFinished.slug,
             roundNumber: lastFinished.roundNumber,
-            nameEn: lastFinished.nameEn,
-            nameRu: lastFinished.nameRu,
+            name: lastFinished.name,
+            track: toTrackSummary(lastFinished.track),
           },
           qualScore: qualWinner.qualScore100,
           gapToSecond: runnerUp?.qualScore100 != null && qualWinner.qualScore100 != null
@@ -118,6 +120,7 @@ homeRouter.get('/home', async (req, res) => {
     },
     orderBy: { startsAt: 'asc' },
     include: {
+      track: true,
       season: { include: { series: true } },
     },
   });
@@ -183,10 +186,8 @@ homeRouter.get('/home', async (req, res) => {
       seasonYear: event.season.year,
       eventSlug: event.slug,
       roundNumber: event.roundNumber,
-      nameEn: event.nameEn,
-      nameRu: event.nameRu,
-      trackEn: event.trackEn,
-      trackRu: event.trackRu,
+      name: event.name,
+      track: toTrackSummary(event.track),
       startsAt: event.startsAt!.toISOString(),
       status: event.status,
       standingsPath: `/series/${event.season.series.slug}/${event.season.year}`,

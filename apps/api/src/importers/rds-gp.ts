@@ -45,10 +45,8 @@ export interface RdsGpPilot {
 export interface RdsGpEvent {
   slug: string;
   roundNumber: number;
-  nameEn: string;
-  nameRu: string;
-  trackEn: string;
-  trackRu: string;
+  name: string;
+  trackName: string;
   startsAt: string;
   status: 'FINISHED' | 'SCHEDULED' | 'CANCELLED';
 }
@@ -273,10 +271,8 @@ function parseEventResults(
   const event: RdsGpEvent = {
     slug: `rds-${meta.id}`,
     roundNumber: meta.roundNumber,
-    nameEn: meta.nameRu,
-    nameRu: `${meta.nameRu} — ${trackRu}`,
-    trackEn: trackRu,
-    trackRu,
+    name: meta.nameRu,
+    trackName: trackRu,
     startsAt,
     status: rows.length > 0 ? 'FINISHED' : 'SCHEDULED',
   };

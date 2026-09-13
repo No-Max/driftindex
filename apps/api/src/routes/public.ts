@@ -5,6 +5,8 @@ import type {
   PilotsListResponse,
   SeasonStandingsResponse,
   SeriesPrestigeResponse,
+  TrackProfileResponse,
+  TracksListResponse,
 } from '@drift-index/shared';
 import { Router } from 'express';
 import { computeP4P } from '../lib/p4p.js';
@@ -14,6 +16,7 @@ import { computePilotStats, toStatsInput } from '../lib/pilotStats.js';
 import { prisma } from '../lib/prisma.js';
 import { computePrestigeRanking, persistPrestigeRanking } from '../lib/seriesOverlap.js';
 import { computeStandings } from '../lib/standings.js';
+import { toTrackSummary } from '../lib/trackDto.js';
 
 export const publicRouter = Router();
 
@@ -84,6 +87,89 @@ publicRouter.get('/series', async (_req, res) => {
   );
 });
 
+publicRouter.get('/tracks', async (_req, res) => {
+  const tracks = await prisma.track.findMany({
+    orderBy: { name: 'asc' },
+    include: {
+      _count: { select: { events: true } },
+      events: {
+        orderBy: [{ startsAt: 'desc' }, { roundNumber: 'desc' }],
+        include: { season: { include: { series: true } } },
+      },
+    },
+  });
+
+  const payload: TracksListResponse = {
+    tracks: tracks.map((track) => {
+      const seenSeries = new Set<string>();
+      const series = [];
+      for (const event of track.events) {
+        if (seenSeries.has(event.season.series.slug)) continue;
+        seenSeries.add(event.season.series.slug);
+        series.push({
+          slug: event.season.series.slug,
+          name: event.season.series.name,
+          shortName: event.season.series.shortName,
+        });
+      }
+
+      const latestEvent = track.events[0];
+      return {
+        ...toTrackSummary(track)!,
+        eventCount: track._count.events,
+        series,
+        latestEvent: latestEvent
+          ? {
+              seriesSlug: latestEvent.season.series.slug,
+              seriesName: latestEvent.season.series.name,
+              seasonYear: latestEvent.season.year,
+              eventSlug: latestEvent.slug,
+              eventName: latestEvent.name,
+              startsAt: latestEvent.startsAt?.toISOString() ?? null,
+            }
+          : null,
+      };
+    }),
+  };
+
+  res.json(payload);
+});
+
+publicRouter.get('/tracks/:slug', async (req, res) => {
+  const track = await prisma.track.findUnique({
+    where: { slug: req.params.slug },
+    include: {
+      events: {
+        orderBy: [{ startsAt: 'desc' }, { roundNumber: 'desc' }],
+        include: { season: { include: { series: true } } },
+      },
+    },
+  });
+
+  if (!track) {
+    res.status(404).json({ error: 'Track not found' });
+    return;
+  }
+
+  const payload: TrackProfileResponse = {
+    ...toTrackSummary(track)!,
+    events: track.events.map((event) => ({
+      seriesSlug: event.season.series.slug,
+      seriesName: event.season.series.name,
+      seriesShortName: event.season.series.shortName,
+      seasonYear: event.season.year,
+      eventSlug: event.slug,
+      eventName: event.name,
+      roundNumber: event.roundNumber,
+      startsAt: event.startsAt?.toISOString() ?? null,
+      status: event.status,
+      standingsPath: `/series/${event.season.series.slug}/${event.season.year}`,
+    })),
+  };
+
+  res.json(payload);
+});
+
 publicRouter.get('/series/:slug/seasons/:year/standings', async (req, res) => {
   const year = Number(req.params.year);
   if (!Number.isFinite(year)) {
@@ -100,6 +186,7 @@ publicRouter.get('/series/:slug/seasons/:year/standings', async (req, res) => {
           events: {
             orderBy: { roundNumber: 'asc' },
             include: {
+              track: true,
               results: {
                 include: { pilot: true },
               },
@@ -146,8 +233,8 @@ publicRouter.get('/series/:slug/seasons/:year/standings', async (req, res) => {
     events: events.map((event) => ({
       slug: event.slug,
       roundNumber: event.roundNumber,
-      nameEn: event.nameEn,
-      nameRu: event.nameRu,
+      name: event.name,
+      track: toTrackSummary(event.track),
       status: event.status,
     })),
     standings,
@@ -246,6 +333,7 @@ publicRouter.get('/pilots/:slug', async (req, res) => {
         include: {
           event: {
             include: {
+              track: true,
               season: {
                 include: { series: true },
               },
@@ -286,8 +374,8 @@ publicRouter.get('/pilots/:slug', async (req, res) => {
       seriesShortName: result.event.season.series.shortName,
       seasonYear: result.event.season.year,
       eventSlug: result.event.slug,
-      eventNameEn: result.event.nameEn,
-      eventNameRu: result.event.nameRu,
+      eventName: result.event.name,
+      track: toTrackSummary(result.event.track),
       roundNumber: result.event.roundNumber,
       qualPosition: result.qualPosition,
       qualScore100: result.qualScore100,
