@@ -227,7 +227,7 @@ function buildSeasonFromTable(
       slug: `dm-${driverSlug}`,
       firstName,
       lastName,
-      nameAlias: driverName,
+      nameAlias: rawName,
       country,
       number,
       photoSourceUrl: null,
