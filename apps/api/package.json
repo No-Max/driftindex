@@ -31,6 +31,7 @@
     "db:import:drift-masters:archive:list": "tsx scripts/import-drift-masters-archive.ts --list-seasons",
     "db:import:drift-masters:archive:all": "tsx scripts/import-drift-masters-archive.ts",
     "db:import:drift-masters:all": "tsx scripts/import-drift-masters-archive.ts && tsx scripts/import-drift-masters.ts --year 2023 2024 2025 2026",
+    "db:import:drift-masters:manual": "tsx scripts/import-drift-masters-manual.ts",
     "db:import:formula-drift": "tsx scripts/import-formula-drift.ts",
     "db:import:formula-drift:list": "tsx scripts/import-formula-drift.ts --list-seasons",
     "db:import:formula-drift:probe": "tsx scripts/import-formula-drift.ts --probe-archives"

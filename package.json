@@ -33,6 +33,7 @@
     "db:import:drift-masters:archive": "npm run db:import:drift-masters:archive --workspace=apps/api",
     "db:import:drift-masters:archive:all": "npm run db:import:drift-masters:archive:all --workspace=apps/api",
     "db:import:drift-masters:all": "npm run db:import:drift-masters:all --workspace=apps/api",
+    "db:import:drift-masters:manual": "npm run db:import:drift-masters:manual --workspace=apps/api",
     "db:import:formula-drift": "npm run db:import:formula-drift --workspace=apps/api",
     "db:import:formula-drift:list": "npm run db:import:formula-drift:list --workspace=apps/api",
     "db:import:formula-drift:probe": "npm run db:import:formula-drift:probe --workspace=apps/api",
