@@ -19,7 +19,6 @@ const slug = computed(() => String(route.params.slug));
 
 const displayName = computed(() => {
   if (!pilot.value) return '';
-  if (locale.value === 'ru' && pilot.value.nameRu) return pilot.value.nameRu;
   return `${pilot.value.firstName} ${pilot.value.lastName}`;
 });
 

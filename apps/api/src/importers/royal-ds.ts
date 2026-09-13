@@ -18,7 +18,7 @@ export interface RoyalDsPilot {
   slug: string;
   firstName: string;
   lastName: string;
-  nameRu: string | null;
+  nameAlias: string | null;
   country: string | null;
   number: number | null;
   photoSourceUrl: string | null;
@@ -142,7 +142,7 @@ export function normalizeRoyalDsStandings(raw: StandingsPage): RoyalDsSeasonData
         slug: row.driverSlug,
         firstName,
         lastName,
-        nameRu: row.fullNameCn,
+        nameAlias: row.fullNameCn,
         country: row.countryCode,
         number: Number.parseInt(row.racingNumber, 10) || null,
         photoSourceUrl: row.photoPortraitUrl,

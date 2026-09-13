@@ -11,6 +11,7 @@ import {
 import { upsertPilotSeriesPhoto } from '../src/lib/media/pilotPhoto.js';
 import { canonicalEnglishNames } from '../src/lib/pilotNames.js';
 import { findMatchingPilot, mergePilotInto } from '../src/lib/pilotMatch.js';
+import { upsertPilotSeriesAlias } from '../src/lib/pilotSeriesAlias.js';
 import { refreshStageCoefficientsForSeason } from '../src/lib/stageCoefficient.js';
 
 const prisma = new PrismaClientCtor();
@@ -174,7 +175,7 @@ async function upsertPilotsAndResults(
 
   for (const pilot of data.pilots) {
     const english = canonicalEnglishNames(pilot);
-    const existing = await findMatchingPilot(db, { ...pilot, ...english });
+    const existing = await findMatchingPilot(db, { ...pilot, ...english }, { seriesId });
     const pilotSlug = existing?.slug ?? pilot.slug;
 
     if (existing && existing.slug !== pilot.slug) {
@@ -189,18 +190,17 @@ async function upsertPilotsAndResults(
       update: {
         firstName: english.firstName,
         lastName: english.lastName,
-        nameRu: pilot.nameRu,
         number: pilot.number,
       },
       create: {
         slug: pilot.slug,
         firstName: english.firstName,
         lastName: english.lastName,
-        nameRu: pilot.nameRu,
         country: pilot.country,
         number: pilot.number,
       },
     });
+    await upsertPilotSeriesAlias(db, { pilotId: pilotRecord.id, seriesId, name: pilot.nameAlias });
 
     if (!skipPhotos) {
       const pilotId = rdsPilotIdFromSlug(pilot.slug);

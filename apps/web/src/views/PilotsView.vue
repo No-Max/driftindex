@@ -37,7 +37,6 @@ const filtered = computed(() => {
     const haystack = [
       pilot.firstName,
       pilot.lastName,
-      pilot.nameRu,
       pilot.number?.toString(),
       pilot.country,
     ]
@@ -53,7 +52,6 @@ const rankedCount = computed(
 );
 
 function pilotName(entry: PilotListEntry) {
-  if (locale.value === 'ru' && entry.pilot.nameRu) return entry.pilot.nameRu;
   return `${entry.pilot.firstName} ${entry.pilot.lastName}`;
 }
 

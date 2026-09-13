@@ -26,7 +26,6 @@ export interface StandingRow {
   pilotSlug: string;
   firstName: string;
   lastName: string;
-  nameRu: string | null;
   country: string | null;
   number: number | null;
   totalPoints: number;
@@ -60,7 +59,6 @@ export interface PilotSummary {
   slug: string;
   firstName: string;
   lastName: string;
-  nameRu: string | null;
   country: string | null;
   number: number | null;
   photoUrl?: string | null;

@@ -9,6 +9,7 @@ import {
 import { upsertPilotSeriesPhoto } from '../src/lib/media/pilotPhoto.js';
 import { findMatchingPilot, mergePilotInto } from '../src/lib/pilotMatch.js';
 import { canonicalEnglishNames } from '../src/lib/pilotNames.js';
+import { upsertPilotSeriesAlias } from '../src/lib/pilotSeriesAlias.js';
 import { refreshStageCoefficientsForSeason } from '../src/lib/stageCoefficient.js';
 
 const prisma = new PrismaClient();
@@ -30,17 +31,17 @@ function parseYears(): number[] {
   return [new Date().getFullYear()];
 }
 
-async function resolvePilotSlug(pilot: FdPilot): Promise<{ slug: string; merged: boolean }> {
+async function resolvePilotSlug(pilot: FdPilot, seriesId: string): Promise<{ slug: string; merged: boolean }> {
   const match = await findMatchingPilot(
     prisma,
     {
       slug: pilot.slug,
-      nameRu: pilot.nameRu,
+      nameAlias: pilot.nameAlias,
       firstName: pilot.firstName,
       lastName: pilot.lastName,
       number: pilot.number,
     },
-    { excludeSlugPrefix: 'fd-' },
+    { excludeSlugPrefix: 'fd-', seriesId },
   );
   const slug = match?.slug ?? pilot.slug;
 
@@ -123,7 +124,7 @@ async function importSeason(year: number, seriesId: string) {
 
   for (const pilot of data.pilots) {
     const english = canonicalEnglishNames(pilot);
-    const { slug: pilotSlug, merged: wasMerged } = await resolvePilotSlug(pilot);
+    const { slug: pilotSlug, merged: wasMerged } = await resolvePilotSlug(pilot, seriesId);
     if (wasMerged) merged++;
 
     const pilotRecord = await prisma.pilot.upsert({
@@ -131,7 +132,6 @@ async function importSeason(year: number, seriesId: string) {
       update: {
         firstName: english.firstName,
         lastName: english.lastName,
-        nameRu: pilot.nameRu,
         country: pilot.country,
         number: pilot.number,
       },
@@ -139,11 +139,11 @@ async function importSeason(year: number, seriesId: string) {
         slug: pilotSlug,
         firstName: english.firstName,
         lastName: english.lastName,
-        nameRu: pilot.nameRu,
         country: pilot.country,
         number: pilot.number,
       },
     });
+    await upsertPilotSeriesAlias(prisma, { pilotId: pilotRecord.id, seriesId, name: pilot.nameAlias });
 
     if (pilot.photoSourceUrl) {
       const { mirrored } = await upsertPilotSeriesPhoto(prisma, {

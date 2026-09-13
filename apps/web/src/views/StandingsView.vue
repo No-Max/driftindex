@@ -42,7 +42,6 @@ onMounted(load);
 watch(() => route.fullPath, load);
 
 function pilotName(row: SeasonStandingsResponse['standings'][0]) {
-  if (locale.value === 'ru' && row.nameRu) return row.nameRu;
   return `${row.firstName} ${row.lastName}`;
 }
 

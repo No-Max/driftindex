@@ -30,7 +30,7 @@ export interface FdPilot {
   fdDriverId: number;
   firstName: string;
   lastName: string;
-  nameRu: string | null;
+  nameAlias: string | null;
   country: string | null;
   number: number | null;
   photoSourceUrl: string | null;
@@ -612,7 +612,7 @@ export function parseArchiveStandingsHtml(html: string, seasonYear: number): FdS
         fdDriverId: fdDriverIdFromSlug(driverSlug),
         firstName,
         lastName,
-        nameRu: null,
+        nameAlias: driverName,
         country: null,
         number: carNumber,
         photoSourceUrl: null,
@@ -859,7 +859,7 @@ async function fetchFormulaDriftSeasonFromApi(seasonYear: number, standings: FdS
       fdDriverId: entry.driver,
       firstName,
       lastName,
-      nameRu: null,
+      nameAlias: rawName,
       country: driver?.country ?? null,
       number: driver?.number ?? null,
       photoSourceUrl: driver?.photoSourceUrl ?? null,

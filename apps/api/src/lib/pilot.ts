@@ -5,7 +5,6 @@ export function toPilotCard(pilot: Pilot) {
     slug: pilot.slug,
     firstName: pilot.firstName,
     lastName: pilot.lastName,
-    nameRu: pilot.nameRu,
     country: pilot.country,
     number: pilot.number,
     photoUrl: pilot.photoUrl,

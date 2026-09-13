@@ -38,12 +38,12 @@ function slugPart(value: string): string {
     .replace(/^_+|_+$/g, '');
 }
 
-function almanacSlugCandidates(firstName: string, lastName: string, nameRu: string | null): string[] {
+function almanacSlugCandidates(firstName: string, lastName: string, aliases: string[]): string[] {
   const candidates = new Set<string>();
   candidates.add(`${slugPart(lastName)}_${slugPart(firstName)}`);
 
-  if (nameRu) {
-    const parts = nameRu.trim().split(/\s+/);
+  for (const alias of aliases) {
+    const parts = alias.trim().split(/\s+/);
     if (parts.length >= 2) {
       const [a, b] = parts;
       candidates.add(`${slugPart(a!)}_${slugPart(b!)}`);
@@ -74,20 +74,20 @@ async function collectAlmanacSlugsFromSeasons(): Promise<Set<string>> {
 
 async function resolvePilotSlug(
   almanacSlug: string,
-  nameRu: string | null,
+  nameAlias: string | null,
 ): Promise<string | null> {
   const daSlug = `da-${almanacSlug}`;
   const daPilot = await prisma.pilot.findUnique({ where: { slug: daSlug }, select: { slug: true } });
   if (daPilot) return daPilot.slug;
 
-  if (!nameRu) return null;
+  if (!nameAlias) return null;
 
-  const english = englishNamesFromNameRu(nameRu);
+  const english = englishNamesFromNameRu(nameAlias);
   const match = await findMatchingPilot(
     prisma,
     {
       slug: daSlug,
-      nameRu,
+      nameAlias,
       firstName: english.firstName,
       lastName: english.lastName,
       number: null,
@@ -108,7 +108,7 @@ async function applyCountry(slug: string, country: string | null): Promise<boole
 
 interface AlmanacProfile {
   country: string | null;
-  nameRu: string | null;
+  nameAlias: string | null;
 }
 
 async function loadAlmanacProfile(
@@ -125,7 +125,7 @@ async function loadAlmanacProfile(
 
   const profile: AlmanacProfile = {
     country: parseAlmanacPilotCountryHtml(html),
-    nameRu: parseAlmanacPilotNameHtml(html),
+    nameAlias: parseAlmanacPilotNameHtml(html),
   };
   cache.set(almanacSlug, profile);
   return profile;
@@ -139,7 +139,7 @@ async function importFromAlmanacSlugs(slugs: Iterable<string>, cache: Map<string
     const profile = await loadAlmanacProfile(almanacSlug, cache);
     if (!profile) continue;
 
-    const pilotSlug = await resolvePilotSlug(almanacSlug, profile.nameRu);
+    const pilotSlug = await resolvePilotSlug(almanacSlug, profile.nameAlias);
     if (!pilotSlug) continue;
     matched++;
 
@@ -155,7 +155,7 @@ async function importBySlugGuessing(
     slug: string;
     firstName: string;
     lastName: string;
-    nameRu: string | null;
+    seriesAliases: Array<{ name: string }>;
   }>,
   cache: Map<string, AlmanacProfile | null>,
 ) {
@@ -163,7 +163,8 @@ async function importBySlugGuessing(
   const countryCache = new Map<string, string | null>();
 
   for (const pilot of missing) {
-    for (const candidate of almanacSlugCandidates(pilot.firstName, pilot.lastName, pilot.nameRu)) {
+    const aliases = pilot.seriesAliases.map((alias) => alias.name);
+    for (const candidate of almanacSlugCandidates(pilot.firstName, pilot.lastName, aliases)) {
       const cached = cache.get(candidate);
       if (cached === null) continue;
 
@@ -173,7 +174,7 @@ async function importBySlugGuessing(
       } else {
         country = await fetchAlmanacPilotCountry(candidate, countryCache);
         if (country != null) {
-          cache.set(candidate, { country, nameRu: pilot.nameRu });
+          cache.set(candidate, { country, nameAlias: aliases[0] ?? null });
         } else if (countryCache.has(candidate)) {
           cache.set(candidate, null);
         }
@@ -232,7 +233,7 @@ async function main() {
 
   const stillMissing = await prisma.pilot.findMany({
     where: { country: null },
-    select: { slug: true, firstName: true, lastName: true, nameRu: true },
+    select: { slug: true, firstName: true, lastName: true, seriesAliases: { select: { name: true } } },
     orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
   });
 
@@ -244,7 +245,13 @@ async function main() {
 
   const remaining = await prisma.pilot.findMany({
     where: { country: null },
-    select: { slug: true, firstName: true, lastName: true, nameRu: true, number: true },
+    select: {
+      slug: true,
+      firstName: true,
+      lastName: true,
+      number: true,
+      seriesAliases: { select: { name: true } },
+    },
     orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
   });
 
@@ -255,7 +262,7 @@ async function main() {
   if (remaining.length > 0) {
     console.log('\n--- NEED USER INPUT ---');
     for (const pilot of remaining) {
-      const label = pilot.nameRu ?? `${pilot.firstName} ${pilot.lastName}`;
+      const label = pilot.seriesAliases[0]?.name ?? `${pilot.firstName} ${pilot.lastName}`;
       console.log(`${pilot.slug}\t#${pilot.number ?? '?'}\t${label}`);
     }
   }

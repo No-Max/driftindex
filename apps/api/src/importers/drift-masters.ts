@@ -16,7 +16,7 @@ export interface DmPilot {
   slug: string;
   firstName: string;
   lastName: string;
-  nameRu: string | null;
+  nameAlias: string | null;
   country: string | null;
   number: number | null;
   photoSourceUrl: string | null;
@@ -193,7 +193,7 @@ export async function fetchDriftMastersSeason(seasonYear: number): Promise<DmSea
         slug: pilotSlug(row.driverSlug),
         firstName,
         lastName,
-        nameRu: null,
+        nameAlias: row.fullName,
         country: alpha3ToAlpha2(row.nationality),
         number: row.startingNumber || null,
         photoSourceUrl: absoluteMediaUrl(row.imageUrl),

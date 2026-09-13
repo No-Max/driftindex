@@ -36,7 +36,10 @@ async function importSeasonBattles(seriesId: string, seasonYear: number): Promis
                   number: true,
                   firstName: true,
                   lastName: true,
-                  nameRu: true,
+                  seriesAliases: {
+                    where: { seriesId },
+                    select: { name: true },
+                  },
                 },
               },
             },

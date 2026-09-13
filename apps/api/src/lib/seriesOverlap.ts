@@ -13,7 +13,6 @@ export interface PilotSeasonStanding {
   pilotSlug: string;
   firstName: string;
   lastName: string;
-  nameRu: string | null;
   identityKey: string;
   seriesSlug: string;
   seasonYear: number;
@@ -69,8 +68,8 @@ export interface PrestigeRankingResult {
   hardnessBySlug: Map<string, number>;
 }
 
-function pilotIdentityKey(firstName: string, lastName: string, nameRu: string | null): string {
-  const key = buildNameKey(firstName, lastName, nameRu);
+function pilotIdentityKey(firstName: string, lastName: string): string {
+  const key = buildNameKey(firstName, lastName, null);
   return key.split('|').length >= 2 ? key : '';
 }
 
@@ -108,12 +107,7 @@ export async function loadPilotSeasonStandings(prisma: PrismaClient): Promise<Pi
           pilotSlug: row.pilot.slug,
           firstName: row.pilot.firstName,
           lastName: row.pilot.lastName,
-          nameRu: row.pilot.nameRu,
-          identityKey: pilotIdentityKey(
-            row.pilot.firstName,
-            row.pilot.lastName,
-            row.pilot.nameRu,
-          ),
+          identityKey: pilotIdentityKey(row.pilot.firstName, row.pilot.lastName),
           seriesSlug: series.slug,
           seasonYear: season.year,
           place: row.rank,
@@ -146,7 +140,6 @@ export async function loadPilotSeriesIndexAverages(
           slug: true,
           firstName: true,
           lastName: true,
-          nameRu: true,
         },
       },
       event: {
@@ -178,7 +171,7 @@ export async function loadPilotSeriesIndexAverages(
 
     const seriesSlug = row.event.season.series.slug;
     const key = `${row.pilot.id}:${seriesSlug}`;
-    const identityKey = pilotIdentityKey(row.pilot.firstName, row.pilot.lastName, row.pilot.nameRu);
+    const identityKey = pilotIdentityKey(row.pilot.firstName, row.pilot.lastName);
     const bucket = buckets.get(key) ?? {
       pilotId: row.pilot.id,
       pilotSlug: row.pilot.slug,

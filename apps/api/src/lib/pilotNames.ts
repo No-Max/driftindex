@@ -4,7 +4,7 @@ import { buildNameKey, toEnglishPilotNames } from './transliterate.js';
 export interface PilotNameFields {
   firstName: string;
   lastName: string;
-  nameRu: string | null;
+  nameAlias?: string | null;
 }
 
 export function canonicalEnglishNames(pilot: PilotNameFields): { firstName: string; lastName: string } {
@@ -12,7 +12,7 @@ export function canonicalEnglishNames(pilot: PilotNameFields): { firstName: stri
 }
 
 export function pilotNameKey(pilot: PilotNameFields): string {
-  return buildNameKey(pilot.firstName, pilot.lastName, pilot.nameRu);
+  return buildNameKey(pilot.firstName, pilot.lastName, pilot.nameAlias);
 }
 
 /** Prefer rdsgp numeric slug, then royal-ds style, then almanac. */
