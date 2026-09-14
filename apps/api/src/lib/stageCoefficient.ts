@@ -16,8 +16,14 @@ export interface StageCoefficientResult {
   gridSource: GridSource | null;
 }
 
+/** Ignore sparse qualifying imports — a handful of known poles must not shrink the grid. */
+const QUAL_GRID_MIN = 16;
+
 function hasQualData(results: StageCoefficientInput[]): boolean {
-  return results.some((row) => row.qualPosition != null || row.qualPoints != null);
+  const withQual = results.filter(
+    (row) => row.qualPosition != null || (row.qualPoints ?? 0) > 0,
+  ).length;
+  return withQual >= QUAL_GRID_MIN;
 }
 
 export function computeStageCoefficient(

@@ -8,9 +8,15 @@
  * Winter Training (Serres, Feb) and Gonco Fest (Bulgaria) are not championship rounds.
  * Round 4 moved from Wałbrzych to Trackwood (reverse layout).
  *
- * Tandem places 1–3 are stored only when an official Pro review names the podium.
- * Round 4 has no labeled Pro podium, so tandemPosition is left null there.
- * Qualifying scores/positions are unknown and are not invented.
+ * Tandem places are stored only when a labeled Pro recap names them.
+ * Round 4 Pro 1–4: drifting.hu Trackwood recap (Valainis / Petricevic / Brandner / Cselőtei).
+ *
+ * Qualifying is partial. Live scoring at drift.rs/dk.html is empty off-air and currently
+ * holds a 3-driver "Test Race" sheet for Round 5 — that test data is not imported.
+ * Full Pro grids were not archived. Known fragments:
+ *   R1 Skylimit / ndriftcup / driftas.eu / drifting.hu
+ *   R2 driftas.eu / tv3.lt
+ *   R3 driftas.eu / sportas24 / tv3.lt / official R3 review
  */
 
 export const DK_2026_SOURCE_URL = 'https://driftkings.com/dk26/';
@@ -85,11 +91,40 @@ export const DK_2026_EVENTS = [
   },
 ] as const;
 
-/** Official Pro podiums from DK round reviews. Round 4 has none. */
-export const DK_2026_PODIUMS: Record<number, readonly [string, string, string]> = {
+/** Labeled Pro tandem finishes. Round 4 includes 4th from the Trackwood recap. */
+export const DK_2026_PODIUMS: Record<number, readonly string[]> = {
   1: ['Andrius Vasiliauskas', 'Péter Porkoláb', 'Gediminas Levickas'],
   2: ['Logan Postigo', 'Sandra Janušauskaitė', 'Gediminas Levickas'],
   3: ['Patrik Cselőtei', 'Erik Lobmayer', 'Adrian Petricevic'],
+  4: ['Gustas Valainis', 'Adrian Petricevic', 'Daniel Brandner', 'Patrik Cselőtei'],
+};
+
+export interface Dk2026Quali {
+  position: number;
+  score: number | null;
+}
+
+/**
+ * Confirmed Pro qualifying fragments only.
+ * Do not treat this as a complete grid — R1 P1–P3 + P8, R2 P2/P12, R3 P1/P2/P15/P22.
+ */
+export const DK_2026_QUALIFYING: Record<number, Record<string, Dk2026Quali>> = {
+  1: {
+    'Erik Lobmayer': { position: 1, score: 94 },
+    'Gediminas Levickas': { position: 2, score: 91 },
+    'Andrius Vasiliauskas': { position: 3, score: 89 },
+    'Péter Porkoláb': { position: 8, score: null },
+  },
+  2: {
+    'Gediminas Levickas': { position: 2, score: 93 },
+    'Sandra Janušauskaitė': { position: 12, score: 78 },
+  },
+  3: {
+    'Gediminas Levickas': { position: 1, score: 91.5 },
+    'Patrik Cselőtei': { position: 2, score: null },
+    'Arnas Kazokevičius': { position: 15, score: 74.5 },
+    'Sandra Janušauskaitė': { position: 22, score: null },
+  },
 };
 
 export interface Dk2026Driver {
@@ -359,6 +394,8 @@ export interface Dk2026ResultRow {
   aliases: readonly string[];
   points: number;
   tandemPosition: number | null;
+  qualPosition: number | null;
+  qualScore100: number | null;
 }
 
 function podiumPlace(roundNumber: number, name: string): number | null {
@@ -380,12 +417,14 @@ export const DK_2026_RESULTS: Dk2026ResultRow[] = DK_2026_DRIVERS.flatMap((drive
         aliases: driver.aliases ?? [],
         points,
         tandemPosition: podiumPlace(roundNumber, driver.name),
+        qualPosition: DK_2026_QUALIFYING[roundNumber]?.[driver.name]?.position ?? null,
+        qualScore100: DK_2026_QUALIFYING[roundNumber]?.[driver.name]?.score ?? null,
       },
     ];
   }),
 );
 
-function assertPodiumDriversExist() {
+function assertKnownDriversExist() {
   const names = new Set(DK_2026_DRIVERS.map((driver) => driver.name));
   for (const [round, podium] of Object.entries(DK_2026_PODIUMS)) {
     for (const name of podium) {
@@ -394,6 +433,13 @@ function assertPodiumDriversExist() {
       }
     }
   }
+  for (const [round, quali] of Object.entries(DK_2026_QUALIFYING)) {
+    for (const name of Object.keys(quali)) {
+      if (!names.has(name)) {
+        throw new Error(`DK 2026 qualifying driver missing from standings: R${round} ${name}`);
+      }
+    }
+  }
 }
 
-assertPodiumDriversExist();
+assertKnownDriversExist();

@@ -9,6 +9,7 @@ import {
 } from '../src/data/drift-kings-2026.js';
 import { findMatchingPilot } from '../src/lib/pilotMatch.js';
 import { upsertPilotSeriesAlias } from '../src/lib/pilotSeriesAlias.js';
+import { toQualScore100 } from '../src/lib/qualScore.js';
 import { refreshStageCoefficientsForSeason } from '../src/lib/stageCoefficient.js';
 import { findOrCreateTrack } from '../src/lib/track.js';
 
@@ -128,6 +129,7 @@ async function main() {
 
   const mergedSlugs = new Set<string>();
   let tandemCount = 0;
+  let qualCount = 0;
   const seenPilots = new Set<string>();
 
   for (const row of DK_2026_RESULTS) {
@@ -178,9 +180,13 @@ async function main() {
       }
     }
 
+    const qualScore100 = toQualScore100(row.qualScore100, SERIES_SLUG);
+
     await prisma.eventResult.upsert({
       where: { eventId_pilotId: { eventId: event.id, pilotId: pilotRecord.id } },
       update: {
+        qualPosition: row.qualPosition,
+        qualScore100,
         tandemPosition: row.tandemPosition,
         points: row.points,
         dataStatus: 'UNVERIFIED',
@@ -188,12 +194,15 @@ async function main() {
       create: {
         eventId: event.id,
         pilotId: pilotRecord.id,
+        qualPosition: row.qualPosition,
+        qualScore100,
         tandemPosition: row.tandemPosition,
         points: row.points,
         dataStatus: 'UNVERIFIED',
       },
     });
     if (row.tandemPosition != null) tandemCount++;
+    if (row.qualPosition != null || qualScore100 != null) qualCount++;
   }
 
   const orphaned = await prisma.pilot.deleteMany({
@@ -209,7 +218,7 @@ async function main() {
   console.log(
     `Import complete: ${DK_2026_EVENTS.length} events (${finishedEvents} finished), ` +
       `${DK_2026_DRIVERS.length} Pro drivers, ${DK_2026_RESULTS.length} results ` +
-      `(${mergedSlugs.size} merged, ${tandemCount} confirmed podiums), ` +
+      `(${mergedSlugs.size} merged, ${tandemCount} tandem finishes, ${qualCount} with quali), ` +
       `${stageCount} stage coefficients` +
       (orphaned.count > 0 ? `, removed ${orphaned.count} orphan dk-* pilots` : ''),
   );
