@@ -190,7 +190,8 @@ const prestigeColumnKeys = ['rank', 'series', 'hardness', 'coefficient', 'sample
           <article class="card method-card">
             <h3>{{ t('seriesPage.method.p4p.title') }}</h3>
             <p>{{ t('seriesPage.method.p4p.body') }}</p>
-            <pre class="formula">P4P = min(P − Hardness − Q/100) + N</pre>
+            <pre class="formula">raw = min(P − Hardness − Q/100) − 0.1×series
+display = (100 − raw)</pre>
             <p class="muted method-note">{{ t('seriesPage.method.p4p.note') }}</p>
           </article>
 

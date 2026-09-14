@@ -42,7 +42,7 @@ export async function loadP4PInputs(
       seriesHardness,
       standings: metrics.map((row) => ({
         avgPlace: row.avgPlace,
-        avgQualScore: row.avgQualScore,
+        avgQualScore: row.avgQualScore ?? 90,
         pilot: row.pilot,
       })),
     });

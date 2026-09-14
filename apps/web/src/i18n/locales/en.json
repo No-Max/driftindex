@@ -94,7 +94,7 @@
       "p4p": {
         "title": "2. Pound-for-pound (P4P)",
         "body": "Each pilot's best score across featured series with overlap data:",
-        "note": "P = mean event place, Q = mean qual score (0–100), Q contributes as Q/100. N = pilots in P4P. Lower P4P means a better result."
+        "note": "P = mean event place (missed rounds count as 32nd). Q = mean qual score, or 90 default, minus 1 pt per missed round. +0.1×series per featured series entered. UI score = 100 − raw (higher is better)."
       },
       "indexPoints": {
         "title": "3. Event indexPoints",

@@ -5,6 +5,9 @@ import { GRID_REFERENCE } from './stageCoefficient.js';
 /** Imputed place for a missed round when averaging over the full season. */
 export const MISSED_EVENT_PLACE = GRID_REFERENCE;
 
+/** Default qual score (0–100) for P4P when a pilot has no qualifying data in a season. */
+export const DEFAULT_P4P_QUAL_SCORE = 90;
+
 export function computeSeasonAveragePlace(
   placeSum: number,
   participatedEvents: number,
@@ -15,6 +18,20 @@ export function computeSeasonAveragePlace(
   const missed = Math.max(0, totalFinishedEvents - participatedEvents);
   const adjustedSum = placeSum + missed * MISSED_EVENT_PLACE;
   return Math.round((adjustedSum / totalFinishedEvents) * 10) / 10;
+}
+
+/** P4P qual: mean qual on attended rounds, or 90 default, minus 1 pt per missed round. */
+export function computeSeasonP4PQualScore(
+  qualScores: number[],
+  participatedEvents: number,
+  totalFinishedEvents: number,
+): number {
+  const missed = Math.max(0, totalFinishedEvents - participatedEvents);
+  const avgQualBase =
+    qualScores.length > 0
+      ? (averageQualScore100(qualScores) ?? DEFAULT_P4P_QUAL_SCORE)
+      : DEFAULT_P4P_QUAL_SCORE;
+  return Math.max(0, Math.round((avgQualBase - missed) * 10) / 10);
 }
 
 export interface SeasonEventWithResults {
@@ -38,7 +55,8 @@ export interface SeasonEventWithResults {
 export interface SeasonP4PMetricsRow {
   pilot: Pilot;
   avgPlace: number;
-  avgQualScore: number | null;
+  /** P4P-adjusted qual: mean qual or 90 default, minus 1 pt per missed round. */
+  avgQualScore: number;
   eventCount: number;
 }
 
@@ -51,7 +69,7 @@ export function eventResultPlace(result: {
   return place;
 }
 
-/** Season metrics for P4P: mean event place and mean qual score (0–100). */
+/** Season metrics for P4P: imputed mean place and adjusted qual score (0–100). */
 export function computeSeasonP4PMetrics(events: SeasonEventWithResults[]): SeasonP4PMetricsRow[] {
   const finishedEvents = events.filter((event) => event.status === 'FINISHED');
   const totalEvents = finishedEvents.length;
@@ -89,7 +107,11 @@ export function computeSeasonP4PMetrics(events: SeasonEventWithResults[]): Seaso
     rows.push({
       pilot: bucket.pilot,
       avgPlace,
-      avgQualScore: averageQualScore100(bucket.qualScores),
+      avgQualScore: computeSeasonP4PQualScore(
+        bucket.qualScores,
+        bucket.eventCount,
+        totalEvents,
+      ),
       eventCount: bucket.eventCount,
     });
   }
