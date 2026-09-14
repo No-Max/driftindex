@@ -19,7 +19,7 @@
     "pole": "Qualifying winner",
     "qualScore": "/100",
     "gap": "gap",
-    "p4pScore": "d-index",
+    "p4pScore": "index points",
     "p4pAvgPlace": "~place {place}",
     "p4pAvgQual": "~qual {score}",
     "p4pLeader": "Drift Index #1",

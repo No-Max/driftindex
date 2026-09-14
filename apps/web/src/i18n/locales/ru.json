@@ -19,7 +19,7 @@
     "pole": "Победитель квалификации",
     "qualScore": "/100",
     "gap": "отрыв",
-    "p4pScore": "d-index",
+    "p4pScore": "index points",
     "p4pAvgPlace": "~место {place}",
     "p4pAvgQual": "~квала {score}",
     "p4pLeader": "Drift Index #1",

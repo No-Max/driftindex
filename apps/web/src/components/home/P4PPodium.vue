@@ -11,6 +11,7 @@ import SeriesLogo from '../SeriesLogo.vue';
 
 const props = defineProps<{
   items: HomeP4PEntry[];
+  year: number;
 }>();
 
 const { t, locale } = useI18n();
@@ -20,6 +21,10 @@ const rest = computed(() => props.items.filter((item) => item.rank > 1));
 
 function seriesName(item: HomeP4PEntry) {
   return item.bestSeries.name;
+}
+
+function seriesPath(slug: string) {
+  return `/series/${slug}/${props.year}`;
 }
 
 function isFeatured(rank: number) {
@@ -53,29 +58,38 @@ function formatQual(
   <div v-if="leader" class="p4p">
     <article class="card p4p-leader">
       <span class="p4p-leader__rank">#1</span>
-      <RouterLink :to="`/pilots/${leader.pilot.slug}`" class="p4p-leader__link">
-        <PilotAvatar :pilot="leader.pilot" size="2xl" />
+      <div class="p4p-leader__body">
+        <RouterLink :to="`/pilots/${leader.pilot.slug}`" class="p4p-leader__pilot-link">
+          <PilotAvatar :pilot="leader.pilot" size="2xl" />
+        </RouterLink>
         <div class="p4p-leader__info">
           <p class="p4p-leader__label">{{ t('home.p4pLeader') }}</p>
-          <p class="p4p-leader__name">{{ formatPilotName(leader.pilot) }}</p>
+          <RouterLink :to="`/pilots/${leader.pilot.slug}`" class="p4p-leader__name-link">
+            <p class="p4p-leader__name">{{ formatPilotName(leader.pilot) }}</p>
+          </RouterLink>
           <p class="p4p-leader__score">{{ leader.score }} {{ t('home.p4pScore') }}</p>
-          <p class="p4p-leader__series">
-            <SeriesLogo
-              :slug="leader.bestSeries.slug"
-              :name="leader.bestSeries.name"
-              :logo-url="leader.bestSeries.logoUrl"
-              size="sm"
-            />
-            <span>{{ seriesName(leader) }} · {{ bestSeriesMeta(leader) }}</span>
-            <span class="muted">· hardness {{ leader.bestSeries.weight }}</span>
-          </p>
+          <div class="p4p-leader__series-block">
+            <div class="p4p-leader__series-item p4p-leader__series-item--primary">
+              <SeriesLogo
+                :slug="leader.bestSeries.slug"
+                :name="leader.bestSeries.name"
+                :logo-url="leader.bestSeries.logoUrl"
+                size="sm"
+              />
+              <RouterLink :to="seriesPath(leader.bestSeries.slug)" class="p4p-series-link">
+                {{ seriesName(leader) }}
+              </RouterLink>
+              <span> · {{ bestSeriesMeta(leader) }}</span>
+              <span class="muted">· hardness {{ leader.bestSeries.weight }}</span>
+            </div>
+          </div>
           <div v-if="leader.otherSeries.length > 0" class="p4p-leader__other-series">
             <p class="p4p-leader__other-series-title">{{ t('home.p4pOtherSeries') }}</p>
             <ul class="p4p-leader__other-series-list">
               <li
                 v-for="series in leader.otherSeries"
                 :key="series.slug"
-                class="p4p-leader__other-series-item"
+                class="p4p-leader__series-item"
               >
                 <SeriesLogo
                   :slug="series.slug"
@@ -83,7 +97,10 @@ function formatQual(
                   :logo-url="series.logoUrl"
                   size="sm"
                 />
-                <span>{{ series.name }} · {{ seriesMeta(series) }}</span>
+                <RouterLink :to="seriesPath(series.slug)" class="p4p-series-link">
+                  {{ series.name }}
+                </RouterLink>
+                <span> · {{ seriesMeta(series) }}</span>
                 <span class="muted">· hardness {{ series.weight }}</span>
               </li>
             </ul>
@@ -118,7 +135,7 @@ function formatQual(
             </div>
           </div>
         </div>
-      </RouterLink>
+      </div>
     </article>
 
     <ol class="p4p-list">
@@ -128,11 +145,17 @@ function formatQual(
         class="p4p-list__item"
         :class="isFeatured(item.rank) ? 'p4p-list__item--featured' : 'p4p-list__item--compact'"
       >
-        <RouterLink :to="`/pilots/${item.pilot.slug}`" class="p4p-list__link">
-          <span class="p4p-list__rank">{{ item.rank }}</span>
-          <PilotAvatar :pilot="item.pilot" :size="isFeatured(item.rank) ? 'xl' : 'md'" />
+        <div class="p4p-list__link">
+          <RouterLink :to="`/pilots/${item.pilot.slug}`" class="p4p-list__rank">
+            {{ item.rank }}
+          </RouterLink>
+          <RouterLink :to="`/pilots/${item.pilot.slug}`" class="p4p-list__avatar-link">
+            <PilotAvatar :pilot="item.pilot" :size="isFeatured(item.rank) ? 'xl' : 'md'" />
+          </RouterLink>
           <div class="p4p-list__body">
-            <p class="p4p-list__name">{{ formatPilotName(item.pilot) }}</p>
+            <RouterLink :to="`/pilots/${item.pilot.slug}`" class="p4p-list__name-link">
+              <p class="p4p-list__name">{{ formatPilotName(item.pilot) }}</p>
+            </RouterLink>
             <p class="p4p-list__series">
               <SeriesLogo
                 :slug="item.bestSeries.slug"
@@ -140,7 +163,10 @@ function formatQual(
                 :logo-url="item.bestSeries.logoUrl"
                 size="sm"
               />
-              <span>{{ seriesName(item) }} · {{ bestSeriesMeta(item) }}</span>
+              <RouterLink :to="seriesPath(item.bestSeries.slug)" class="p4p-series-link">
+                {{ seriesName(item) }}
+              </RouterLink>
+              <span> · {{ bestSeriesMeta(item) }}</span>
             </p>
             <p v-if="item.pilot.stats && isFeatured(item.rank)" class="p4p-list__meta">
               <span>{{ item.pilot.stats.eventsCount }} {{ t('pilot.stats.eventsShort') }}</span>
@@ -149,8 +175,10 @@ function formatQual(
               </span>
             </p>
           </div>
-          <span class="p4p-list__score">{{ item.score }}</span>
-        </RouterLink>
+          <RouterLink :to="`/pilots/${item.pilot.slug}`" class="p4p-list__score">
+            {{ item.score }}
+          </RouterLink>
+        </div>
       </li>
     </ol>
   </div>
@@ -168,8 +196,10 @@ function formatQual(
   position: relative;
   display: flex;
   flex-direction: column;
+  height: 100%;
+  min-height: 0;
   padding: 1.75rem 2rem;
-  overflow: visible;
+  overflow: hidden;
   border-color: rgba(255, 77, 26, 0.35);
   background: linear-gradient(160deg, rgba(255, 77, 26, 0.1), var(--surface));
 }
@@ -185,7 +215,7 @@ function formatQual(
   opacity: 0.9;
 }
 
-.p4p-leader__link {
+.p4p-leader__body {
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -193,12 +223,31 @@ function formatQual(
   text-align: center;
   gap: 1rem;
   width: 100%;
-  min-height: 100%;
+  min-height: 0;
   padding-top: 0.5rem;
 }
 
+.p4p-leader__pilot-link,
+.p4p-leader__name-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.p4p-leader__pilot-link:hover,
+.p4p-leader__name-link:hover {
+  color: var(--accent);
+}
+
+.p4p-leader__name-link {
+  display: inline-block;
+}
+
 .p4p-leader__info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
   width: 100%;
+  min-height: 0;
 }
 
 .p4p-leader__label {
@@ -224,14 +273,10 @@ function formatQual(
   color: var(--accent);
 }
 
-.p4p-leader__series {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  margin: 0.35rem 0 0;
-  font-size: 0.9rem;
+.p4p-leader__series-block {
+  width: 100%;
+  margin-top: 0.85rem;
+  text-align: left;
 }
 
 .p4p-leader__other-series {
@@ -257,7 +302,7 @@ function formatQual(
   gap: 0.45rem;
 }
 
-.p4p-leader__other-series-item {
+.p4p-leader__series-item {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -269,13 +314,31 @@ function formatQual(
   font-size: 0.85rem;
 }
 
+.p4p-leader__series-item--primary {
+  border-color: rgba(255, 77, 26, 0.45);
+  box-shadow: 0 0 0 1px rgba(255, 77, 26, 0.12);
+}
+
+.p4p-series-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.p4p-series-link:hover {
+  color: var(--accent);
+}
+
 .p4p-leader__stats {
   width: 100%;
   margin-top: 1rem;
 }
 
 .p4p-leader__events {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
   width: 100%;
+  min-height: 0;
   margin-top: 1rem;
   text-align: left;
 }
@@ -290,16 +353,25 @@ function formatQual(
 }
 
 .p4p-leader__events-table {
+  flex: 1;
+  min-height: 0;
   border: 1px solid var(--border);
   border-radius: 12px;
   background: rgba(0, 0, 0, 0.15);
-  overflow-x: auto;
+  overflow: auto;
 }
 
 .p4p-leader__events-table th,
 .p4p-leader__events-table td {
   padding: 0.45rem 0.55rem;
   font-size: 0.82rem;
+}
+
+.p4p-leader__events-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface-2);
 }
 
 .p4p-leader__events-table tbody tr:last-child td {
@@ -312,6 +384,7 @@ function formatQual(
   padding: 0;
   display: grid;
   gap: 0.65rem;
+  height: 100%;
   align-content: start;
 }
 
@@ -344,12 +417,26 @@ function formatQual(
   padding: 0.65rem 0.9rem;
 }
 
+.p4p-list__rank,
+.p4p-list__avatar-link,
+.p4p-list__name-link,
+.p4p-list__score {
+  color: inherit;
+  text-decoration: none;
+}
+
 .p4p-list__rank {
   font-family: Oswald, sans-serif;
   font-size: 1.1rem;
   color: var(--accent);
   min-width: 1.5rem;
   text-align: center;
+}
+
+.p4p-list__avatar-link,
+.p4p-list__name-link:hover,
+.p4p-list__score:hover {
+  color: var(--accent);
 }
 
 .p4p-list__item--featured .p4p-list__rank {
@@ -415,7 +502,7 @@ function formatQual(
     grid-template-columns: 1fr;
   }
 
-  .p4p-leader__link {
+  .p4p-leader__body {
     padding: 0.5rem 0;
   }
 }

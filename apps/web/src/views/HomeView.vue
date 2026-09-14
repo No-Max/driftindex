@@ -38,7 +38,7 @@ onMounted(async () => {
 
     <template v-else-if="data">
       <section class="home-section">
-        <P4PPodium :items="data.poundForPound" />
+        <P4PPodium :items="data.poundForPound" :year="data.year" />
       </section>
 
       <section class="home-section">
