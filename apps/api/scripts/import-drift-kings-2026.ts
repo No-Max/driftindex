@@ -8,7 +8,6 @@ import {
   DK_2026_STANDINGS_URL,
 } from '../src/data/drift-kings-2026.js';
 import { findMatchingPilot } from '../src/lib/pilotMatch.js';
-import { canonicalEnglishNames } from '../src/lib/pilotNames.js';
 import { upsertPilotSeriesAlias } from '../src/lib/pilotSeriesAlias.js';
 import { refreshStageCoefficientsForSeason } from '../src/lib/stageCoefficient.js';
 import { findOrCreateTrack } from '../src/lib/track.js';
@@ -137,8 +136,9 @@ async function main() {
       throw new Error(`Missing event ${row.eventSlug} for ${row.name}`);
     }
 
-    const parsed = splitName(row.name);
-    const english = canonicalEnglishNames({ ...parsed, nameAlias: row.name });
+    // Curated English names — skip canonicalEnglishNames(), which title-cases
+    // the whole last-name string and mangles "Du Pasquier" / "Trela-Muchewicz".
+    const english = splitName(row.name);
     const slug = `dk-${driverSlugFromName(row.name)}`;
     const pilotSlug = await resolvePilotSlug(
       english.firstName,
