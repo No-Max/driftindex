@@ -2,6 +2,7 @@
 import type { HomeP4PEntry } from '@drift-index/shared';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { formatAvgPlaceRange } from '../../lib/formatAvgPlace';
 import PilotAvatar from '../PilotAvatar.vue';
 import PilotStatsGrid from '../PilotStatsGrid.vue';
 
@@ -25,7 +26,7 @@ function isFeatured(rank: number) {
 function bestSeriesSummary(item: HomeP4PEntry) {
   const parts = [
     seriesName(item),
-    t('home.p4pAvgPlace', { place: item.bestSeries.place.toFixed(1) }),
+    t('home.p4pAvgPlace', { place: formatAvgPlaceRange(item.bestSeries.place) }),
   ];
   if (item.bestSeries.avgQualScore != null) {
     parts.push(t('home.p4pAvgQual', { score: item.bestSeries.avgQualScore.toFixed(1) }));

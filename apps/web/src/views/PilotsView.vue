@@ -4,6 +4,7 @@ import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { fetchPilots } from '../api/client';
 import PilotAvatar from '../components/PilotAvatar.vue';
+import { formatAvgPlaceRange } from '../lib/formatAvgPlace';
 
 const { t } = useI18n();
 
@@ -64,7 +65,7 @@ function bestSeriesSummary(entry: PilotListEntry) {
   if (!entry.bestSeries) return '';
   const parts = [
     seriesName(entry),
-    t('home.p4pAvgPlace', { place: entry.bestSeries.place.toFixed(1) }),
+    t('home.p4pAvgPlace', { place: formatAvgPlaceRange(entry.bestSeries.place) }),
   ];
   if (entry.bestSeries.avgQualScore != null) {
     parts.push(t('home.p4pAvgQual', { score: entry.bestSeries.avgQualScore.toFixed(1) }));

@@ -20,8 +20,8 @@
     "qualScore": "/100",
     "gap": "gap",
     "p4pScore": "P4P",
-    "p4pAvgPlace": "avg place {place}",
-    "p4pAvgQual": "avg qual {score}",
+    "p4pAvgPlace": "~place {place}",
+    "p4pAvgQual": "~qual {score}",
     "p4pLeader": "Pound-for-pound #1",
     "noEvents": "No events",
     "sections": {
@@ -60,7 +60,7 @@
     "title": "Series",
     "subtitle": "Prestige ranking and P4P weights · {year}",
     "prestigeTitle": "Series prestige",
-    "prestigeLead": "Featured championships ranked by how hard they are relative to each other. Hardness feeds directly into pound-for-pound (P4P) scores.",
+    "prestigeLead": "Selected championships ranked by difficulty relative to each other. The higher this measure, the harder it is to win in that series compared with the others. Difficulty feeds directly into pound-for-pound (P4P).",
     "historyWindow": "Overlap window: {from}–{to} ({years} seasons)",
     "overlapGroups": "{count} pilots in 2+ series",
     "col": {
@@ -72,7 +72,7 @@
     "colHelp": {
       "rank": "Series position in the prestige ranking. Higher Hardness means a higher Rank.",
       "series": "Featured championship included in prestige and P4P calculations.",
-      "hardness": "Reflects the average difference in places drivers take compared with other series; based on event-by-event places, not season standings.",
+      "hardness": "Reflects the average difference in places a driver takes compared with their results in other series; based on places at each event, not season standings. It is a scale, not a coefficient — it shows the average gap between places held.",
       "samples": "Drivers who competed in multiple series; hardness is calculated from their results."
     },
     "showOverlap": "Overlaps",
