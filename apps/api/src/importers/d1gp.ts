@@ -1,24 +1,11 @@
 import * as cheerio from 'cheerio';
-import { D1GP_2026_DRIVERS } from '../data/d1gp-2026-drivers.js';
+import {
+  registerLatinDriverFromRanking,
+  resolveD1Driver,
+} from '../data/d1gp-drivers.js';
+import { getD1gpSeasonConfig, D1GP_SUPPORTED_SEASONS } from '../data/d1gp-seasons.js';
 
 const SITE = 'https://d1gp.co.jp';
-const RANKING_URL =
-  SITE +
-  '/2026d1%e3%82%b0%e3%83%a9%e3%83%b3%e3%83%97%e3%83%aa%e3%82%b7%e3%83%aa%e3%83%bc%e3%82%ba%e3%83%a9%e3%83%b3%e3%82%ad%e3%83%b3%e3%82%b0/';
-const DRIVERS_INTRO_URL =
-  SITE +
-  '/2026-d1%e3%82%b0%e3%83%a9%e3%83%b3%e3%83%97%e3%83%aa%e3%83%89%e3%83%a9%e3%82%a4%e3%83%90%e3%83%bc%e7%b4%b9%e4%bb%8b/';
-
-/** e.g. DM2026_003-KeiichiNomura-D.jpg or …-683x1024.jpg */
-const DRIVER_PHOTO_RE =
-  /DM2026_(\d+)-([A-Za-z]+(?:-[A-Za-z]+)?)-D(?:-683x1024)?\.jpg/gi;
-
-const ROUND_REPORT_URLS: Record<number, string> = {
-  1: SITE + '/25117/',
-  2: SITE + '/25129/',
-  3: SITE + '/25728/',
-  4: SITE + '/25738/',
-};
 
 export interface D1StageResult {
   eventSlug: string;
@@ -64,88 +51,28 @@ interface RoundReportData {
   tandemByNumber: Map<number, { position: number }>;
 }
 
-const D1GP_2026_EVENTS: D1Event[] = [
-  {
-    slug: 'd1-r1',
-    roundNumber: 1,
-    name: 'Round 1 — Aichi Sky Expo',
-    trackName: 'Aichi Sky Expo',
-    startsAt: '2026-05-09T09:00:00.000Z',
-    status: 'FINISHED',
-  },
-  {
-    slug: 'd1-r2',
-    roundNumber: 2,
-    name: 'Round 2 — Aichi Sky Expo',
-    trackName: 'Aichi Sky Expo',
-    startsAt: '2026-05-10T09:00:00.000Z',
-    status: 'FINISHED',
-  },
-  {
-    slug: 'd1-r3',
-    roundNumber: 3,
-    name: 'Round 3 — Tsukuba Circuit',
-    trackName: 'Tsukuba Circuit',
-    startsAt: '2026-06-27T09:00:00.000Z',
-    status: 'FINISHED',
-  },
-  {
-    slug: 'd1-r4',
-    roundNumber: 4,
-    name: 'Round 4 — Tsukuba Circuit',
-    trackName: 'Tsukuba Circuit',
-    startsAt: '2026-06-28T09:00:00.000Z',
-    status: 'FINISHED',
-  },
-  {
-    slug: 'd1-r5',
-    roundNumber: 5,
-    name: 'Round 5 — Ebisu Circuit',
-    trackName: 'Ebisu Circuit',
-    startsAt: '2026-09-26T09:00:00.000Z',
-    status: 'SCHEDULED',
-  },
-  {
-    slug: 'd1-r6',
-    roundNumber: 6,
-    name: 'Round 6 — Ebisu Circuit',
-    trackName: 'Ebisu Circuit',
-    startsAt: '2026-09-27T09:00:00.000Z',
-    status: 'SCHEDULED',
-  },
-  {
-    slug: 'd1-r7',
-    roundNumber: 7,
-    name: 'Round 7 — Autopolis',
-    trackName: 'Autopolis',
-    startsAt: '2026-10-24T09:00:00.000Z',
-    status: 'SCHEDULED',
-  },
-  {
-    slug: 'd1-r8',
-    roundNumber: 8,
-    name: 'Round 8 — Autopolis',
-    trackName: 'Autopolis',
-    startsAt: '2026-10-25T09:00:00.000Z',
-    status: 'SCHEDULED',
-  },
-  {
-    slug: 'd1-r9',
-    roundNumber: 9,
-    name: 'Round 9 — Odaiba',
-    trackName: 'Odaiba, Tokyo Bay',
-    startsAt: '2026-11-14T09:00:00.000Z',
-    status: 'SCHEDULED',
-  },
-  {
-    slug: 'd1-r10',
-    roundNumber: 10,
-    name: 'Round 10 — Odaiba',
-    trackName: 'Odaiba, Tokyo Bay',
-    startsAt: '2026-11-15T09:00:00.000Z',
-    status: 'SCHEDULED',
-  },
-];
+interface RankingRow {
+  number: number;
+  nameJa: string;
+  team: string;
+  roundPoints: Map<number, number>;
+  totalPoints: number;
+}
+
+const TRACK_LABELS: Record<string, string> = {
+  OKUIBUKI: 'Okui',
+  TSUKUBA: 'Tsukuba Circuit',
+  EBISU: 'Ebisu Circuit',
+  AUTOPOLIS: 'Autopolis',
+  AP: 'Autopolis',
+  FUJI: 'Fuji Speedway',
+  ODAIBA: 'Odaiba, Tokyo Bay',
+  AICHI: 'Aichi Sky Expo',
+};
+
+export function listD1gpSeasons(): number[] {
+  return [...D1GP_SUPPORTED_SEASONS];
+}
 
 async function fetchHtml(url: string): Promise<string> {
   const response = await fetch(url, {
@@ -181,6 +108,41 @@ function pilotSlug(number: number, firstName: string, lastName: string): string 
 
 function eventSlug(roundNumber: number): string {
   return `d1-r${roundNumber}`;
+}
+
+function normalizeTrackLabel(raw: string): string {
+  const key = raw.trim().toUpperCase().replace(/\s+/g, ' ');
+  return TRACK_LABELS[key] ?? titleCaseTrack(raw.trim());
+}
+
+function titleCaseTrack(value: string): string {
+  return value
+    .toLowerCase()
+    .split(/\s+/)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+function parseVenueSchedule(html: string): Map<number, string> {
+  const text = cheerio.load(html).root().text().replace(/\s+/g, ' ');
+  const schedule = new Map<number, string>();
+
+  for (const match of text.matchAll(/RD\.(\d+)(?:&(\d+))?\s+([A-Z][A-Z\s]{1,20}?)(?:\s*\/|\s+ドライバ|\s+単走|$)/g)) {
+    const start = Number.parseInt(match[1]!, 10);
+    const end = match[2] ? Number.parseInt(match[2], 10) : start;
+    const track = normalizeTrackLabel(match[3]!);
+    for (let round = start; round <= end; round += 1) {
+      schedule.set(round, track);
+    }
+  }
+
+  return schedule;
+}
+
+function approximateEventDate(year: number, roundNumber: number): string {
+  const month = Math.min(11, 3 + roundNumber);
+  const day = roundNumber % 2 === 0 ? 10 : 9;
+  return new Date(Date.UTC(year, month - 1, day, 9)).toISOString();
 }
 
 function findTable(
@@ -232,16 +194,20 @@ function parseRoundReport(html: string): RoundReportData {
         .find('td')
         .toArray()
         .map((cell) => $(cell).text().trim());
+      if (positionIndex < 0 || numberIndex < 0 || bestIndex < 0) return;
       if (cells.length <= Math.max(positionIndex, numberIndex, bestIndex)) return;
-      const position = parseInteger(cells[positionIndex]!);
-      const number = parseInteger(cells[numberIndex]!);
-      const bestScore = parseFloatScore(cells[bestIndex]!);
+      const position = parseInteger(cells[positionIndex] ?? '');
+      const number = parseInteger(cells[numberIndex] ?? '');
+      const bestScore = parseFloatScore(cells[bestIndex] ?? '');
       if (position == null || number == null || bestScore == null) return;
       qualByNumber.set(number, { position, bestScore });
     });
   }
 
   const tandemTable =
+    findTable($, ['driver', 'model', 'points'], {
+      exclude: ['best', 'group', 'tsuiso', 'tanso', 'tuiso'],
+    }) ??
     findTable($, ['driver', 'tuiso']) ??
     findTable($, ['driver', 'tsuiso']) ??
     findTable($, ['driver', 'model'], { exclude: ['best', 'group'] });
@@ -254,9 +220,10 @@ function parseRoundReport(html: string): RoundReportData {
         .find('td')
         .toArray()
         .map((cell) => $(cell).text().trim());
+      if (positionIndex < 0 || numberIndex < 0) return;
       if (cells.length <= Math.max(positionIndex, numberIndex)) return;
-      const position = parseInteger(cells[positionIndex]!);
-      const number = parseInteger(cells[numberIndex]!);
+      const position = parseInteger(cells[positionIndex] ?? '');
+      const number = parseInteger(cells[numberIndex] ?? '');
       if (position == null || number == null) return;
       tandemByNumber.set(number, { position });
     });
@@ -265,15 +232,7 @@ function parseRoundReport(html: string): RoundReportData {
   return { qualByNumber, tandemByNumber };
 }
 
-interface RankingRow {
-  number: number;
-  nameJa: string;
-  team: string;
-  roundPoints: Map<number, number>;
-  totalPoints: number;
-}
-
-function parseTsuisoRanking(html: string): RankingRow[] {
+function parseTsuisoRanking(html: string): { rows: RankingRow[]; roundNumbers: number[] } {
   const $ = cheerio.load(html);
   const table = findTable($, ['driver', 'rd.1']);
   if (!table) {
@@ -293,6 +252,7 @@ function parseTsuisoRanking(html: string): RankingRow[] {
     if (match) roundColumns.set(Number(match[1]), index);
   }
 
+  const roundNumbers = [...roundColumns.keys()].sort((a, b) => a - b);
   const rows: RankingRow[] = [];
   table.find('tr').slice(1).each((_, row) => {
     const cells = $(row)
@@ -315,72 +275,136 @@ function parseTsuisoRanking(html: string): RankingRow[] {
     const totalRaw = cells[cells.length - 1] ?? '';
     const totalPoints = parseInteger(totalRaw) ?? 0;
 
+    const nameJa = cells[2]!;
+    registerLatinDriverFromRanking(number, nameJa);
+
     rows.push({
       number,
-      nameJa: cells[2]!,
+      nameJa,
       team: cells[3]!,
       roundPoints,
       totalPoints,
     });
   });
 
-  return rows;
+  return { rows, roundNumbers };
 }
 
-function parseDriverPhotos(html: string): Map<number, string> {
+function parseDriverPhotos(html: string, seasonYear: number): Map<number, string> {
   const byNumber = new Map<number, string>();
+  const photoRe = new RegExp(
+    `DM${seasonYear}_(\\d+)-([A-Za-z]+(?:-[A-Za-z]+)?)-D(?:-683x1024)?\\.jpg`,
+    'gi',
+  );
 
-  for (const match of html.matchAll(DRIVER_PHOTO_RE)) {
+  for (const match of html.matchAll(photoRe)) {
     const number = Number.parseInt(match[1]!, 10);
     const nameSlug = match[2]!;
-    const url = `${SITE}/wp-content/uploads/2026/05/DM2026_${match[1]!.padStart(3, '0')}-${nameSlug}-D.jpg`;
+    const padded = match[1]!.padStart(3, '0');
+    const uploadYear = seasonYear >= 2026 ? '2026' : String(seasonYear);
+    const url = `${SITE}/wp-content/uploads/${uploadYear}/05/DM${seasonYear}_${padded}-${nameSlug}-D.jpg`;
     byNumber.set(number, url);
   }
 
   return byNumber;
 }
 
-function resolveDriver(number: number, nameJa: string) {
-  const known = D1GP_2026_DRIVERS[number];
-  if (known) return known;
+async function discoverRoundReports(categoryUrls: string[]): Promise<Map<number, string>> {
+  const byRound = new Map<number, string>();
 
-  const parts = nameJa.trim().split(/\s+/);
-  const lastName = parts[0] ?? nameJa;
-  const firstName = parts.slice(1).join(' ') || lastName;
-  return {
-    firstName,
-    lastName,
-    nameJa,
-    country: 'JP' as const,
-  };
+  for (const categoryUrl of categoryUrls) {
+    const feedUrl = categoryUrl.endsWith('/') ? `${categoryUrl}feed/` : `${categoryUrl}/feed/`;
+    const xml = await fetchHtml(feedUrl);
+
+    for (const item of xml.matchAll(/<item>([\s\S]*?)<\/item>/g)) {
+      const block = item[1]!;
+      const titleMatch = block.match(/<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/);
+      const linkMatch = block.match(/<link>([\s\S]*?)<\/link>/);
+      if (!titleMatch || !linkMatch) continue;
+
+      const title = titleMatch[1]!
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#039;/g, "'");
+      const link = linkMatch[1]!.trim();
+
+      if (title.includes('エントリー')) continue;
+      if (!/(詳細レポート|大会結果|結果発表|レポート)/.test(title)) continue;
+
+      const roundMatch = title.match(/RD\.?\s*(\d+)/i);
+      if (!roundMatch) continue;
+
+      const roundNumber = Number.parseInt(roundMatch[1]!, 10);
+      if (!byRound.has(roundNumber)) {
+        byRound.set(roundNumber, link);
+      }
+    }
+  }
+
+  return byRound;
+}
+
+function buildEvents(
+  seasonYear: number,
+  roundNumbers: number[],
+  venueSchedule: Map<number, string>,
+  reportRounds: Set<number>,
+  rankingRows: RankingRow[],
+): D1Event[] {
+  return roundNumbers.map((roundNumber) => {
+    const trackName = venueSchedule.get(roundNumber) ?? `Round ${roundNumber}`;
+    const hasPoints = rankingRows.some((row) => row.roundPoints.has(roundNumber));
+    const status: D1Event['status'] =
+      reportRounds.has(roundNumber) || hasPoints ? 'FINISHED' : 'SCHEDULED';
+
+    return {
+      slug: eventSlug(roundNumber),
+      roundNumber,
+      name: `Round ${roundNumber} — ${trackName}`,
+      trackName,
+      startsAt: approximateEventDate(seasonYear, roundNumber),
+      status,
+    };
+  });
+}
+
+function resolveDriver(_seasonYear: number, number: number, nameJa: string) {
+  return resolveD1Driver(number, nameJa);
 }
 
 export async function fetchD1gpSeason(seasonYear: number): Promise<D1SeasonData> {
-  if (seasonYear !== 2026) {
-    throw new Error(`D1GP importer currently supports 2026 only (requested ${seasonYear})`);
-  }
+  const config = getD1gpSeasonConfig(seasonYear);
+  const categoryUrls = config.categorySlugs.map((slug) => `${config.categoryBase}${slug}/`);
 
-  const [rankingHtml, driversIntroHtml, ...reportHtmls] = await Promise.all([
-    fetchHtml(RANKING_URL),
-    fetchHtml(DRIVERS_INTRO_URL),
-    ...Object.values(ROUND_REPORT_URLS).map((url) => fetchHtml(url)),
-  ]);
+  const rankingHtml = await fetchHtml(config.rankingUrl);
+  const { rows: rankingRows, roundNumbers } = parseTsuisoRanking(rankingHtml);
+  const venueSchedule = parseVenueSchedule(rankingHtml);
 
-  const rankingRows = parseTsuisoRanking(rankingHtml);
-  const photosByNumber = parseDriverPhotos(driversIntroHtml);
+  const reportUrlsByRound = await discoverRoundReports(categoryUrls);
+  const reportRounds = new Set(reportUrlsByRound.keys());
+
+  const reportEntries = [...reportUrlsByRound.entries()].sort(([a], [b]) => a - b);
+  const reportHtmls = await Promise.all(reportEntries.map(([, url]) => fetchHtml(url)));
   const reportsByRound = new Map<number, RoundReportData>();
-  for (const [roundNumber, html] of Object.entries(ROUND_REPORT_URLS).map(([round, url], index) => [
-    Number(round),
-    reportHtmls[index]!,
-  ] as const)) {
-    reportsByRound.set(roundNumber, parseRoundReport(html));
+  for (const [index, [roundNumber]] of reportEntries.entries()) {
+    reportsByRound.set(roundNumber, parseRoundReport(reportHtmls[index]!));
   }
 
-  const finishedRounds = [...reportsByRound.keys()].sort((a, b) => a - b);
+  let photosByNumber = new Map<number, string>();
+  if (config.driversIntroUrl) {
+    const driversIntroHtml = await fetchHtml(config.driversIntroUrl);
+    photosByNumber = parseDriverPhotos(driversIntroHtml, seasonYear);
+  }
+
+  const events = buildEvents(seasonYear, roundNumbers, venueSchedule, reportRounds, rankingRows);
+  const finishedRounds = events.filter((event) => event.status === 'FINISHED').map((event) => event.roundNumber);
+
   const pilots: D1Pilot[] = rankingRows
     .filter((row) => row.totalPoints > 0 || [...row.roundPoints.values()].some((points) => points > 0))
     .map((row) => {
-      const driver = resolveDriver(row.number, row.nameJa);
+      const driver = resolveDriver(seasonYear, row.number, row.nameJa);
       const stages: D1StageResult[] = [];
 
       for (const roundNumber of finishedRounds) {
@@ -417,9 +441,9 @@ export async function fetchD1gpSeason(seasonYear: number): Promise<D1SeasonData>
     .filter((pilot) => pilot.stages.length > 0);
 
   return {
-    sourceUrl: RANKING_URL,
+    sourceUrl: config.rankingUrl,
     seasonYear,
-    events: D1GP_2026_EVENTS,
+    events,
     pilots,
   };
 }

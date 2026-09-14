@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
-import { fetchD1gpSeason } from '../src/importers/d1gp.js';
+import { fetchD1gpSeason, listD1gpSeasons } from '../src/importers/d1gp.js';
 import type { D1Pilot } from '../src/importers/d1gp.js';
 import { findMatchingPilot } from '../src/lib/pilotMatch.js';
 import { canonicalEnglishNames } from '../src/lib/pilotNames.js';
@@ -14,10 +14,25 @@ const prisma = new PrismaClient();
 const SERIES_SLUG = 'd1gp';
 
 function parseYears(): number[] {
+  if (process.argv.includes('--list-seasons')) return [];
+
+  const supported = listD1gpSeasons();
+  if (process.argv.includes('--all')) {
+    return supported;
+  }
+
   const yearArgs = process.argv.filter((arg) => /^\d{4}$/.test(arg));
   if (yearArgs.length > 0) {
-    return yearArgs.map((arg) => Number.parseInt(arg, 10));
+    const years = yearArgs.map((arg) => Number.parseInt(arg, 10));
+    const invalid = years.filter((year) => !supported.includes(year));
+    if (invalid.length > 0) {
+      throw new Error(
+        `Unsupported season(s): ${invalid.join(', ')}. Available: ${supported.join(', ')}`,
+      );
+    }
+    return years;
   }
+
   return [2026];
 }
 
@@ -191,7 +206,24 @@ async function importSeason(year: number, seriesId: string) {
   );
 }
 
+async function cleanupOrphanD1Pilots() {
+  const deleted = await prisma.pilot.deleteMany({
+    where: {
+      slug: { startsWith: 'd1-' },
+      results: { none: {} },
+    },
+  });
+  if (deleted.count > 0) {
+    console.log(`Removed ${deleted.count} orphan d1-* pilot records`);
+  }
+}
+
 async function main() {
+  if (process.argv.includes('--list-seasons')) {
+    console.log(listD1gpSeasons().join('\n'));
+    return;
+  }
+
   const series = await prisma.series.findUnique({ where: { slug: SERIES_SLUG } });
   if (!series) {
     throw new Error(`Series ${SERIES_SLUG} not found — run db:seed first`);
@@ -200,6 +232,8 @@ async function main() {
   for (const year of parseYears()) {
     await importSeason(year, series.id);
   }
+
+  await cleanupOrphanD1Pilots();
 }
 
 main()

@@ -35,7 +35,9 @@
     "db:import:formula-drift": "tsx scripts/import-formula-drift.ts",
     "db:import:formula-drift:list": "tsx scripts/import-formula-drift.ts --list-seasons",
     "db:import:formula-drift:probe": "tsx scripts/import-formula-drift.ts --probe-archives",
-    "db:import:d1gp": "tsx scripts/import-d1gp.ts"
+    "db:import:d1gp": "tsx scripts/import-d1gp.ts",
+    "db:import:d1gp:list": "tsx scripts/import-d1gp.ts --list-seasons",
+    "db:import:d1gp:all": "tsx scripts/import-d1gp.ts --all"
   },
   "dependencies": {
     "@drift-index/shared": "*",

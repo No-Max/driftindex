@@ -40,7 +40,9 @@ export function computeStageCoefficient(
       return (b.qualPoints ?? 0) - (a.qualPoints ?? 0);
     });
     const topGrid = sorted.slice(0, GRID_CAP);
-    const gridActual = topGrid.filter((row) => (row.qualPoints ?? 0) > 0).length;
+    const gridActual = topGrid.filter(
+      (row) => (row.qualPoints ?? 0) > 0 || (row.qualPosition != null && row.qualPosition >= 1),
+    ).length;
     if (gridActual === 0) return empty;
 
     return {
