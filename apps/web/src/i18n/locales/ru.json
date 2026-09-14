@@ -75,10 +75,9 @@
       "hardness": "Отражает среднюю разницу в занимаемых пилотами местах по отношению к другим сериям; считается по местам на каждом этапе, а не по итогам сезона.",
       "samples": "Пилоты, выступавшие в нескольких сериях; именно по их результатам ведётся расчёт сложности."
     },
-    "showOverlap": "Примеры",
+    "showOverlap": "Overlaps",
     "hideOverlap": "Скрыть",
-    "overlapExamples": "Среднее место пилота на этапах",
-    "overlapLine": "{target} {avgPlaceTarget} · {other} {avgPlaceOther}",
+    "overlapExamples": "Overlaps",
     "source": {
       "overlap": "Расчёт по overlap",
       "insufficient": "Недостаточно overlap-данных"

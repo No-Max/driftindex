@@ -4,11 +4,11 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 const FEATURED = [
-  { slug: 'formula-drift-pro', name: 'Formula Drift PRO', shortName: 'FD PRO', country: 'US', order: 1, weight: 1.0 },
+  { slug: 'formula-drift-pro', name: 'Formula Drift Pro', shortName: 'FD Pro', country: 'US', order: 1, weight: 1.0 },
   { slug: 'drift-masters', name: 'Drift Masters', shortName: 'DM', country: 'EU', order: 2, weight: 1.15 },
   { slug: 'd1gp', name: 'D1 Grand Prix', shortName: 'D1GP', country: 'JP', order: 3, weight: 1.1 },
-  { slug: 'rds-gp', name: 'RDS GP', shortName: 'RDS GP', country: 'RU', order: 4, weight: 0.95 },
-  { slug: 'royal-ds', name: 'Royal Drift Series', shortName: 'RDS', country: 'CN', order: 5, weight: 0.9 },
+  { slug: 'rds-gp', name: 'Russian Drift Series GP', shortName: 'RDS GP', country: 'RU', order: 4, weight: 0.95 },
+  { slug: 'royal-ds', name: 'Royal Drift Series', shortName: 'Royal DS', country: 'CN', order: 5, weight: 0.9 },
   { slug: 'drift-kings', name: 'Drift Kings', shortName: 'DK', country: 'INT', order: 6, weight: 0.85 },
 ] as const;
 

@@ -75,10 +75,9 @@
       "hardness": "Reflects the average difference in places drivers take compared with other series; based on event-by-event places, not season standings.",
       "samples": "Drivers who competed in multiple series; hardness is calculated from their results."
     },
-    "showOverlap": "Examples",
+    "showOverlap": "Overlaps",
     "hideOverlap": "Hide",
-    "overlapExamples": "Average event place per series",
-    "overlapLine": "{target} {avgPlaceTarget} · {other} {avgPlaceOther}",
+    "overlapExamples": "Overlaps",
     "source": {
       "overlap": "Live overlap ranking",
       "insufficient": "Insufficient overlap data"

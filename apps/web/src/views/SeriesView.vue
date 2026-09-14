@@ -48,15 +48,22 @@ const historyLabel = computed(() => {
   });
 });
 
-function seriesName(entry: SeriesPrestigeEntry | SeriesListItem) {
+function seriesLongName(entry: SeriesPrestigeEntry | SeriesListItem) {
   return entry.name;
 }
 
-function seriesNameBySlug(slug: string) {
-  const entry = prestige.value?.entries.find((item) => item.slug === slug);
-  if (entry) return seriesName(entry);
-  const listed = seriesList.value.find((item) => item.slug === slug);
-  return listed ? seriesName(listed) : slug;
+function seriesShortName(entry: SeriesPrestigeEntry | SeriesListItem) {
+  return entry.shortName ?? entry.name;
+}
+
+function seriesBySlug(slug: string): SeriesPrestigeEntry | SeriesListItem | undefined {
+  return prestige.value?.entries.find((item) => item.slug === slug)
+    ?? seriesList.value.find((item) => item.slug === slug);
+}
+
+function seriesShortNameBySlug(slug: string) {
+  const entry = seriesBySlug(slug);
+  return entry ? seriesShortName(entry) : slug;
 }
 
 function formatSamples(value: number) {
@@ -67,8 +74,52 @@ function toggleContributions(slug: string) {
   expandedSlug.value = expandedSlug.value === slug ? null : slug;
 }
 
-function contributionPilotName(row: OverlapContribution) {
+function contributionPilotName(row: Pick<OverlapContribution, 'firstName' | 'lastName'>) {
   return `${row.firstName} ${row.lastName}`;
+}
+
+function overlapPlaceDelta(row: OverlapContribution) {
+  return Math.round((row.avgPlaceTarget - row.avgPlaceOther) * 10) / 10;
+}
+
+function formatPlace(value: number) {
+  return value.toFixed(1);
+}
+
+interface GroupedOverlapContribution {
+  pilotSlug: string;
+  firstName: string;
+  lastName: string;
+  rows: OverlapContribution[];
+}
+
+function groupContributions(contributions: OverlapContribution[]): GroupedOverlapContribution[] {
+  const byPilot = new Map<string, GroupedOverlapContribution>();
+
+  for (const row of contributions) {
+    const existing = byPilot.get(row.pilotSlug);
+    if (existing) {
+      existing.rows.push(row);
+      continue;
+    }
+    byPilot.set(row.pilotSlug, {
+      pilotSlug: row.pilotSlug,
+      firstName: row.firstName,
+      lastName: row.lastName,
+      rows: [row],
+    });
+  }
+
+  return [...byPilot.values()]
+    .sort((a, b) => contributionPilotName(a).localeCompare(contributionPilotName(b), undefined, { sensitivity: 'base' }))
+    .map((group) => ({
+      ...group,
+      rows: [...group.rows].sort((a, b) =>
+        seriesShortNameBySlug(a.otherSeriesSlug).localeCompare(seriesShortNameBySlug(b.otherSeriesSlug), undefined, {
+          sensitivity: 'base',
+        }),
+      ),
+    }));
 }
 
 function latestSeasonYear(item: SeriesListItem) {
@@ -119,8 +170,8 @@ const prestigeColumnKeys = ['rank', 'series', 'hardness', 'samples'] as const;
                 <tr>
                   <td class="rank">{{ entry.effectiveOrder }}</td>
                   <td>
-                    <strong>{{ seriesName(entry) }}</strong>
-                    <span class="muted series-code">{{ entry.slug }}</span>
+                    <strong>{{ seriesLongName(entry) }}</strong>
+                    <span class="muted series-code">{{ seriesShortName(entry) }}</span>
                   </td>
                   <td class="muted">{{ entry.hardnessScore != null ? entry.hardnessScore : '—' }}</td>
                   <td class="muted">{{ entry.overlapSamples ? formatSamples(entry.overlapSamples) : '—' }}</td>
@@ -139,17 +190,21 @@ const prestigeColumnKeys = ['rank', 'series', 'hardness', 'samples'] as const;
                   <td colspan="5">
                     <p class="contrib-title">{{ t('seriesPage.overlapExamples') }}</p>
                     <ul class="contrib-list">
-                      <li v-for="(row, index) in entry.contributions" :key="index">
-                        <RouterLink :to="`/pilots/${row.pilotSlug}`" class="pilot-link">
-                          {{ contributionPilotName(row) }}
+                      <li v-for="group in groupContributions(entry.contributions)" :key="group.pilotSlug" class="contrib-group">
+                        <RouterLink :to="`/pilots/${group.pilotSlug}`" class="pilot-link">
+                          {{ contributionPilotName(group) }}
                         </RouterLink>
-                        ·
-                        {{ t('seriesPage.overlapLine', {
-                          target: seriesNameBySlug(row.targetSeriesSlug),
-                          other: seriesNameBySlug(row.otherSeriesSlug),
-                          avgPlaceTarget: row.avgPlaceTarget.toFixed(1),
-                          avgPlaceOther: row.avgPlaceOther.toFixed(1),
-                        }) }}
+                        <ul class="contrib-sublist">
+                          <li v-for="(row, index) in group.rows" :key="index" class="contrib-line">
+                            {{ seriesShortNameBySlug(row.targetSeriesSlug) }}
+                            <span class="contrib-num">{{ formatPlace(row.avgPlaceTarget) }}</span>
+                            -
+                            {{ seriesShortNameBySlug(row.otherSeriesSlug) }}
+                            <span class="contrib-num">{{ formatPlace(row.avgPlaceOther) }}</span>
+                            =
+                            <span class="contrib-num">{{ formatPlace(overlapPlaceDelta(row)) }}</span>
+                          </li>
+                        </ul>
                       </li>
                     </ul>
                   </td>
@@ -208,7 +263,10 @@ display = (100 − raw)</pre>
             <div class="catalog-card__head">
               <span class="catalog-card__code">{{ item.country ?? 'INT' }}</span>
               <div>
-                <h3>{{ seriesName(item) }}</h3>
+                <h3>{{ seriesLongName(item) }}</h3>
+                <p v-if="item.shortName && item.shortName !== item.name" class="muted catalog-short">
+                  {{ item.shortName }}
+                </p>
                 <p class="muted">
                   {{ t('seriesPage.seasonCount', { count: item.seasons.length }) }}
                 </p>
@@ -319,9 +377,32 @@ display = (100 − raw)</pre>
   margin: 0;
   padding-left: 1.1rem;
   display: grid;
-  gap: 0.35rem;
+  gap: 0.65rem;
   font-size: 0.9rem;
   line-height: 1.45;
+}
+
+.contrib-group {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.contrib-sublist {
+  margin: 0;
+  padding-left: 1rem;
+  display: grid;
+  gap: 0.15rem;
+  list-style: none;
+  color: var(--muted);
+}
+
+.contrib-line {
+  font-variant-numeric: tabular-nums;
+}
+
+.contrib-num {
+  color: var(--accent);
+  font-weight: 600;
 }
 
 .column-legend {
