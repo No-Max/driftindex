@@ -38,8 +38,12 @@ onMounted(async () => {
 
     <template v-else-if="data">
       <section class="home-section">
+        <P4PPodium :items="data.poundForPound" />
+      </section>
+
+      <section class="home-section">
         <SectionHeading
-          :title="t('home.sections.championships', { year: data.year })"
+          :title="t('home.sections.championships')"
           :subtitle="t('home.sections.championshipsSub')"
         />
         <ChampionshipSlider :items="data.championships" />
@@ -59,14 +63,6 @@ onMounted(async () => {
           :subtitle="t('home.sections.calendarSub')"
         />
         <YearCalendar :year="data.year" :events="data.calendar" />
-      </section>
-
-      <section class="home-section">
-        <SectionHeading
-          :title="t('home.sections.p4p')"
-          :subtitle="t('home.sections.p4pSub')"
-        />
-        <P4PPodium :items="data.poundForPound" />
       </section>
 
       <section class="home-section">

@@ -13,16 +13,16 @@
   },
   "home": {
     "title": "Drift Index",
-    "subtitle": "Global drift standings, champions, and pound-for-pound rankings.",
+    "subtitle": "Global drift standings, champions, and Drift Index rankings.",
     "champion": "Leader",
     "noLeader": "No standings yet",
     "pole": "Qualifying winner",
     "qualScore": "/100",
     "gap": "gap",
-    "p4pScore": "P4P",
+    "p4pScore": "d-index",
     "p4pAvgPlace": "~place {place}",
     "p4pAvgQual": "~qual {score}",
-    "p4pLeader": "Pound-for-pound #1",
+    "p4pLeader": "Drift Index #1",
     "p4pSeasonEvents": "Season events",
     "p4pOtherSeries": "Also in",
     "p4pColRound": "Round",
@@ -30,14 +30,22 @@
     "pointsShort": "pts",
     "seriesSince": "since {year}",
     "championshipsPage": "Championships page {n}",
+    "championshipsPrev": "Previous championships",
+    "championshipsNext": "Next championships",
+    "qualWinnersPage": "Qualifying winners page {n}",
+    "qualWinnersPrev": "Previous qualifying winners",
+    "qualWinnersNext": "Next qualifying winners",
+    "calendarPage": "Calendar month {n}",
+    "calendarPrev": "Previous months",
+    "calendarNext": "Next months",
     "sections": {
-      "championships": "Championships {year}",
+      "championships": "Super Podium",
       "championshipsSub": "Current season leaders across top series",
       "qualWinners": "Qualifying winners",
       "qualWinnersSub": "Pole position at the latest round of each series",
       "calendar": "Calendar {year}",
       "calendarSub": "All rounds across featured championships",
-      "p4p": "Pound-for-pound",
+      "p4p": "Drift Index",
       "p4pSub": "Season mean event place adjusted by Hardness",
       "fanVotes": "Fan votes"
     },
@@ -63,9 +71,9 @@
   },
   "seriesPage": {
     "title": "Series",
-    "subtitle": "Prestige ranking and P4P weights · {year}",
+    "subtitle": "Prestige ranking and d-index weights · {year}",
     "prestigeTitle": "Series prestige",
-    "prestigeLead": "Selected championships ranked by difficulty relative to each other. The higher this measure, the harder it is to win in that series compared with the others. Difficulty feeds directly into pound-for-pound (P4P).",
+    "prestigeLead": "Selected championships ranked by difficulty relative to each other. The higher this measure, the harder it is to win in that series compared with the others. Difficulty feeds directly into Drift Index (d-index).",
     "historyWindow": "Overlap window: {from}–{to} ({years} seasons)",
     "overlapGroups": "{count} pilots in 2+ series",
     "col": {
@@ -76,7 +84,7 @@
     },
     "colHelp": {
       "rank": "Series position in the prestige ranking. Higher Hardness means a higher Rank.",
-      "series": "Featured championship included in prestige and P4P calculations.",
+      "series": "Featured championship included in prestige and d-index calculations.",
       "hardness": "Reflects the average difference in places a driver takes compared with their results in other series; based on places at each event, not season standings. It is a scale, not a coefficient — it shows the average gap between places held.",
       "samples": "Drivers who competed in multiple series; hardness is calculated from their results."
     },
@@ -94,7 +102,7 @@
         "body": "For drivers in 2+ featured series, we use mean indexPoints per event. For series X: P = S_X − S_Y, raw = −mean(P). Coefficient H = (raw + 32) / 32 — higher H means a tougher series."
       },
       "p4p": {
-        "title": "2. Pound-for-pound (P4P)",
+        "title": "2. Drift Index (d-index)",
         "body": "Each pilot's best score across featured series with overlap data:",
         "note": "P = mean event place (missed rounds count as 32nd). Q = mean qual score, or 90 default, minus 1 pt per missed round. +0.1×series per featured series entered. UI score = 100 − raw (higher is better)."
       },
@@ -105,7 +113,7 @@
       },
       "noData": {
         "title": "4. Series without overlap",
-        "body": "Featured series with no overlap pairs get no H coefficient and are excluded from P4P. They are listed at the bottom without a weight."
+        "body": "Featured series with no overlap pairs get no H coefficient and are excluded from d-index. They are listed at the bottom without a weight."
       }
     },
     "catalogTitle": "Championship catalog",
@@ -116,10 +124,10 @@
   },
   "pilots": {
     "title": "Pilots",
-    "subtitle": "Sorted by pound-for-pound score · {year}",
+    "subtitle": "Sorted by Drift Index score · {year}",
     "search": "Search by name or number…",
     "resultsCount": "{count} matches",
-    "rankedCount": "{count} pilots with P4P ranking",
+    "rankedCount": "{count} pilots with d-index ranking",
     "unranked": "Outside featured series",
     "noResults": "No pilots match your search"
   },

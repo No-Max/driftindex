@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { HomeChampionshipCard } from '@drift-index/shared';
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useCardSlider } from '../../composables/useCardSlider';
 import { formatPilotName } from '../../lib/formatPilotName';
 import PilotAvatar from '../PilotAvatar.vue';
 import SeriesLogo from '../SeriesLogo.vue';
@@ -12,82 +13,73 @@ const props = defineProps<{
 
 const { t } = useI18n();
 
-const pageIndex = ref(0);
-const paused = ref(false);
-const cardsPerPage = 3;
-const autoplayMs = 9000;
+const itemCount = computed(() => props.items.length);
 
-const pages = computed(() => {
-  const result: HomeChampionshipCard[][] = [];
-  for (let i = 0; i < props.items.length; i += cardsPerPage) {
-    result.push(props.items.slice(i, i + cardsPerPage));
-  }
-  return result;
-});
-
-const pageCount = computed(() => pages.value.length);
-
-let timer: ReturnType<typeof setInterval> | null = null;
+const {
+  viewportRef,
+  slideIndex,
+  canNavigate,
+  positionCount,
+  viewportStyle,
+  trackStyle,
+  dragging,
+  paused,
+  goTo,
+  next,
+  prev,
+  onPointerDown,
+  onPointerMove,
+  finishDrag,
+  onLinkClick,
+} = useCardSlider(itemCount, (width) => (width > 960 ? 3 : 1));
 
 function seriesName(item: HomeChampionshipCard) {
   return item.series.name;
 }
-
-function goToPage(index: number) {
-  if (pageCount.value <= 0) return;
-  pageIndex.value = ((index % pageCount.value) + pageCount.value) % pageCount.value;
-}
-
-function nextPage() {
-  goToPage(pageIndex.value + 1);
-}
-
-function startAutoplay() {
-  stopAutoplay();
-  if (pageCount.value <= 1) return;
-  timer = setInterval(() => {
-    if (!paused.value) nextPage();
-  }, autoplayMs);
-}
-
-function stopAutoplay() {
-  if (timer) {
-    clearInterval(timer);
-    timer = null;
-  }
-}
-
-watch(pageCount, () => {
-  pageIndex.value = 0;
-  startAutoplay();
-});
-
-onMounted(startAutoplay);
-onUnmounted(stopAutoplay);
 </script>
 
 <template>
   <div
-    class="champ-slider"
+    class="card-slider"
     @mouseenter="paused = true"
     @mouseleave="paused = false"
   >
-    <div class="champ-slider__viewport">
+    <div class="card-slider__frame">
+      <button
+        v-if="canNavigate"
+        type="button"
+        class="card-slider__nav card-slider__nav--prev"
+        :aria-label="t('home.championshipsPrev')"
+        @click="prev"
+      >
+        ‹
+      </button>
+
       <div
-        class="champ-slider__track"
-        :style="{ transform: `translateX(-${pageIndex * 100}%)` }"
+        ref="viewportRef"
+        class="card-slider__viewport"
+        :class="{ 'card-slider__viewport--dragging': dragging }"
+        :style="viewportStyle"
+        @pointerdown="onPointerDown"
+        @pointermove="onPointerMove"
+        @pointerup="finishDrag"
+        @pointercancel="finishDrag"
       >
         <div
-          v-for="(page, pageNumber) in pages"
-          :key="pageNumber"
-          class="champ-slider__page"
+          class="card-slider__track"
+          :class="{ 'card-slider__track--dragging': dragging }"
+          :style="trackStyle"
         >
           <article
-            v-for="item in page"
+            v-for="item in items"
             :key="item.series.slug"
-            class="card champ-card"
+            class="card-slider__item card champ-card"
           >
-            <RouterLink :to="item.standingsPath" class="champ-card__link">
+            <RouterLink
+              :to="item.standingsPath"
+              class="champ-card__link"
+              @click="onLinkClick"
+            >
               <div class="champ-card__head">
                 <SeriesLogo
                   :slug="item.series.slug"
@@ -117,37 +109,87 @@ onUnmounted(stopAutoplay);
           </article>
         </div>
       </div>
+
+      <button
+        v-if="canNavigate"
+        type="button"
+        class="card-slider__nav card-slider__nav--next"
+        :aria-label="t('home.championshipsNext')"
+        @click="next"
+      >
+        ›
+      </button>
     </div>
 
-    <div v-if="pageCount > 1" class="champ-slider__dots">
+    <div v-if="canNavigate" class="card-slider__dots">
       <button
-        v-for="(_, index) in pageCount"
-        :key="index"
+        v-for="index in positionCount"
+        :key="index - 1"
         type="button"
-        class="champ-slider__dot"
-        :class="{ 'champ-slider__dot--active': index === pageIndex }"
-        :aria-label="t('home.championshipsPage', { n: index + 1 })"
-        @click="goToPage(index)"
+        class="card-slider__dot"
+        :class="{ 'card-slider__dot--active': index - 1 === slideIndex }"
+        :aria-label="t('home.championshipsPage', { n: index })"
+        @click="goTo(index - 1)"
       />
     </div>
   </div>
 </template>
 
 <style scoped>
-.champ-slider__viewport {
-  overflow: hidden;
+.card-slider__frame {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
 }
 
-.champ-slider__track {
+.card-slider__viewport {
+  container-type: inline-size;
+  --slider-gap: 1.25rem;
+  overflow: hidden;
+  touch-action: pan-y;
+  cursor: grab;
+  user-select: none;
+}
+
+.card-slider__viewport--dragging {
+  cursor: grabbing;
+}
+
+.card-slider__track {
   display: flex;
+  gap: var(--slider-gap);
   transition: transform 0.5s ease;
 }
 
-.champ-slider__page {
-  flex: 0 0 100%;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1.25rem;
+.card-slider__track--dragging {
+  transition: none;
+}
+
+.card-slider__item {
+  flex: 0 0 calc((100cqw - (var(--visible-count) - 1) * var(--slider-gap)) / var(--visible-count));
+  min-width: 0;
+}
+
+.card-slider__nav {
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.card-slider__nav:hover {
+  border-color: rgba(255, 77, 26, 0.45);
+  color: var(--accent);
+  background: var(--surface);
 }
 
 .champ-card__link {
@@ -198,14 +240,15 @@ onUnmounted(stopAutoplay);
   color: var(--muted);
 }
 
-.champ-slider__dots {
+.card-slider__dots {
   display: flex;
   justify-content: center;
+  flex-wrap: wrap;
   gap: 0.5rem;
   margin-top: 1rem;
 }
 
-.champ-slider__dot {
+.card-slider__dot {
   width: 0.55rem;
   height: 0.55rem;
   padding: 0;
@@ -216,14 +259,19 @@ onUnmounted(stopAutoplay);
   transition: background 0.15s, transform 0.15s;
 }
 
-.champ-slider__dot--active {
+.card-slider__dot--active {
   background: var(--accent);
   transform: scale(1.15);
 }
 
 @media (max-width: 960px) {
-  .champ-slider__page {
+  .card-slider__frame {
     grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+
+  .card-slider__nav {
+    display: none;
   }
 }
 </style>

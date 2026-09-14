@@ -13,16 +13,16 @@
   },
   "home": {
     "title": "Drift Index",
-    "subtitle": "Мировые standings, чемпионы и pound-for-pound рейтинг.",
+    "subtitle": "Мировые standings, чемпионы и рейтинг Drift Index.",
     "champion": "Лидер",
     "noLeader": "Таблица пока пуста",
     "pole": "Победитель квалификации",
     "qualScore": "/100",
     "gap": "отрыв",
-    "p4pScore": "P4P",
+    "p4pScore": "d-index",
     "p4pAvgPlace": "~место {place}",
     "p4pAvgQual": "~квала {score}",
-    "p4pLeader": "Pound-for-pound #1",
+    "p4pLeader": "Drift Index #1",
     "p4pSeasonEvents": "Этапы сезона",
     "p4pOtherSeries": "Также в",
     "p4pColRound": "Этап",
@@ -30,14 +30,22 @@
     "pointsShort": "очк.",
     "seriesSince": "с {year}",
     "championshipsPage": "Страница чемпионатов {n}",
+    "championshipsPrev": "Предыдущие чемпионаты",
+    "championshipsNext": "Следующие чемпионаты",
+    "qualWinnersPage": "Страница победителей квалификаций {n}",
+    "qualWinnersPrev": "Предыдущие победители квалификаций",
+    "qualWinnersNext": "Следующие победители квалификаций",
+    "calendarPage": "Месяц календаря {n}",
+    "calendarPrev": "Предыдущие месяцы",
+    "calendarNext": "Следующие месяцы",
     "sections": {
-      "championships": "Чемпионаты {year}",
+      "championships": "Super Podium",
       "championshipsSub": "Актуальные лидеры топ-серий",
       "qualWinners": "Победители квалификаций",
       "qualWinnersSub": "Pole на последнем этапе каждой серии",
       "calendar": "Календарь {year}",
       "calendarSub": "Все этапы featured-чемпионатов",
-      "p4p": "Pound-for-pound",
+      "p4p": "Drift Index",
       "p4pSub": "Среднее место на этапах сезона с учётом Hardness",
       "fanVotes": "Голосование фанатов"
     },
@@ -63,9 +71,9 @@
   },
   "seriesPage": {
     "title": "Серии",
-    "subtitle": "Рейтинг престижа и веса P4P · {year}",
+    "subtitle": "Рейтинг престижа и веса d-index · {year}",
     "prestigeTitle": "Престиж серий",
-    "prestigeLead": "Избранные чемпионаты, отсортированные по «сложности» относительно друг друга. Чем выше этот показатель, тем сложнее победить в этой серии по отношению к другим. «Сложность» напрямую влияет на pound-for-pound (P4P).",
+    "prestigeLead": "Избранные чемпионаты, отсортированные по «сложности» относительно друг друга. Чем выше этот показатель, тем сложнее победить в этой серии по отношению к другим. «Сложность» напрямую влияет на Drift Index (d-index).",
     "historyWindow": "Окно overlap: {from}–{to} ({years} сезона)",
     "overlapGroups": "{count} пилотов в 2+ сериях",
     "col": {
@@ -76,7 +84,7 @@
     },
     "colHelp": {
       "rank": "Место серии в prestige-рейтинге. Чем выше Hardness, тем выше Rank.",
-      "series": "Featured-чемпионат, который участвует в расчёте престижа и P4P.",
+      "series": "Featured-чемпионат, который участвует в расчёте престижа и d-index.",
       "hardness": "Отражает среднюю разницу в занимаемых пилотом местах по отношению к его результатам в других сериях; считается по занятым местам на каждом этапе, а не по итогам сезона. Это не коэффициент, а шкала, показывает средний разрыв между занимаемыми местами.",
       "samples": "Пилоты, выступавшие в нескольких сериях; именно по их результатам ведётся расчёт сложности."
     },
@@ -94,7 +102,7 @@
         "body": "Для пилотов в 2+ featured-сериях считаем среднее indexPoints по этапам. Для серии X: P = S_X − S_Y, raw = −mean(P). Коэффициент H = (raw + 32) / 32 — выше H, серия труднее."
       },
       "p4p": {
-        "title": "2. Pound-for-pound (P4P)",
+        "title": "2. Drift Index (d-index)",
         "body": "Лучший результат пилота среди featured-серий с overlap-данными:",
         "note": "P = среднее место (пропуски = 32-е). Q = средний qual или 90 по умолчанию, минус 1 балл за пропуск этапа. +0.1×series за каждую featured-серию. В интерфейсе: (100 − raw) — чем выше, тем лучше."
       },
@@ -105,7 +113,7 @@
       },
       "noData": {
         "title": "4. Серии без overlap",
-        "body": "Featured-серии без overlap-пар не получают H и не участвуют в P4P. В таблице они в конце без коэффициента."
+        "body": "Featured-серии без overlap-пар не получают H и не участвуют в d-index. В таблице они в конце без коэффициента."
       }
     },
     "catalogTitle": "Каталог чемпионатов",
@@ -116,10 +124,10 @@
   },
   "pilots": {
     "title": "Пилоты",
-    "subtitle": "Сортировка по pound-for-pound · {year}",
+    "subtitle": "Сортировка по Drift Index · {year}",
     "search": "Поиск по имени или номеру…",
     "resultsCount": "Найдено: {count}",
-    "rankedCount": "В рейтинге P4P: {count} пилотов",
+    "rankedCount": "В рейтинге d-index: {count} пилотов",
     "unranked": "Вне featured-серий",
     "noResults": "Ничего не найдено"
   },
