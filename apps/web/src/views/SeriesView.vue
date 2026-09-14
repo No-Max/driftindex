@@ -245,22 +245,16 @@ const prestigeColumnKeys = ['rank', 'series', 'hardness', 'samples'] as const;
           <article class="card method-card">
             <h3>{{ t('seriesPage.method.overlap.title') }}</h3>
             <p>{{ t('seriesPage.method.overlap.body') }}</p>
-            <pre class="formula">H = (raw + 32) / 32</pre>
           </article>
 
           <article class="card method-card">
             <h3>{{ t('seriesPage.method.p4p.title') }}</h3>
             <p>{{ t('seriesPage.method.p4p.body') }}</p>
-            <pre class="formula">raw = min(P − Hardness − Q/100) − 0.1×series
-display = (100 − raw)</pre>
-            <p class="muted method-note">{{ t('seriesPage.method.p4p.note') }}</p>
           </article>
 
           <article class="card method-card">
             <h3>{{ t('seriesPage.method.indexPoints.title') }}</h3>
             <p>{{ t('seriesPage.method.indexPoints.body') }}</p>
-            <pre class="formula">indexPoints = (32 − place + 1) × k</pre>
-            <p class="muted method-note">{{ t('seriesPage.method.indexPoints.note') }}</p>
           </article>
 
           <article class="card method-card">
@@ -477,23 +471,6 @@ display = (100 − raw)</pre>
   margin: 0;
   line-height: 1.55;
   color: var(--muted);
-}
-
-.formula {
-  margin: 0.75rem 0 0;
-  padding: 0.65rem 0.8rem;
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid var(--border);
-  font-family: ui-monospace, monospace;
-  font-size: 0.88rem;
-  color: var(--text);
-  overflow-x: auto;
-}
-
-.method-note {
-  margin-top: 0.65rem !important;
-  font-size: 0.85rem;
 }
 
 .catalog-grid {

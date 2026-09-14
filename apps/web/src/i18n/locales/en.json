@@ -98,22 +98,20 @@
     "methodTitle": "How we calculate it",
     "method": {
       "overlap": {
-        "title": "1. Pilot overlap",
-        "body": "For drivers in 2+ featured series, we use mean indexPoints per event. For series X: P = S_X − S_Y, raw = −mean(P). Coefficient H = (raw + 32) / 32 — higher H means a tougher series."
+        "title": "1. Series difficulty (Hardness)",
+        "body": "We compare pilots who race in more than one featured series. If their average finish is worse in one championship than in the others, that series is rated tougher. Hardness ranks featured series from most to least difficult."
       },
       "p4p": {
-        "title": "2. Drift Index (d-index)",
-        "body": "Each pilot's best score across featured series with overlap data:",
-        "note": "P = mean event place (missed rounds count as 32nd). Q = mean qual score, or 90 default, minus 1 pt per missed round. +0.1×series per featured series entered. UI score = 100 − raw (higher is better)."
+        "title": "2. Drift Index",
+        "body": "Each driver's score comes from their season in featured series: average event place, missed rounds, qualifying level, and how hard that series is. A strong result in a tougher championship weighs more. We take the best series result; racing in extra featured series adds a small bonus. Higher index points means a stronger season."
       },
       "indexPoints": {
-        "title": "3. Event indexPoints",
-        "body": "Each event result is scored with a grid-strength factor k (Top32 reference).",
-        "note": "k = 1 − 1/n + 1/32, where n is scoring drivers in the top-32 qual grid."
+        "title": "3. Event results",
+        "body": "Every round is converted to a comparable score from finishing position and how deep the qualifying grid was that weekend. That keeps events fair when entry lists differ in size."
       },
       "noData": {
-        "title": "4. Series without overlap",
-        "body": "Featured series with no overlap pairs get no H coefficient and are excluded from d-index. They are listed at the bottom without a weight."
+        "title": "4. Series without crossover",
+        "body": "If nobody from a featured series also appears in our other tracked championships, we cannot estimate its difficulty. Those series stay in the prestige table but are left out of Drift Index until crossover data exists."
       }
     },
     "catalogTitle": "Championship catalog",
