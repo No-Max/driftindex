@@ -1,10 +1,15 @@
 import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
+import { DM_2019_EVENTS } from '../src/data/drift-masters-2019-events.js';
+import { applyArchiveResultOverrides } from '../src/data/drift-masters-archive-overrides.js';
+import { applyArchivePilotNumbers } from '../src/data/drift-masters-pilot-numbers.js';
 import {
   DM_ARCHIVE_SEASONS,
   fetchDriftMastersArchiveSeason,
 } from '../src/importers/drift-masters-archive.js';
+import { fetchDriftMastersQualByRound } from '../src/importers/drift-masters.js';
 import type { DmPilot } from '../src/importers/drift-masters.js';
+import { applyDriftMastersQualBackfill } from '../src/lib/driftMastersQualImport.js';
 import { findMatchingPilot } from '../src/lib/pilotMatch.js';
 import { canonicalEnglishNames } from '../src/lib/pilotNames.js';
 import { upsertPilotSeriesAlias } from '../src/lib/pilotSeriesAlias.js';
@@ -48,7 +53,13 @@ async function resolvePilotSlug(pilot: DmPilot, seriesId: string): Promise<strin
 async function importSeason(year: number, seriesId: string) {
   console.log(`\n=== Drift Masters ${year} (archive) ===`);
   const data = await fetchDriftMastersArchiveSeason(year);
+  applyArchivePilotNumbers(data.seasonYear, data.pilots);
   console.log(`Loaded ${data.pilots.length} pilots, ${data.events.length} events`);
+
+  const qualByRound = await fetchDriftMastersQualByRound(year, data.events.length);
+  for (const [roundNumber, rows] of qualByRound) {
+    console.log(`Loaded ${rows.length} qual results for round ${roundNumber}`);
+  }
 
   let season = await prisma.season.findUnique({
     where: { seriesId_year: { seriesId, year: data.seasonYear } },
@@ -79,25 +90,33 @@ async function importSeason(year: number, seriesId: string) {
     },
   });
 
+  const eventMetaByRound =
+    year === 2019 ? new Map(DM_2019_EVENTS.map((event) => [event.roundNumber, event])) : null;
+
   const eventRecords = new Map<string, { id: string }>();
   for (const event of data.events) {
-    const track = await findOrCreateTrack(prisma, { name: event.trackName, sourceUrl: data.sourceUrl });
+    const meta = eventMetaByRound?.get(event.roundNumber);
+    const eventName = meta?.name ?? event.name;
+    const trackName = meta?.trackName ?? event.trackName;
+    const startsAt = meta?.startsAt ?? event.startsAt;
+
+    const track = await findOrCreateTrack(prisma, { name: trackName, sourceUrl: data.sourceUrl });
     const record = await prisma.event.upsert({
       where: { seasonId_slug: { seasonId: season.id, slug: event.slug } },
       update: {
         roundNumber: event.roundNumber,
-        name: event.name,
+        name: eventName,
         trackId: track?.id ?? null,
-        startsAt: new Date(event.startsAt),
+        startsAt: new Date(startsAt),
         status: event.status,
       },
       create: {
         seasonId: season.id,
         slug: event.slug,
         roundNumber: event.roundNumber,
-        name: event.name,
+        name: eventName,
         trackId: track?.id ?? null,
-        startsAt: new Date(event.startsAt),
+        startsAt: new Date(startsAt),
         status: event.status,
       },
     });
@@ -105,7 +124,10 @@ async function importSeason(year: number, seriesId: string) {
   }
 
   let resultCount = 0;
+  let qualMatched = 0;
+  let qualOnly = 0;
   let merged = 0;
+  const pilotRecordsBySlug = new Map<string, { id: string }>();
 
   for (const pilot of data.pilots) {
     const english = canonicalEnglishNames(pilot);
@@ -129,6 +151,7 @@ async function importSeason(year: number, seriesId: string) {
       },
     });
     await upsertPilotSeriesAlias(prisma, { pilotId: pilotRecord.id, seriesId, name: pilot.nameAlias });
+    pilotRecordsBySlug.set(pilotSlug, pilotRecord);
 
     for (const stage of pilot.stages) {
       const event = eventRecords.get(stage.eventSlug);
@@ -157,11 +180,28 @@ async function importSeason(year: number, seriesId: string) {
     }
   }
 
+  const qualBackfill = await applyDriftMastersQualBackfill(prisma, {
+    seriesId,
+    seriesSlug: SERIES_SLUG,
+    dataStatus: 'UNVERIFIED',
+    pilots: data.pilots,
+    qualByRound,
+    eventRecords,
+    pilotRecordsBySlug,
+    resolvePilotSlug,
+  });
+  qualMatched += qualBackfill.qualMatched;
+  qualOnly += qualBackfill.qualOnly;
+  resultCount += qualBackfill.resultCount;
+
+  const overrideCount = await applyArchiveResultOverrides(prisma, data.seasonYear, season.id);
   const stageCount = await refreshStageCoefficientsForSeason(prisma, season.id);
 
   console.log(
-    `Import complete: ${data.pilots.length} pilots (${merged} merged), ${resultCount} results, ` +
-      `${stageCount} stage coefficients`,
+    `Import complete: ${data.pilots.length} pilots (${merged} merged), ${resultCount} results` +
+      (qualMatched > 0 ? ` (${qualMatched} with qual scores, ${qualOnly} qual-only)` : '') +
+      (overrideCount > 0 ? `, ${overrideCount} verified overrides` : '') +
+      `, ${stageCount} stage coefficients`,
   );
 }
 

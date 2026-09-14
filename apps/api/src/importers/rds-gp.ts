@@ -83,6 +83,22 @@ function parseDecimal(value: string): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+/** RDS qualifying run score (0–100). Rejects horsepower, car names, and other non-score cells. */
+export function parseQualRunScore(value: string): number | null {
+  const trimmed = value.trim();
+  if (!trimmed || /[a-zA-Zа-яА-ЯёЁ]/.test(trimmed)) return null;
+
+  const normalized = trimmed.replace(/\s/g, '').replace(',', '.');
+  if (!/^\d+(\.\d+)?$/.test(normalized)) return null;
+
+  const parsed = Number.parseFloat(normalized);
+  if (!Number.isFinite(parsed) || parsed <= 0) return null;
+  // Reject mis-parsed horsepower / points; allow tiny judge overflow (e.g. 100.1 → 100).
+  if (parsed > 101) return null;
+
+  return Math.round(Math.min(100, parsed) * 10) / 10;
+}
+
 function parseQualCell(text: string): { qualPoints: number | null; qualPosition: number | null } {
   const match = text.trim().match(/^(\d+)\s*\((\d+)\)$/);
   if (!match) return { qualPoints: null, qualPosition: null };
@@ -218,8 +234,8 @@ function parseEventRow(
   const qual = parseQualCell(texts[qualCellIndex]!);
   const runScores = texts
     .slice(pilotCellIndex + 1, qualCellIndex)
-    .map(parseDecimal)
-    .filter((value): value is number => value != null && value > 0);
+    .map(parseQualRunScore)
+    .filter((value): value is number => value != null);
 
   let totalPoints = 0;
   for (let index = texts.length - 1; index > qualCellIndex; index -= 1) {

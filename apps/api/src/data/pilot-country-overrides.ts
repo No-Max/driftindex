@@ -25,6 +25,7 @@ export const PILOT_COUNTRY_OVERRIDES: Record<string, string> = {
   'rds-4': 'AM', // William Gukasyan
   'rds-16': 'AM', // Garik Khachatryan
   'rds-93': 'RU', // Georgii (Gocha) Chivchyan
+  'dm-georgy-chivchyan': 'RU', // Georgy (Gocha) Chivchyan — DMEC 2019 Riga wildcard
   'rds-5763': 'HK', // Charles Ng
   'rds-16887': 'PT', // Emmanuel Amandio
   'rds-27778': 'LV', // Artem Leitis

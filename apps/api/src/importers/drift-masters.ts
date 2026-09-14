@@ -5,10 +5,27 @@ const BASE = 'https://dm.gp/umbraco/api/v1';
 const SITE = 'https://dm.gp';
 const RAWMOTION_BASE = 'https://live.rawmotion.com/api/v1';
 
+/** dm.gp season metadata — used when /seasons API is unavailable. */
+export const DM_GP_SEASONS: DmSeasonMeta[] = [
+  { id: 'e1ce883d-7c51-4eca-9568-19e128ae491e', slug: 'drift-masters-2023', year: 2023, isCurrent: false },
+  { id: 'f12a7013-244a-4c0d-bcac-2f114745d236', slug: 'drift-masters-2024', year: 2024, isCurrent: false },
+  { id: '2921cac0-c54c-4448-9c88-dfc42b8b967a', slug: 'drift-masters-2025', year: 2025, isCurrent: false },
+  { id: 'de78e5bb-ebc3-4d79-abdf-fdcf4fd99c26', slug: 'drift-masters-2026', year: 2026, isCurrent: true },
+];
+
 /** RawMotion event IDs for seasons where dm.gp omits qualifying data. */
 const RAWMOTION_DM_EVENT_IDS: Record<number, string> = {
+  2019: '0c7108a1-8da7-11e9-909b-f171dc59e2a3',
+  2022: '9d5cb870-caba-11ec-9b6a-07912c2ae072',
+  2024: 'f8488bd1-0eb8-11ef-8e9f-db3243ea316e',
+  2025: '6fa30551-2d00-11f0-9310-b544412bc579',
   2026: '24217941-4497-11f1-9a48-e5b2f4f9b363',
 };
+
+const rawMotionAthleteNamesByEvent = new Map<
+  string,
+  Map<string, { firstName: string; lastName: string }>
+>();
 
 export interface DmStageResult {
   eventSlug: string;
@@ -57,9 +74,10 @@ export interface DmQualResult {
   lastName: string;
   fullName: string;
   nationality: string | null;
+  bib: number | null;
 }
 
-interface DmSeasonMeta {
+export interface DmSeasonMeta {
   id: string;
   slug: string;
   year: number;
@@ -125,9 +143,11 @@ interface RawMotionRoundMeta {
 interface RawMotionQualRow {
   rank: number;
   value: string;
-  firstname: string;
-  lastname: string;
-  nation: string;
+  firstname?: string;
+  lastname?: string;
+  nation?: string;
+  bib?: string;
+  externalAthleteId?: string;
 }
 
 interface RawMotionHeat {
@@ -194,14 +214,56 @@ export function findDmQualResult(
   return fuzzyMatches.length === 1 ? fuzzyMatches[0] : undefined;
 }
 
+async function loadRawMotionAthleteNamesForEvent(
+  eventId: string,
+): Promise<Map<string, { firstName: string; lastName: string }>> {
+  const cached = rawMotionAthleteNamesByEvent.get(eventId);
+  if (cached) return cached;
+
+  const names = new Map<string, { firstName: string; lastName: string }>();
+
+  for (let roundNumber = 1; roundNumber <= 7; roundNumber++) {
+    try {
+      const rounds = await fetchRawMotionJson<RawMotionRoundMeta[]>(
+        `/event/${eventId}/contest/${roundNumber}/rounds`,
+      );
+      const qualRound =
+        rounds.find((round) => round.name === 'Qualifying') ??
+        rounds.find((round) => /^Q\d+\s+Qualifying$/i.test(round.name)) ??
+        rounds.find((round) => /qualifying/i.test(round.name) && !/top\s*32/i.test(round.name));
+      if (!qualRound) continue;
+
+      const heats = await fetchRawMotionJson<RawMotionHeat[]>(
+        `/event/${eventId}/contest/${roundNumber}/round/${qualRound.externalId}/heat/0`,
+      );
+      for (const row of heats[0]?.results ?? []) {
+        if (!row.externalAthleteId || !row.firstname || !row.lastname) continue;
+        names.set(row.externalAthleteId, {
+          firstName: titleCaseName(row.firstname),
+          lastName: titleCaseName(row.lastname),
+        });
+      }
+    } catch {
+      // Some event/round combinations are missing on RawMotion.
+    }
+  }
+
+  rawMotionAthleteNamesByEvent.set(eventId, names);
+  return names;
+}
+
 async function fetchRawMotionRoundQual(
   eventId: string,
   roundNumber: number,
 ): Promise<DmQualResult[]> {
+  const athleteNames = await loadRawMotionAthleteNamesForEvent(eventId);
   const rounds = await fetchRawMotionJson<RawMotionRoundMeta[]>(
     `/event/${eventId}/contest/${roundNumber}/rounds`,
   );
-  const qualRound = rounds.find((round) => round.name === 'Qualifying');
+  const qualRound =
+    rounds.find((round) => round.name === 'Qualifying') ??
+    rounds.find((round) => /^Q\d+\s+Qualifying$/i.test(round.name)) ??
+    rounds.find((round) => /qualifying/i.test(round.name) && !/top\s*32/i.test(round.name));
   if (!qualRound) {
     throw new Error(`Qualifying round not found for contest ${roundNumber}`);
   }
@@ -216,9 +278,16 @@ async function fetchRawMotionRoundQual(
       const qualScore100 = parseQualScore(row.value);
       if (qualScore100 == null) return null;
 
-      const firstName = titleCaseName(row.firstname);
-      const lastName = titleCaseName(row.lastname);
-      const fullName = `${firstName} ${lastName}`;
+      const resolved = row.externalAthleteId ? athleteNames.get(row.externalAthleteId) : undefined;
+      const firstName = row.firstname
+        ? titleCaseName(row.firstname)
+        : (resolved?.firstName ?? '');
+      const lastName = row.lastname ? titleCaseName(row.lastname) : (resolved?.lastName ?? '');
+      const fullName = [firstName, lastName].filter(Boolean).join(' ');
+      const bibRaw = row.bib == null ? '' : String(row.bib).trim();
+      const bibParsed = bibRaw ? Number.parseInt(bibRaw, 10) : Number.NaN;
+      const bib = Number.isFinite(bibParsed) ? bibParsed : null;
+      if (!fullName && bib == null) return null;
 
       return {
         roundNumber,
@@ -226,8 +295,9 @@ async function fetchRawMotionRoundQual(
         qualScore100,
         firstName,
         lastName,
-        fullName,
+        fullName: fullName || 'Unknown',
         nationality: row.nation || null,
+        bib,
       } satisfies DmQualResult;
     })
     .filter((row): row is DmQualResult => row != null);
@@ -236,6 +306,7 @@ async function fetchRawMotionRoundQual(
 /** Fetch qualifying scores from RawMotion live scoring (dm.gp API has no qual data). */
 export async function fetchDriftMastersQualByRound(
   seasonYear: number,
+  roundCount = 7,
 ): Promise<Map<number, DmQualResult[]>> {
   const eventId = RAWMOTION_DM_EVENT_IDS[seasonYear];
   if (!eventId) {
@@ -243,7 +314,7 @@ export async function fetchDriftMastersQualByRound(
   }
 
   const byRound = new Map<number, DmQualResult[]>();
-  for (let roundNumber = 1; roundNumber <= 7; roundNumber++) {
+  for (let roundNumber = 1; roundNumber <= roundCount; roundNumber++) {
     try {
       const rows = await fetchRawMotionRoundQual(eventId, roundNumber);
       byRound.set(roundNumber, rows);
@@ -305,15 +376,32 @@ function formatEventName(round: DmRoundMeta): { name: string; trackName: string 
 }
 
 export async function listDriftMastersSeasons(): Promise<DmSeasonMeta[]> {
-  return fetchJson<DmSeasonMeta[]>('/seasons');
+  try {
+    return await fetchJson<DmSeasonMeta[]>('/seasons');
+  } catch {
+    return [...DM_GP_SEASONS];
+  }
+}
+
+async function resolveDriftMastersSeason(seasonYear: number): Promise<DmSeasonMeta> {
+  const fallback = DM_GP_SEASONS.find((item) => item.year === seasonYear);
+  try {
+    const seasons = await fetchJson<DmSeasonMeta[]>('/seasons');
+    const season = seasons.find((item) => item.year === seasonYear);
+    if (season) return season;
+  } catch {
+    // dm.gp /seasons endpoint is occasionally unavailable — use hardcoded IDs.
+  }
+  if (!fallback) {
+    throw new Error(
+      `Drift Masters season ${seasonYear} not found on dm.gp. Available: ${DM_GP_SEASONS.map((s) => s.year).join(', ')}`,
+    );
+  }
+  return fallback;
 }
 
 export async function fetchDriftMastersSeason(seasonYear: number): Promise<DmSeasonData> {
-  const seasons = await listDriftMastersSeasons();
-  const season = seasons.find((item) => item.year === seasonYear);
-  if (!season) {
-    throw new Error(`Drift Masters season ${seasonYear} not found on dm.gp`);
-  }
+  const season = await resolveDriftMastersSeason(seasonYear);
 
   const [rounds, standings] = await Promise.all([
     fetchJson<DmRoundMeta[]>(`/seasons/${season.id}/rounds`),
@@ -337,7 +425,12 @@ export async function fetchDriftMastersSeason(seasonYear: number): Promise<DmSea
     });
 
   const pilots: DmPilot[] = standings
-    .filter((row) => row.totalPoints > 0)
+    .filter(
+      (row) =>
+        row.totalPoints > 0 ||
+        row.imageUrl != null ||
+        row.roundsResults.some((stage) => stage.points > 0 || stage.position != null),
+    )
     .map((row) => {
       const { firstName, lastName } = parseDriverName(row.fullName);
       const stages: DmStageResult[] = row.roundsResults

@@ -12,6 +12,7 @@ import { upsertPilotSeriesPhoto } from '../src/lib/media/pilotPhoto.js';
 import { canonicalEnglishNames } from '../src/lib/pilotNames.js';
 import { findMatchingPilot, mergePilotInto } from '../src/lib/pilotMatch.js';
 import { upsertPilotSeriesAlias } from '../src/lib/pilotSeriesAlias.js';
+import { toQualScore100 } from '../src/lib/qualScore.js';
 import { refreshStageCoefficientsForSeason } from '../src/lib/stageCoefficient.js';
 import { findOrCreateTrack } from '../src/lib/track.js';
 
@@ -225,12 +226,14 @@ async function upsertPilotsAndResults(
       const event = eventRecords.get(stage.eventSlug);
       if (!event) continue;
 
+      const qualScore100 = toQualScore100(stage.qualScore100, SERIES_SLUG);
+
       await db.eventResult.upsert({
         where: { eventId_pilotId: { eventId: event.id, pilotId: pilotRecord.id } },
         update: {
           qualPosition: stage.qualifyingPosition,
           qualPoints: stage.qualifyingPoints,
-          qualScore100: stage.qualScore100,
+          qualScore100,
           tandemPosition: stage.tandemPosition,
           points: stage.points,
           dataStatus: 'VERIFIED',
@@ -240,7 +243,7 @@ async function upsertPilotsAndResults(
           pilotId: pilotRecord.id,
           qualPosition: stage.qualifyingPosition,
           qualPoints: stage.qualifyingPoints,
-          qualScore100: stage.qualScore100,
+          qualScore100,
           tandemPosition: stage.tandemPosition,
           points: stage.points,
           dataStatus: 'VERIFIED',

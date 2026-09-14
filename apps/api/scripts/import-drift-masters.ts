@@ -7,6 +7,7 @@ import {
   listDriftMastersSeasons,
 } from '../src/importers/drift-masters.js';
 import type { DmPilot } from '../src/importers/drift-masters.js';
+import { applyDriftMastersQualBackfill } from '../src/lib/driftMastersQualImport.js';
 import { upsertPilotSeriesPhoto } from '../src/lib/media/pilotPhoto.js';
 import { findMatchingPilot } from '../src/lib/pilotMatch.js';
 import { canonicalEnglishNames } from '../src/lib/pilotNames.js';
@@ -54,7 +55,7 @@ async function importSeason(year: number, seriesId: string) {
   const data = await fetchDriftMastersSeason(year);
   console.log(`Loaded ${data.pilots.length} pilots, ${data.events.length} events`);
 
-  const qualByRound = await fetchDriftMastersQualByRound(year);
+  const qualByRound = await fetchDriftMastersQualByRound(year, data.events.length);
   for (const [roundNumber, rows] of qualByRound) {
     console.log(`Loaded ${rows.length} qual results for round ${roundNumber}`);
   }
@@ -115,9 +116,11 @@ async function importSeason(year: number, seriesId: string) {
 
   let resultCount = 0;
   let qualMatched = 0;
+  let qualOnly = 0;
   let photosMirrored = 0;
   let photosFailed = 0;
   let merged = 0;
+  const pilotRecordsBySlug = new Map<string, { id: string }>();
 
   for (const pilot of data.pilots) {
     const english = canonicalEnglishNames(pilot);
@@ -141,6 +144,7 @@ async function importSeason(year: number, seriesId: string) {
       },
     });
     await upsertPilotSeriesAlias(prisma, { pilotId: pilotRecord.id, seriesId, name: pilot.nameAlias });
+    pilotRecordsBySlug.set(pilotSlug, pilotRecord);
 
     if (pilot.photoSourceUrl) {
       const { mirrored } = await upsertPilotSeriesPhoto(prisma, {
@@ -190,11 +194,26 @@ async function importSeason(year: number, seriesId: string) {
     }
   }
 
+  const qualBackfill = await applyDriftMastersQualBackfill(prisma, {
+    seriesId,
+    seriesSlug: SERIES_SLUG,
+    dataStatus: 'VERIFIED',
+    pilots: data.pilots,
+    qualByRound,
+    eventRecords,
+    pilotRecordsBySlug,
+    resolvePilotSlug,
+  });
+  qualMatched += qualBackfill.qualMatched;
+  qualOnly += qualBackfill.qualOnly;
+  resultCount += qualBackfill.resultCount;
+
   const stageCount = await refreshStageCoefficientsForSeason(prisma, season.id);
 
   console.log(
     `Import complete: ${data.pilots.length} pilots (${merged} merged with existing), ` +
-      `${resultCount} results (${qualMatched} with qual scores), ${photosMirrored} photos mirrored` +
+      `${resultCount} results (${qualMatched} with qual scores, ${qualOnly} qual-only), ` +
+      `${photosMirrored} photos mirrored` +
       `${photosFailed ? `, ${photosFailed} photo failures` : ''}, ${stageCount} stage coefficients`,
   );
 }
