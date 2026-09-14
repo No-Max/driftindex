@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { PilotProfileResponse } from '@drift-index/shared';
+import { compareEventResultsChronologically } from '@drift-index/shared';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
@@ -20,6 +21,11 @@ const slug = computed(() => String(route.params.slug));
 const displayName = computed(() => {
   if (!pilot.value) return '';
   return `${pilot.value.firstName} ${pilot.value.lastName}`;
+});
+
+const sortedResults = computed(() => {
+  const results = pilot.value?.results ?? [];
+  return [...results].sort((a, b) => compareEventResultsChronologically(a, b));
 });
 
 async function load() {
@@ -51,6 +57,11 @@ function formatEventDuels(result: PilotProfileResponse['results'][0]) {
   const wins = result.tandemWins ?? 0;
   const pct = Math.round((wins / result.tandemBattles) * 1000) / 10;
   return `${result.tandemBattles}/${wins} (${pct}%)`;
+}
+
+function formatQualScore(score: number | null | undefined) {
+  if (score == null) return '—';
+  return score.toFixed(1);
 }
 </script>
 
@@ -87,14 +98,15 @@ function formatEventDuels(result: PilotProfileResponse['results'][0]) {
             <tr>
               <th>{{ t('pilot.series') }}</th>
               <th>{{ t('pilot.event') }}</th>
-              <th>{{ t('pilot.qual') }}</th>
+              <th>{{ t('pilot.qualPlace') }}</th>
+              <th>{{ t('pilot.qualScore') }}</th>
               <th>{{ t('pilot.place') }}</th>
               <th>{{ t('pilot.duels') }}</th>
               <th>{{ t('pilot.points') }}</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(result, index) in pilot.results" :key="index">
+            <tr v-for="(result, index) in sortedResults" :key="index">
               <td>
                 <RouterLink :to="`/series/${result.seriesSlug}/${result.seasonYear}`">
                   {{ seriesName(result) }} {{ result.seasonYear }}
@@ -111,6 +123,13 @@ function formatEventDuels(result: PilotProfileResponse['results'][0]) {
                 </RouterLink>
               </td>
               <td class="muted">{{ result.qualPosition ?? '—' }}</td>
+              <td class="muted">
+                <template v-if="result.qualScore100 != null">
+                  {{ formatQualScore(result.qualScore100) }}
+                  <span class="qual-score-suffix">{{ t('pilot.stats.qualShort') }}</span>
+                </template>
+                <template v-else>—</template>
+              </td>
               <td class="muted">{{ result.eventPlace ?? '—' }}</td>
               <td class="muted">{{ formatEventDuels(result) }}</td>
               <td><strong>{{ result.points }}</strong></td>
@@ -150,5 +169,11 @@ function formatEventDuels(result: PilotProfileResponse['results'][0]) {
   margin-top: 0.15rem;
   color: var(--accent);
   font-size: 0.78rem;
+}
+
+.qual-score-suffix {
+  margin-left: 0.1rem;
+  font-size: 0.78rem;
+  opacity: 0.65;
 }
 </style>

@@ -1,12 +1,13 @@
-import type {
-  DataSource,
-  PilotListEntry,
-  PilotProfileResponse,
-  PilotsListResponse,
-  SeasonStandingsResponse,
-  SeriesPrestigeResponse,
-  TrackProfileResponse,
-  TracksListResponse,
+import {
+  compareEventResultsChronologically,
+  type DataSource,
+  type PilotListEntry,
+  type PilotProfileResponse,
+  type PilotsListResponse,
+  type SeasonStandingsResponse,
+  type SeriesPrestigeResponse,
+  type TrackProfileResponse,
+  type TracksListResponse,
 } from '@drift-index/shared';
 import { Router } from 'express';
 import { computeP4P } from '../lib/p4p.js';
@@ -351,6 +352,24 @@ publicRouter.get('/pilots/:slug', async (req, res) => {
   }
 
   const stats = computePilotStats(toStatsInput(pilot.results));
+  const resultsByEventDate = [...pilot.results].sort((a, b) =>
+    compareEventResultsChronologically(
+      {
+        startsAt: a.event.startsAt?.toISOString() ?? null,
+        seasonYear: a.event.season.year,
+        roundNumber: a.event.roundNumber,
+        seriesSlug: a.event.season.series.slug,
+        eventSlug: a.event.slug,
+      },
+      {
+        startsAt: b.event.startsAt?.toISOString() ?? null,
+        seasonYear: b.event.season.year,
+        roundNumber: b.event.roundNumber,
+        seriesSlug: b.event.season.series.slug,
+        eventSlug: b.event.slug,
+      },
+    ),
+  );
 
   const payload: PilotProfileResponse = {
     slug: pilot.slug,
@@ -368,7 +387,7 @@ publicRouter.get('/pilots/:slug', async (req, res) => {
         photoUrl: entry.photoUrl!,
       })),
     stats,
-    results: pilot.results.map((result) => ({
+    results: resultsByEventDate.map((result) => ({
       seriesSlug: result.event.season.series.slug,
       seriesName: result.event.season.series.name,
       seriesShortName: result.event.season.series.shortName,
@@ -376,6 +395,7 @@ publicRouter.get('/pilots/:slug', async (req, res) => {
       eventSlug: result.event.slug,
       eventName: result.event.name,
       track: toTrackSummary(result.event.track),
+      startsAt: result.event.startsAt?.toISOString() ?? null,
       roundNumber: result.event.roundNumber,
       qualPosition: result.qualPosition,
       qualScore100: result.qualScore100,
@@ -396,3 +416,4 @@ function parseOptionalYear(value: unknown): number | null {
   const year = Number(value);
   return Number.isFinite(year) ? year : null;
 }
+

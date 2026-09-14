@@ -67,14 +67,12 @@
       "rank": "Rank",
       "series": "Series",
       "hardness": "Hardness",
-      "coefficient": "Series coefficient",
       "samples": "Samples"
     },
     "colHelp": {
       "rank": "Series position in the prestige ranking. Higher Hardness means a higher Rank.",
       "series": "Featured championship included in prestige and P4P calculations.",
       "hardness": "Reflects the average difference in places drivers take compared with other series; based on event-by-event places, not season standings.",
-      "coefficient": "Normalized series weight: (Hardness + 32) / 32.",
       "samples": "Drivers who competed in multiple series; hardness is calculated from their results."
     },
     "showOverlap": "Examples",
@@ -127,7 +125,8 @@
     "series": "Series",
     "event": "Event",
     "points": "Points",
-    "qual": "Qual",
+    "qualPlace": "Qual place",
+    "qualScore": "Qual score",
     "place": "Place",
     "duels": "Tandem duels",
     "photoPrev": "Previous photo",

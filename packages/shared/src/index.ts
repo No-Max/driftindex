@@ -1,5 +1,11 @@
 export type EventStatus = 'SCHEDULED' | 'FINISHED' | 'CANCELLED';
 
+export {
+  compareEventResultsChronologically,
+  eventChronologyTimestamp,
+  type EventChronologyFields,
+} from './eventChronology.js';
+
 export interface DataSource {
   labelEn: string;
   labelRu: string;
@@ -227,8 +233,10 @@ export interface PilotProfileResponse extends PilotSummary {
     eventSlug: string;
     eventName: string;
     track: TrackSummary | null;
+    startsAt: string | null;
     roundNumber: number;
     qualPosition: number | null;
+    qualScore100: number | null;
     qualPoints: number | null;
     eventPlace: number | null;
     tandemBattles: number | null;

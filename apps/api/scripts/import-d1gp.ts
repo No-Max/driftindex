@@ -1,40 +1,27 @@
 import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
-import {
-  fetchDriftMastersQualByRound,
-  fetchDriftMastersSeason,
-  findDmQualResult,
-  listDriftMastersSeasons,
-} from '../src/importers/drift-masters.js';
-import type { DmPilot } from '../src/importers/drift-masters.js';
-import { upsertPilotSeriesPhoto } from '../src/lib/media/pilotPhoto.js';
+import { fetchD1gpSeason } from '../src/importers/d1gp.js';
+import type { D1Pilot } from '../src/importers/d1gp.js';
 import { findMatchingPilot } from '../src/lib/pilotMatch.js';
 import { canonicalEnglishNames } from '../src/lib/pilotNames.js';
+import { upsertPilotSeriesPhoto } from '../src/lib/media/pilotPhoto.js';
 import { upsertPilotSeriesAlias } from '../src/lib/pilotSeriesAlias.js';
 import { toQualScore100 } from '../src/lib/qualScore.js';
 import { refreshStageCoefficientsForSeason } from '../src/lib/stageCoefficient.js';
 import { findOrCreateTrack } from '../src/lib/track.js';
 
 const prisma = new PrismaClient();
-const SERIES_SLUG = 'drift-masters';
+const SERIES_SLUG = 'd1gp';
 
 function parseYears(): number[] {
-  if (process.argv.includes('--list-seasons')) return [];
-
-  const yearFlagIndex = process.argv.indexOf('--year');
-  const yearArgs =
-    yearFlagIndex !== -1
-      ? process.argv.slice(yearFlagIndex + 1).filter((arg) => /^\d{4}$/.test(arg))
-      : process.argv.filter((arg) => /^\d{4}$/.test(arg));
-
+  const yearArgs = process.argv.filter((arg) => /^\d{4}$/.test(arg));
   if (yearArgs.length > 0) {
     return yearArgs.map((arg) => Number.parseInt(arg, 10));
   }
-
-  return [new Date().getFullYear()];
+  return [2026];
 }
 
-async function resolvePilotSlug(pilot: DmPilot, seriesId: string): Promise<string> {
+async function resolvePilotSlug(pilot: D1Pilot, seriesId: string): Promise<string> {
   const match = await findMatchingPilot(
     prisma,
     {
@@ -44,20 +31,15 @@ async function resolvePilotSlug(pilot: DmPilot, seriesId: string): Promise<strin
       lastName: pilot.lastName,
       number: pilot.number,
     },
-    { excludeSlugPrefix: 'dm-', seriesId },
+    { excludeSlugPrefix: 'd1-', seriesId },
   );
   return match?.slug ?? pilot.slug;
 }
 
 async function importSeason(year: number, seriesId: string) {
-  console.log(`\n=== Drift Masters ${year} ===`);
-  const data = await fetchDriftMastersSeason(year);
+  console.log(`\n=== D1 Grand Prix ${year} ===`);
+  const data = await fetchD1gpSeason(year);
   console.log(`Loaded ${data.pilots.length} pilots, ${data.events.length} events`);
-
-  const qualByRound = await fetchDriftMastersQualByRound(year);
-  for (const [roundNumber, rows] of qualByRound) {
-    console.log(`Loaded ${rows.length} qual results for round ${roundNumber}`);
-  }
 
   let season = await prisma.season.findUnique({
     where: { seriesId_year: { seriesId, year: data.seasonYear } },
@@ -71,19 +53,19 @@ async function importSeason(year: number, seriesId: string) {
   season = await prisma.season.upsert({
     where: { seriesId_year: { seriesId, year: data.seasonYear } },
     update: {
-      nameEn: `Drift Masters ${data.seasonYear}`,
-      nameRu: `Drift Masters ${data.seasonYear}`,
-      sourceLabelEn: 'Drift Masters — official results',
-      sourceLabelRu: 'Drift Masters — официальные результаты',
+      nameEn: `D1 Grand Prix ${data.seasonYear}`,
+      nameRu: `D1 Grand Prix ${data.seasonYear}`,
+      sourceLabelEn: 'D1 Grand Prix — official results',
+      sourceLabelRu: 'D1 Grand Prix — официальные результаты',
       sourceUrl: data.sourceUrl,
     },
     create: {
       seriesId,
       year: data.seasonYear,
-      nameEn: `Drift Masters ${data.seasonYear}`,
-      nameRu: `Drift Masters ${data.seasonYear}`,
-      sourceLabelEn: 'Drift Masters — official results',
-      sourceLabelRu: 'Drift Masters — официальные результаты',
+      nameEn: `D1 Grand Prix ${data.seasonYear}`,
+      nameRu: `D1 Grand Prix ${data.seasonYear}`,
+      sourceLabelEn: 'D1 Grand Prix — official results',
+      sourceLabelRu: 'D1 Grand Prix — официальные результаты',
       sourceUrl: data.sourceUrl,
     },
   });
@@ -113,11 +95,22 @@ async function importSeason(year: number, seriesId: string) {
     eventRecords.set(event.slug, record);
   }
 
+  const teamCache = new Map<string, string>();
+  async function teamId(name: string | null): Promise<string | null> {
+    if (!name) return null;
+    const cached = teamCache.get(name);
+    if (cached) return cached;
+    let team = await prisma.team.findFirst({ where: { name } });
+    if (!team) team = await prisma.team.create({ data: { name } });
+    teamCache.set(name, team.id);
+    return team.id;
+  }
+
   let resultCount = 0;
-  let qualMatched = 0;
+  let qualCount = 0;
+  let merged = 0;
   let photosMirrored = 0;
   let photosFailed = 0;
-  let merged = 0;
 
   for (const pilot of data.pilots) {
     const english = canonicalEnglishNames(pilot);
@@ -158,31 +151,29 @@ async function importSeason(year: number, seriesId: string) {
       const event = eventRecords.get(stage.eventSlug);
       if (!event) continue;
 
-      const qualRows = qualByRound.get(stage.roundNumber);
-      const qual = qualRows
-        ? findDmQualResult(qualRows, english.firstName, english.lastName, pilot.nameAlias)
-        : undefined;
-      const qualScore100 = qual ? toQualScore100(qual.qualScore100, SERIES_SLUG) : null;
-      if (qual) qualMatched++;
+      const qualScore100 = toQualScore100(stage.qualScore100, SERIES_SLUG);
+      if (qualScore100 != null) qualCount++;
 
       await prisma.eventResult.upsert({
         where: { eventId_pilotId: { eventId: event.id, pilotId: pilotRecord.id } },
         update: {
-          qualPosition: qual?.rank ?? stage.qualifyingPosition,
+          qualPosition: stage.qualifyingPosition,
           qualPoints: stage.qualifyingPoints,
           qualScore100,
           tandemPosition: stage.tandemPosition,
           points: stage.points,
+          teamId: await teamId(pilot.team),
           dataStatus: 'VERIFIED',
         },
         create: {
           eventId: event.id,
           pilotId: pilotRecord.id,
-          qualPosition: qual?.rank ?? stage.qualifyingPosition,
+          qualPosition: stage.qualifyingPosition,
           qualPoints: stage.qualifyingPoints,
           qualScore100,
           tandemPosition: stage.tandemPosition,
           points: stage.points,
+          teamId: await teamId(pilot.team),
           dataStatus: 'VERIFIED',
         },
       });
@@ -192,23 +183,15 @@ async function importSeason(year: number, seriesId: string) {
 
   const stageCount = await refreshStageCoefficientsForSeason(prisma, season.id);
 
+  const withPhotos = data.pilots.filter((p) => p.photoSourceUrl).length;
   console.log(
     `Import complete: ${data.pilots.length} pilots (${merged} merged with existing), ` +
-      `${resultCount} results (${qualMatched} with qual scores), ${photosMirrored} photos mirrored` +
-      `${photosFailed ? `, ${photosFailed} photo failures` : ''}, ${stageCount} stage coefficients`,
+      `${resultCount} results (${qualCount} with qual scores), ${stageCount} stage coefficients, ` +
+      `${withPhotos} photo sources (${photosMirrored} mirrored, ${photosFailed} failed)`,
   );
 }
 
 async function main() {
-  if (process.argv.includes('--list-seasons')) {
-    const seasons = await listDriftMastersSeasons();
-    console.log('Drift Masters seasons on dm.gp:');
-    for (const season of seasons) {
-      console.log(`  ${season.year}  ${season.slug}  ${season.id}${season.isCurrent ? ' (current)' : ''}`);
-    }
-    return;
-  }
-
   const series = await prisma.series.findUnique({ where: { slug: SERIES_SLUG } });
   if (!series) {
     throw new Error(`Series ${SERIES_SLUG} not found — run db:seed first`);

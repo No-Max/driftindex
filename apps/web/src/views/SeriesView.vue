@@ -59,10 +59,6 @@ function seriesNameBySlug(slug: string) {
   return listed ? seriesName(listed) : slug;
 }
 
-function formatCoefficient(value: number) {
-  return value.toFixed(3);
-}
-
 function formatSamples(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }
@@ -79,7 +75,7 @@ function latestSeasonYear(item: SeriesListItem) {
   return item.seasons[0]?.year;
 }
 
-const prestigeColumnKeys = ['rank', 'series', 'hardness', 'coefficient', 'samples'] as const;
+const prestigeColumnKeys = ['rank', 'series', 'hardness', 'samples'] as const;
 </script>
 
 <template>
@@ -114,7 +110,6 @@ const prestigeColumnKeys = ['rank', 'series', 'hardness', 'coefficient', 'sample
                 <th>{{ t('seriesPage.col.rank') }}</th>
                 <th>{{ t('seriesPage.col.series') }}</th>
                 <th>{{ t('seriesPage.col.hardness') }}</th>
-                <th>{{ t('seriesPage.col.coefficient') }}</th>
                 <th>{{ t('seriesPage.col.samples') }}</th>
                 <th />
               </tr>
@@ -128,11 +123,6 @@ const prestigeColumnKeys = ['rank', 'series', 'hardness', 'coefficient', 'sample
                     <span class="muted series-code">{{ entry.slug }}</span>
                   </td>
                   <td class="muted">{{ entry.hardnessScore != null ? entry.hardnessScore : '—' }}</td>
-                  <td>
-                    <strong class="coef">
-                      {{ entry.coefficient != null ? formatCoefficient(entry.coefficient) : '—' }}
-                    </strong>
-                  </td>
                   <td class="muted">{{ entry.overlapSamples ? formatSamples(entry.overlapSamples) : '—' }}</td>
                   <td>
                     <button
@@ -146,7 +136,7 @@ const prestigeColumnKeys = ['rank', 'series', 'hardness', 'coefficient', 'sample
                   </td>
                 </tr>
                 <tr v-if="expandedSlug === entry.slug && entry.contributions.length > 0" class="contrib-row">
-                  <td colspan="6">
+                  <td colspan="5">
                     <p class="contrib-title">{{ t('seriesPage.overlapExamples') }}</p>
                     <ul class="contrib-list">
                       <li v-for="(row, index) in entry.contributions" :key="index">
@@ -294,10 +284,6 @@ display = (100 − raw)</pre>
   display: block;
   font-size: 0.75rem;
   margin-top: 0.15rem;
-}
-
-.coef {
-  color: var(--accent);
 }
 
 .expand-btn {

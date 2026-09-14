@@ -1,7 +1,14 @@
 import { alpha3ToAlpha2 } from '../lib/countryCode.js';
+import { buildNameKey, normalizeToken } from '../lib/transliterate.js';
 
 const BASE = 'https://dm.gp/umbraco/api/v1';
 const SITE = 'https://dm.gp';
+const RAWMOTION_BASE = 'https://live.rawmotion.com/api/v1';
+
+/** RawMotion event IDs for seasons where dm.gp omits qualifying data. */
+const RAWMOTION_DM_EVENT_IDS: Record<number, string> = {
+  2026: '24217941-4497-11f1-9a48-e5b2f4f9b363',
+};
 
 export interface DmStageResult {
   eventSlug: string;
@@ -40,6 +47,16 @@ export interface DmSeasonData {
   seasonId: string;
   events: DmEvent[];
   pilots: DmPilot[];
+}
+
+export interface DmQualResult {
+  roundNumber: number;
+  rank: number;
+  qualScore100: number;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  nationality: string | null;
 }
 
 interface DmSeasonMeta {
@@ -88,6 +105,155 @@ async function fetchJson<T>(path: string): Promise<T> {
     throw new Error(`Failed to fetch ${BASE}${path}: ${response.status}`);
   }
   return response.json() as Promise<T>;
+}
+
+async function fetchRawMotionJson<T>(path: string): Promise<T> {
+  const response = await fetch(`${RAWMOTION_BASE}${path}`, {
+    headers: { accept: 'application/json', 'user-agent': 'DriftIndexImporter/1.0' },
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ${RAWMOTION_BASE}${path}: ${response.status}`);
+  }
+  return response.json() as Promise<T>;
+}
+
+interface RawMotionRoundMeta {
+  name: string;
+  externalId: string;
+}
+
+interface RawMotionQualRow {
+  rank: number;
+  value: string;
+  firstname: string;
+  lastname: string;
+  nation: string;
+}
+
+interface RawMotionHeat {
+  results: RawMotionQualRow[];
+}
+
+function parseQualScore(value: string): number | null {
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function titleCaseName(value: string): string {
+  return titleCase(value.trim());
+}
+
+/** Qualifying results keyed by normalized pilot name (round number → lookup). */
+export function buildDmQualLookup(results: DmQualResult[]): Map<string, DmQualResult> {
+  const lookup = new Map<string, DmQualResult>();
+  for (const row of results) {
+    const key = buildNameKey(row.firstName, row.lastName, row.fullName);
+    lookup.set(key, row);
+  }
+  return lookup;
+}
+
+function lastNamesMatch(left: string, right: string): boolean {
+  const a = normalizeToken(left);
+  const b = normalizeToken(right);
+  return a === b || a.startsWith(b) || b.startsWith(a);
+}
+
+function firstNamesMatch(left: string, right: string): boolean {
+  const a = normalizeToken(left);
+  const b = normalizeToken(right);
+  if (!a || !b) return false;
+  if (a === b) return true;
+  const prefixLength = Math.min(3, a.length, b.length);
+  return a.slice(0, prefixLength) === b.slice(0, prefixLength);
+}
+
+/** Match dm.gp pilot to RawMotion qual row (handles Pawel/Paweł, Dave/David, etc.). */
+export function findDmQualResult(
+  rows: DmQualResult[],
+  firstName: string,
+  lastName: string,
+  nameAlias: string | null | undefined,
+): DmQualResult | undefined {
+  const lookup = buildDmQualLookup(rows);
+  const aliasNames = nameAlias ? parseDriverName(nameAlias) : null;
+  const keys = [
+    buildNameKey(firstName, lastName, nameAlias),
+    aliasNames ? buildNameKey(aliasNames.firstName, aliasNames.lastName, nameAlias) : null,
+  ].filter((key): key is string => key != null);
+
+  for (const key of keys) {
+    const hit = lookup.get(key);
+    if (hit) return hit;
+  }
+
+  const lastMatches = rows.filter((row) => lastNamesMatch(row.lastName, lastName));
+  if (lastMatches.length === 1) return lastMatches[0];
+
+  const fuzzyMatches = lastMatches.filter((row) => firstNamesMatch(row.firstName, firstName));
+  return fuzzyMatches.length === 1 ? fuzzyMatches[0] : undefined;
+}
+
+async function fetchRawMotionRoundQual(
+  eventId: string,
+  roundNumber: number,
+): Promise<DmQualResult[]> {
+  const rounds = await fetchRawMotionJson<RawMotionRoundMeta[]>(
+    `/event/${eventId}/contest/${roundNumber}/rounds`,
+  );
+  const qualRound = rounds.find((round) => round.name === 'Qualifying');
+  if (!qualRound) {
+    throw new Error(`Qualifying round not found for contest ${roundNumber}`);
+  }
+
+  const heats = await fetchRawMotionJson<RawMotionHeat[]>(
+    `/event/${eventId}/contest/${roundNumber}/round/${qualRound.externalId}/heat/0`,
+  );
+  const results = heats[0]?.results ?? [];
+
+  return results
+    .map((row) => {
+      const qualScore100 = parseQualScore(row.value);
+      if (qualScore100 == null) return null;
+
+      const firstName = titleCaseName(row.firstname);
+      const lastName = titleCaseName(row.lastname);
+      const fullName = `${firstName} ${lastName}`;
+
+      return {
+        roundNumber,
+        rank: row.rank,
+        qualScore100,
+        firstName,
+        lastName,
+        fullName,
+        nationality: row.nation || null,
+      } satisfies DmQualResult;
+    })
+    .filter((row): row is DmQualResult => row != null);
+}
+
+/** Fetch qualifying scores from RawMotion live scoring (dm.gp API has no qual data). */
+export async function fetchDriftMastersQualByRound(
+  seasonYear: number,
+): Promise<Map<number, DmQualResult[]>> {
+  const eventId = RAWMOTION_DM_EVENT_IDS[seasonYear];
+  if (!eventId) {
+    return new Map();
+  }
+
+  const byRound = new Map<number, DmQualResult[]>();
+  for (let roundNumber = 1; roundNumber <= 7; roundNumber++) {
+    try {
+      const rows = await fetchRawMotionRoundQual(eventId, roundNumber);
+      byRound.set(roundNumber, rows);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.warn(`RawMotion qual unavailable for round ${roundNumber}: ${message}`);
+    }
+  }
+
+  return byRound;
 }
 
 function parseDriverName(fullName: string): { firstName: string; lastName: string } {

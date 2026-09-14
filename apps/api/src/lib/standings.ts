@@ -148,6 +148,6 @@ export function computeStandings(events: SeasonEventWithResults[]): ComputedStan
       rank: index + 1,
       pilot: row.pilot,
       totalPoints: row.total,
-      eventPoints: finishedEvents.map((event) => row.byEvent.get(event.id) ?? null),
+      eventPoints: events.map((event) => row.byEvent.get(event.id) ?? null),
     }));
 }
