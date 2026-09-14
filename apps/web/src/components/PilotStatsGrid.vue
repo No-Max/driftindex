@@ -9,11 +9,6 @@ defineProps<{
 
 const { t } = useI18n();
 
-function formatTandem(stats: PilotStats) {
-  if (stats.tandemBattles <= 0 || stats.tandemWinPct == null) return '—';
-  return `${stats.tandemBattles}/${stats.tandemWins} (${stats.tandemWinPct}%)`;
-}
-
 function formatQual(value: number | null) {
   if (value == null) return '—';
   return value.toFixed(1);
@@ -22,10 +17,6 @@ function formatQual(value: number | null) {
 
 <template>
   <dl class="stats" :class="{ 'stats--compact': compact }">
-    <div class="stats__item">
-      <dt>{{ t('pilot.stats.tandemRecord') }}</dt>
-      <dd>{{ formatTandem(stats) }}</dd>
-    </div>
     <div class="stats__item">
       <dt>{{ t('pilot.stats.events') }}</dt>
       <dd>{{ stats.eventsCount }}</dd>
@@ -44,7 +35,7 @@ function formatQual(value: number | null) {
 <style scoped>
 .stats {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.75rem;
   margin: 0;
 }

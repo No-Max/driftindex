@@ -2,8 +2,10 @@ import type { HomeResponse } from '@drift-index/shared';
 import { Router } from 'express';
 import { computeP4P } from '../lib/p4p.js';
 import { loadP4PInputs } from '../lib/p4pData.js';
+import { buildP4PBestSeriesEvents } from '../lib/p4pSeasonEvents.js';
 import { toPilotCard } from '../lib/pilot.js';
 import { computePilotStats, toStatsInput } from '../lib/pilotStats.js';
+import { loadSeriesLogoMap, seriesLogoFromMap } from '../lib/seriesLogos.js';
 import { computePrestigeRanking } from '../lib/seriesOverlap.js';
 import { computeStandings } from '../lib/standings.js';
 import { prisma } from '../lib/prisma.js';
@@ -36,8 +38,15 @@ homeRouter.get('/home', async (req, res) => {
 
   const prestige = await computePrestigeRanking(prisma, year);
 
+  const seriesStartYears = await prisma.season.groupBy({
+    by: ['seriesId'],
+    _min: { year: true },
+  });
+  const startYearBySeriesId = new Map(
+    seriesStartYears.map((row) => [row.seriesId, row._min.year ?? year]),
+  );
+
   const championships = [];
-  const superPodium = [];
   const qualWinners = [];
 
   for (const series of featuredSeries) {
@@ -57,26 +66,11 @@ homeRouter.get('/home', async (req, res) => {
         logoUrl: series.logoUrl,
       },
       seasonYear: season.year,
+      seriesStartYear: startYearBySeriesId.get(series.id) ?? season.year,
       leader: leader ? toPilotCard(leader.pilot) : null,
       leaderPoints: leader?.totalPoints ?? null,
       standingsPath: `/series/${series.slug}/${season.year}`,
     });
-
-    if (leader) {
-      superPodium.push({
-        pilot: toPilotCard(leader.pilot),
-        series: {
-          slug: series.slug,
-          name: series.name,
-          shortName: series.shortName,
-          country: series.country,
-          logoUrl: series.logoUrl,
-        },
-        seasonYear: season.year,
-        totalPoints: leader.totalPoints,
-        standingsPath: `/series/${series.slug}/${season.year}`,
-      });
-    }
 
     const lastFinished = [...events].reverse().find((e) => e.status === 'FINISHED');
     if (lastFinished) {
@@ -145,6 +139,7 @@ homeRouter.get('/home', async (req, res) => {
   const statsByPilotId = new Map(
     p4pPilotResults.map((pilot) => [pilot.id, computePilotStats(toStatsInput(pilot.results))]),
   );
+  const resultsByPilotId = new Map(p4pPilotResults.map((pilot) => [pilot.id, pilot.results]));
 
   const poundForPound = p4pRows.map((row) => ({
     rank: row.rank,
@@ -157,11 +152,20 @@ homeRouter.get('/home', async (req, res) => {
       slug: row.bestSeriesSlug,
       name: row.bestSeriesName,
       shortName: row.bestSeriesShortName,
+      logoUrl: row.bestSeriesLogoUrl,
       weight: row.bestSeriesWeight,
       place: row.bestSeriesPlace,
       avgQualScore: row.bestSeriesAvgQual,
     },
+    otherSeries: row.otherSeries,
+    bestSeriesEvents: buildP4PBestSeriesEvents(
+      resultsByPilotId.get(row.pilot.id) ?? [],
+      row.bestSeriesSlug,
+      year,
+    ),
   }));
+
+  const logoBySlug = await loadSeriesLogoMap(prisma);
 
   const payload: HomeResponse = {
     year,
@@ -173,10 +177,12 @@ homeRouter.get('/home', async (req, res) => {
       historyFromYear: prestige.historyFromYear,
       historyToYear: prestige.historyToYear,
       source: prestige.source,
-      entries: prestige.entries,
+      entries: prestige.entries.map((entry) => ({
+        ...entry,
+        logoUrl: seriesLogoFromMap(logoBySlug, entry.slug),
+      })),
     },
     championships,
-    superPodium,
     qualWinners,
     calendar: calendarEvents.map((event) => ({
       seriesSlug: event.season.series.slug,

@@ -4,7 +4,9 @@ import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { fetchPilots } from '../api/client';
 import PilotAvatar from '../components/PilotAvatar.vue';
+import SeriesLogo from '../components/SeriesLogo.vue';
 import { formatAvgPlaceRange } from '../lib/formatAvgPlace';
+import { formatPilotName } from '../lib/formatPilotName';
 
 const { t } = useI18n();
 
@@ -53,7 +55,7 @@ const rankedCount = computed(
 );
 
 function pilotName(entry: PilotListEntry) {
-  return `${entry.pilot.firstName} ${entry.pilot.lastName}`;
+  return formatPilotName(entry.pilot);
 }
 
 function seriesName(entry: PilotListEntry) {
@@ -61,10 +63,9 @@ function seriesName(entry: PilotListEntry) {
   return entry.bestSeries.name;
 }
 
-function bestSeriesSummary(entry: PilotListEntry) {
+function bestSeriesMeta(entry: PilotListEntry) {
   if (!entry.bestSeries) return '';
   const parts = [
-    seriesName(entry),
     t('home.p4pAvgPlace', { place: formatAvgPlaceRange(entry.bestSeries.place) }),
   ];
   if (entry.bestSeries.avgQualScore != null) {
@@ -113,7 +114,13 @@ function bestSeriesSummary(entry: PilotListEntry) {
                 {{ pilotName(entry) }}
               </p>
               <p v-if="entry.bestSeries" class="pilots-list__series">
-                {{ bestSeriesSummary(entry) }}
+                <SeriesLogo
+                  :slug="entry.bestSeries.slug"
+                  :name="entry.bestSeries.name"
+                  :logo-url="entry.bestSeries.logoUrl"
+                  size="sm"
+                />
+                <span>{{ seriesName(entry) }} · {{ bestSeriesMeta(entry) }}</span>
                 <span class="muted">· hardness {{ entry.bestSeries.weight }}</span>
               </p>
               <p v-else class="pilots-list__series muted">{{ t('pilots.unranked') }}</p>
@@ -222,6 +229,10 @@ function bestSeriesSummary(entry: PilotListEntry) {
 }
 
 .pilots-list__series {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
   margin: 0.15rem 0 0;
   font-size: 0.82rem;
 }

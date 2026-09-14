@@ -20,13 +20,14 @@ defineProps<{
 .section-heading h2 {
   margin: 0;
   font-family: Oswald, sans-serif;
-  font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+  font-size: clamp(1.5rem, 2.5vw, 1.9rem);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
 .section-heading p {
   margin: 0.35rem 0 0;
-  font-size: 0.95rem;
+  font-size: 1.05rem;
+  line-height: 1.5;
 }
 </style>

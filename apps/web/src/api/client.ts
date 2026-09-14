@@ -21,6 +21,7 @@ export interface SeriesListItem {
   name: string;
   shortName: string | null;
   country: string | null;
+  logoUrl: string | null;
   seasons: Array<{
     year: number;
     nameEn: string | null;

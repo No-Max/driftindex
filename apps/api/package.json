@@ -12,6 +12,7 @@
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
+    "db:sync:series-logos": "tsx scripts/sync-series-logos.ts",
     "db:import:royal-ds": "tsx scripts/import-royal-ds.ts",
     "db:import:rds-gp": "tsx scripts/import-rds-gp.ts",
     "db:import:rds-gp:list": "tsx scripts/import-rds-gp.ts --list-seasons",

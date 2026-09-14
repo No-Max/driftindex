@@ -8,9 +8,11 @@ import { fetchPilot } from '../api/client';
 import PilotAvatar from '../components/PilotAvatar.vue';
 import PilotPhotoSlider from '../components/PilotPhotoSlider.vue';
 import PilotStatsGrid from '../components/PilotStatsGrid.vue';
+import { formatPilotName } from '../lib/formatPilotName';
+import { formatQualCell } from '../lib/formatQualCell';
 
 const route = useRoute();
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const pilot = ref<PilotProfileResponse | null>(null);
 const loading = ref(true);
@@ -20,7 +22,7 @@ const slug = computed(() => String(route.params.slug));
 
 const displayName = computed(() => {
   if (!pilot.value) return '';
-  return `${pilot.value.firstName} ${pilot.value.lastName}`;
+  return formatPilotName(pilot.value);
 });
 
 const sortedResults = computed(() => {
@@ -52,16 +54,8 @@ function eventName(result: PilotProfileResponse['results'][0]) {
   return result.eventName;
 }
 
-function formatEventDuels(result: PilotProfileResponse['results'][0]) {
-  if (result.tandemBattles == null || result.tandemBattles <= 0) return '—';
-  const wins = result.tandemWins ?? 0;
-  const pct = Math.round((wins / result.tandemBattles) * 1000) / 10;
-  return `${result.tandemBattles}/${wins} (${pct}%)`;
-}
-
-function formatQualScore(score: number | null | undefined) {
-  if (score == null) return '—';
-  return score.toFixed(1);
+function formatQual(result: PilotProfileResponse['results'][0]) {
+  return formatQualCell(result.qualScore100, result.qualPosition, locale.value);
 }
 </script>
 
@@ -98,10 +92,8 @@ function formatQualScore(score: number | null | undefined) {
             <tr>
               <th>{{ t('pilot.series') }}</th>
               <th>{{ t('pilot.event') }}</th>
-              <th>{{ t('pilot.qualPlace') }}</th>
-              <th>{{ t('pilot.qualScore') }}</th>
+              <th>{{ t('pilot.qual') }}</th>
               <th>{{ t('pilot.place') }}</th>
-              <th>{{ t('pilot.duels') }}</th>
               <th>{{ t('pilot.points') }}</th>
             </tr>
           </thead>
@@ -122,16 +114,8 @@ function formatQualScore(score: number | null | undefined) {
                   {{ result.track.name }}
                 </RouterLink>
               </td>
-              <td class="muted">{{ result.qualPosition ?? '—' }}</td>
-              <td class="muted">
-                <template v-if="result.qualScore100 != null">
-                  {{ formatQualScore(result.qualScore100) }}
-                  <span class="qual-score-suffix">{{ t('pilot.stats.qualShort') }}</span>
-                </template>
-                <template v-else>—</template>
-              </td>
+              <td class="muted">{{ formatQual(result) }}</td>
               <td class="muted">{{ result.eventPlace ?? '—' }}</td>
-              <td class="muted">{{ formatEventDuels(result) }}</td>
               <td><strong>{{ result.points }}</strong></td>
             </tr>
           </tbody>
@@ -169,11 +153,5 @@ function formatQualScore(score: number | null | undefined) {
   margin-top: 0.15rem;
   color: var(--accent);
   font-size: 0.78rem;
-}
-
-.qual-score-suffix {
-  margin-left: 0.1rem;
-  font-size: 0.78rem;
-  opacity: 0.65;
 }
 </style>

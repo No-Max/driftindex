@@ -4,7 +4,7 @@ import { countryFlagEmoji, countryFlagSrc } from '../lib/countryFlag';
 
 const props = defineProps<{
   country: string;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 }>();
 
 const imageFailed = ref(false);
@@ -60,26 +60,32 @@ const showImage = computed(() => flagSrc.value && !imageFailed.value);
 }
 
 .flag-badge--sm {
-  width: 14px;
-  height: 14px;
-  font-size: 0.55rem;
+  width: 15px;
+  height: 15px;
+  font-size: 0.58rem;
 }
 
 .flag-badge--md {
-  width: 16px;
-  height: 16px;
-  font-size: 0.6rem;
+  width: 18px;
+  height: 18px;
+  font-size: 0.62rem;
 }
 
 .flag-badge--lg {
-  width: 20px;
-  height: 20px;
-  font-size: 0.72rem;
+  width: 22px;
+  height: 22px;
+  font-size: 0.75rem;
 }
 
 .flag-badge--xl {
-  width: 24px;
-  height: 24px;
-  font-size: 0.85rem;
+  width: 26px;
+  height: 26px;
+  font-size: 0.88rem;
+}
+
+.flag-badge--2xl {
+  width: 30px;
+  height: 30px;
+  font-size: 1rem;
 }
 </style>

@@ -4,6 +4,7 @@ export interface P4PInputSeries {
   slug: string;
   name: string;
   shortName: string | null;
+  logoUrl?: string | null;
   /** Raw overlap hardness for the series. */
   seriesHardness: number;
   standings: Array<{ avgPlace: number; avgQualScore: number; pilot: Pilot }>;
@@ -37,6 +38,16 @@ export function p4pDisplayScore(rawP4P: number): number {
   return Math.round((100 - rawP4P) * 100) / 100;
 }
 
+export interface P4PSeriesParticipation {
+  slug: string;
+  name: string;
+  shortName: string | null;
+  logoUrl: string | null;
+  weight: number;
+  place: number;
+  avgQualScore: number | null;
+}
+
 export interface P4PResult {
   rank: number;
   score: number;
@@ -44,9 +55,12 @@ export interface P4PResult {
   bestSeriesSlug: string;
   bestSeriesName: string;
   bestSeriesShortName: string | null;
+  bestSeriesLogoUrl: string | null;
   bestSeriesWeight: number;
   bestSeriesPlace: number;
   bestSeriesAvgQual: number | null;
+  /** Other featured series the pilot entered in the same season (excluding best). */
+  otherSeries: P4PSeriesParticipation[];
 }
 
 /** P4P = min(avgPlace − Hardness − qual/100) − 0.1×series (lower raw is better). */
@@ -55,19 +69,20 @@ export function computeP4P(
   limit?: number,
 ): P4PResult[] {
   const seriesCountByPilot = countP4PSeriesByPilot(seriesList);
-  const bestByPilot = new Map<
-    string,
-    {
-      pilot: Pilot;
-      adjusted: number;
-      seriesSlug: string;
-      seriesName: string;
-      seriesShortName: string | null;
-      hardness: number;
-      place: number;
-      avgQualScore: number;
-    }
-  >();
+  type PilotSeriesRow = {
+    pilot: Pilot;
+    adjusted: number;
+    seriesSlug: string;
+    seriesName: string;
+    seriesShortName: string | null;
+    seriesLogoUrl: string | null;
+    hardness: number;
+    place: number;
+    avgQualScore: number;
+  };
+
+  const bestByPilot = new Map<string, PilotSeriesRow>();
+  const allSeriesByPilot = new Map<string, PilotSeriesRow[]>();
 
   for (const series of seriesList) {
     for (const row of series.standings) {
@@ -75,20 +90,39 @@ export function computeP4P(
 
       const adjusted =
         row.avgPlace - series.seriesHardness - qualScoreP4PAdjustment(row.avgQualScore);
+      const participation: PilotSeriesRow = {
+        pilot: row.pilot,
+        adjusted,
+        seriesSlug: series.slug,
+        seriesName: series.name,
+        seriesShortName: series.shortName,
+        seriesLogoUrl: series.logoUrl ?? null,
+        hardness: series.seriesHardness,
+        place: row.avgPlace,
+        avgQualScore: row.avgQualScore,
+      };
+
+      const seriesListForPilot = allSeriesByPilot.get(row.pilot.id) ?? [];
+      seriesListForPilot.push(participation);
+      allSeriesByPilot.set(row.pilot.id, seriesListForPilot);
+
       const existing = bestByPilot.get(row.pilot.id);
       if (!existing || adjusted < existing.adjusted) {
-        bestByPilot.set(row.pilot.id, {
-          pilot: row.pilot,
-          adjusted,
-          seriesSlug: series.slug,
-          seriesName: series.name,
-          seriesShortName: series.shortName,
-          hardness: series.seriesHardness,
-          place: row.avgPlace,
-          avgQualScore: row.avgQualScore,
-        });
+        bestByPilot.set(row.pilot.id, participation);
       }
     }
+  }
+
+  function toSeriesParticipation(row: PilotSeriesRow): P4PSeriesParticipation {
+    return {
+      slug: row.seriesSlug,
+      name: row.seriesName,
+      shortName: row.seriesShortName,
+      logoUrl: row.seriesLogoUrl,
+      weight: Math.round(row.hardness * 100) / 100,
+      place: row.place,
+      avgQualScore: row.avgQualScore,
+    };
   }
 
   const sorted = [...bestByPilot.values()].sort((a, b) => {
@@ -102,6 +136,11 @@ export function computeP4P(
       row.adjusted,
       seriesCountByPilot.get(row.pilot.id) ?? 0,
     );
+    const otherSeries = (allSeriesByPilot.get(row.pilot.id) ?? [])
+      .filter((entry) => entry.seriesSlug !== row.seriesSlug)
+      .sort((a, b) => a.adjusted - b.adjusted)
+      .map(toSeriesParticipation);
+
     return {
       rank: index + 1,
       score: p4pDisplayScore(rawP4P),
@@ -109,9 +148,11 @@ export function computeP4P(
       bestSeriesSlug: row.seriesSlug,
       bestSeriesName: row.seriesName,
       bestSeriesShortName: row.seriesShortName,
+      bestSeriesLogoUrl: row.seriesLogoUrl,
       bestSeriesWeight: Math.round(row.hardness * 100) / 100,
       bestSeriesPlace: row.place,
       bestSeriesAvgQual: row.avgQualScore,
+      otherSeries,
     };
   });
 }

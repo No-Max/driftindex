@@ -39,6 +39,7 @@ export async function loadP4PInputs(
       slug: series.slug,
       name: series.name,
       shortName: series.shortName,
+      logoUrl: series.logoUrl,
       seriesHardness,
       standings: metrics.map((row) => ({
         avgPlace: row.avgPlace,

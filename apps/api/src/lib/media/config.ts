@@ -25,3 +25,8 @@ export function toPublicMediaPath(relativePath: string): string {
 export function pilotSeriesPortraitRelativePath(pilotSlug: string, seriesSlug: string): string {
   return `pilots/${pilotSlug}/${seriesSlug}.webp`;
 }
+
+/** One logo per series: series/{seriesSlug}.webp */
+export function seriesLogoRelativePath(seriesSlug: string): string {
+  return `series/${seriesSlug}.webp`;
+}

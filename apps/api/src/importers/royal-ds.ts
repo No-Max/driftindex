@@ -89,12 +89,28 @@ function hasScoredPoints(points: number | null | undefined): boolean {
   return (points ?? 0) > 0;
 }
 
-function parseName(fullNameEn: string): { firstName: string; lastName: string } {
-  const parts = fullNameEn.trim().split(/\s+/);
+function normalizeSlugToken(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function parseName(fullNameEn: string, driverSlug: string): { firstName: string; lastName: string } {
+  const parts = fullNameEn.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 1) return { firstName: parts[0]!, lastName: parts[0]! };
-  const lastName = parts[0]!;
-  const firstName = parts.slice(1).join(' ');
-  return { firstName, lastName };
+
+  const slugLead = normalizeSlugToken(driverSlug.split('-')[0] ?? '');
+  const firstLead = normalizeSlugToken(parts[0]!);
+  const lastLead = normalizeSlugToken(parts[parts.length - 1]!);
+  const matchesLead = (token: string) =>
+    slugLead.length >= 3 && (slugLead.startsWith(token) || token.startsWith(slugLead));
+
+  if (matchesLead(firstLead)) {
+    return { lastName: parts[0]!, firstName: parts.slice(1).join(' ') };
+  }
+  if (matchesLead(lastLead)) {
+    return { firstName: parts[0]!, lastName: parts.slice(1).join(' ') };
+  }
+
+  return { lastName: parts[0]!, firstName: parts.slice(1).join(' ') };
 }
 
 function mapEventStatus(phase: string): RoyalDsEvent['status'] {
@@ -121,7 +137,7 @@ export function normalizeRoyalDsStandings(raw: StandingsPage): RoyalDsSeasonData
   const pilots: RoyalDsPilot[] = personal
     .filter((row) => hasScoredPoints(row.totalPoints))
     .map((row) => {
-      const { firstName, lastName } = parseName(row.fullNameEn);
+      const { firstName, lastName } = parseName(row.fullNameEn, row.driverSlug);
       const stages = row.stages
         .filter((stage) => stage.official && hasScoredPoints(stage.totalPoints))
         .map((stage) => ({

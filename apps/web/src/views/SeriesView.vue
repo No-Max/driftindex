@@ -3,6 +3,8 @@ import type { OverlapContribution, SeriesPrestigeEntry, SeriesPrestigeResponse }
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { fetchSeriesList, fetchSeriesPrestige, type SeriesListItem } from '../api/client';
+import SeriesLogo from '../components/SeriesLogo.vue';
+import { formatPilotName } from '../lib/formatPilotName';
 
 const { t } = useI18n();
 
@@ -56,6 +58,10 @@ function seriesShortName(entry: SeriesPrestigeEntry | SeriesListItem) {
   return entry.shortName ?? entry.name;
 }
 
+function seriesLogoUrl(entry: SeriesPrestigeEntry | SeriesListItem) {
+  return entry.logoUrl ?? null;
+}
+
 function seriesBySlug(slug: string): SeriesPrestigeEntry | SeriesListItem | undefined {
   return prestige.value?.entries.find((item) => item.slug === slug)
     ?? seriesList.value.find((item) => item.slug === slug);
@@ -75,7 +81,7 @@ function toggleContributions(slug: string) {
 }
 
 function contributionPilotName(row: Pick<OverlapContribution, 'firstName' | 'lastName'>) {
-  return `${row.firstName} ${row.lastName}`;
+  return formatPilotName(row);
 }
 
 function overlapPlaceDelta(row: OverlapContribution) {
@@ -170,8 +176,18 @@ const prestigeColumnKeys = ['rank', 'series', 'hardness', 'samples'] as const;
                 <tr>
                   <td class="rank">{{ entry.effectiveOrder }}</td>
                   <td>
-                    <strong>{{ seriesLongName(entry) }}</strong>
-                    <span class="muted series-code">{{ seriesShortName(entry) }}</span>
+                    <div class="series-cell">
+                      <SeriesLogo
+                        :slug="entry.slug"
+                        :name="seriesLongName(entry)"
+                        :logo-url="seriesLogoUrl(entry)"
+                        size="md"
+                      />
+                      <div>
+                        <strong>{{ seriesLongName(entry) }}</strong>
+                        <span class="muted series-code">{{ seriesShortName(entry) }}</span>
+                      </div>
+                    </div>
                   </td>
                   <td class="muted">{{ entry.hardnessScore != null ? entry.hardnessScore : '—' }}</td>
                   <td class="muted">{{ entry.overlapSamples ? formatSamples(entry.overlapSamples) : '—' }}</td>
@@ -261,7 +277,13 @@ display = (100 − raw)</pre>
         <div class="catalog-grid">
           <article v-for="item in seriesList" :key="item.slug" class="card catalog-card">
             <div class="catalog-card__head">
-              <span class="catalog-card__code">{{ item.country ?? 'INT' }}</span>
+              <SeriesLogo
+                :slug="item.slug"
+                :name="seriesLongName(item)"
+                :logo-url="seriesLogoUrl(item)"
+                :country="item.country"
+                size="lg"
+              />
               <div>
                 <h3>{{ seriesLongName(item) }}</h3>
                 <p v-if="item.shortName && item.shortName !== item.name" class="muted catalog-short">
@@ -326,16 +348,19 @@ display = (100 − raw)</pre>
 
 .section-title {
   margin: 0;
-  font-family: Oswald, sans-serif;
-  font-size: 1.35rem;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
 }
 
 .section-lead {
   margin: 0;
-  max-width: 70ch;
+  max-width: 75ch;
   line-height: 1.55;
+  font-size: 1.05rem;
+}
+
+.series-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
 }
 
 .series-code {
@@ -487,20 +512,6 @@ display = (100 − raw)</pre>
   display: flex;
   gap: 0.75rem;
   align-items: center;
-}
-
-.catalog-card__code {
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  font-family: Oswald, sans-serif;
-  font-weight: 600;
-  color: var(--accent);
-  flex-shrink: 0;
 }
 
 .catalog-card h3 {

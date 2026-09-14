@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import type { HomeQualWinner } from '@drift-index/shared';
 import { useI18n } from 'vue-i18n';
+import { formatPilotName } from '../../lib/formatPilotName';
 import PilotAvatar from '../PilotAvatar.vue';
+import SeriesLogo from '../SeriesLogo.vue';
 
 defineProps<{
   items: HomeQualWinner[];
@@ -25,13 +27,21 @@ function eventName(item: HomeQualWinner) {
         <PilotAvatar :pilot="item.pilot" size="lg" />
         <div>
           <p class="qual-card__pole">{{ t('home.pole') }}</p>
-          <p class="qual-card__name">{{ item.pilot.lastName }}</p>
-          <p class="muted">{{ item.pilot.firstName }}</p>
+          <p class="qual-card__name">{{ formatPilotName(item.pilot) }}</p>
         </div>
       </RouterLink>
 
       <div class="qual-card__meta">
-        <p class="qual-card__series">{{ seriesName(item) }}</p>
+        <p class="qual-card__series">
+          <SeriesLogo
+            :slug="item.series.slug"
+            :name="item.series.name"
+            :logo-url="item.series.logoUrl"
+            :country="item.series.country"
+            size="sm"
+          />
+          <span>{{ seriesName(item) }}</span>
+        </p>
         <p class="muted">
           {{ eventName(item) }} · R{{ item.event.roundNumber }}
           <template v-if="item.event.track">
@@ -86,6 +96,9 @@ function eventName(item: HomeQualWinner) {
 }
 
 .qual-card__series {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
   margin: 0 0 0.2rem;
   font-weight: 600;
 }

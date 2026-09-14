@@ -17,6 +17,7 @@ export interface SeriesSummary {
   name: string;
   shortName: string | null;
   country: string | null;
+  logoUrl?: string | null;
 }
 
 export interface SeasonSummary {
@@ -87,16 +88,10 @@ export interface SeriesCard extends SeriesSummary {
 export interface HomeChampionshipCard {
   series: SeriesCard;
   seasonYear: number;
+  /** First tracked season year for the series. */
+  seriesStartYear: number;
   leader: PilotSummary | null;
   leaderPoints: number | null;
-  standingsPath: string;
-}
-
-export interface HomeSuperPodiumEntry {
-  pilot: PilotSummary;
-  series: SeriesCard;
-  seasonYear: number;
-  totalPoints: number;
   standingsPath: string;
 }
 
@@ -128,20 +123,38 @@ export interface HomeCalendarEvent {
   standingsPath: string;
 }
 
+export interface HomeP4PSeasonEvent {
+  roundNumber: number;
+  eventName: string;
+  qualPosition: number | null;
+  qualScore100: number | null;
+  eventPlace: number | null;
+  tandemBattles: number | null;
+  tandemWins: number | null;
+  points: number;
+}
+
+export interface HomeP4PSeriesParticipation {
+  slug: string;
+  name: string;
+  shortName: string | null;
+  logoUrl?: string | null;
+  /** Raw series Hardness used in P4P. */
+  weight: number;
+  /** Mean event place in the season (1 decimal). */
+  place: number;
+  avgQualScore: number | null;
+}
+
 export interface HomeP4PEntry {
   rank: number;
   score: number;
   pilot: PilotSummary;
-  bestSeries: {
-    slug: string;
-    name: string;
-    shortName: string | null;
-    /** Raw series Hardness used in P4P. */
-    weight: number;
-    /** Mean event place in the season (1 decimal). */
-    place: number;
-    avgQualScore: number | null;
-  };
+  bestSeries: HomeP4PSeriesParticipation;
+  /** Other featured series the pilot entered in the same season (excluding best). */
+  otherSeries: HomeP4PSeriesParticipation[];
+  /** Finished events in the P4P best series for the current season. */
+  bestSeriesEvents: HomeP4PSeasonEvent[];
 }
 
 export interface OverlapContribution {
@@ -162,6 +175,7 @@ export interface SeriesPrestigeEntry {
   slug: string;
   name: string;
   shortName: string | null;
+  logoUrl?: string | null;
   effectiveOrder: number;
   /** Raw overlap hardness = −mean(P); null when no overlap data. */
   hardnessScore: number | null;
@@ -186,7 +200,6 @@ export interface HomeResponse {
   year: number;
   seriesPrestige: SeriesPrestigeResponse;
   championships: HomeChampionshipCard[];
-  superPodium: HomeSuperPodiumEntry[];
   qualWinners: HomeQualWinner[];
   calendar: HomeCalendarEvent[];
   poundForPound: HomeP4PEntry[];
@@ -211,6 +224,7 @@ export interface PilotListEntry {
     slug: string;
     name: string;
     shortName: string | null;
+    logoUrl?: string | null;
     weight: number;
     place: number;
     avgQualScore: number | null;

@@ -1,5 +1,6 @@
 :root {
   color-scheme: dark;
+  --content-max: 1600px;
   --bg: #0b0d10;
   --surface: #141820;
   --surface-2: #1b2230;
@@ -13,6 +14,10 @@
   font-family: Inter, system-ui, sans-serif;
   background: var(--bg);
   color: var(--text);
+}
+
+html {
+  font-size: 112.5%;
 }
 
 * {
@@ -36,14 +41,18 @@ button {
   font: inherit;
 }
 
+p {
+  margin: 0;
+}
+
 .container {
-  width: min(1200px, calc(100% - 2rem));
+  width: min(var(--content-max), calc(100% - 2.5rem));
   margin: 0 auto;
 }
 
 .page-title {
   font-family: Oswald, Inter, sans-serif;
-  font-size: clamp(2rem, 4vw, 3rem);
+  font-size: clamp(2.25rem, 4.5vw, 3.35rem);
   letter-spacing: 0.02em;
   margin: 0 0 0.5rem;
   text-transform: uppercase;
@@ -52,6 +61,16 @@ button {
 .page-subtitle {
   color: var(--muted);
   margin: 0 0 2rem;
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+
+.section-title {
+  margin: 0;
+  font-family: Oswald, sans-serif;
+  font-size: clamp(1.5rem, 2.5vw, 1.85rem);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
 
 .card {
@@ -92,14 +111,15 @@ table {
 
 th,
 td {
-  padding: 0.85rem 1rem;
+  padding: 1rem 1.15rem;
   border-bottom: 1px solid var(--border);
   text-align: left;
   white-space: nowrap;
+  font-size: 0.95rem;
 }
 
 th {
-  font-size: 0.75rem;
+  font-size: 0.82rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--muted);
@@ -112,7 +132,7 @@ tbody tr:hover {
 
 .rank {
   font-family: Oswald, sans-serif;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   color: var(--accent);
 }
 

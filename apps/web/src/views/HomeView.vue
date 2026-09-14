@@ -8,7 +8,6 @@ import FanVoteStubs from '../components/home/FanVoteStubs.vue';
 import P4PPodium from '../components/home/P4PPodium.vue';
 import QualWinners from '../components/home/QualWinners.vue';
 import SectionHeading from '../components/home/SectionHeading.vue';
-import SuperPodium from '../components/home/SuperPodium.vue';
 import YearCalendar from '../components/home/YearCalendar.vue';
 
 const { t } = useI18n();
@@ -39,16 +38,11 @@ onMounted(async () => {
 
     <template v-else-if="data">
       <section class="home-section">
-        <SectionHeading :title="t('home.sections.championships')" />
-        <ChampionshipSlider :items="data.championships" />
-      </section>
-
-      <section class="home-section">
         <SectionHeading
-          :title="t('home.sections.superPodium')"
-          :subtitle="t('home.sections.superPodiumSub')"
+          :title="t('home.sections.championships', { year: data.year })"
+          :subtitle="t('home.sections.championshipsSub')"
         />
-        <SuperPodium :items="data.superPodium" />
+        <ChampionshipSlider :items="data.championships" />
       </section>
 
       <section class="home-section">

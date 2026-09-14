@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import type { PilotSummary } from '@drift-index/shared';
 import { computed } from 'vue';
+import { formatPilotName } from '../lib/formatPilotName';
 import CountryFlagBadge from './CountryFlagBadge.vue';
 
 const props = defineProps<{
   pilot: PilotSummary;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 }>();
 
 const initials = computed(() =>
@@ -16,7 +17,7 @@ const initials = computed(() =>
 <template>
   <div class="avatar-wrap">
     <div class="avatar" :class="`avatar--${size ?? 'md'}`">
-      <img v-if="pilot.photoUrl" :src="pilot.photoUrl" :alt="pilot.lastName" />
+      <img v-if="pilot.photoUrl" :src="pilot.photoUrl" :alt="formatPilotName(pilot)" />
       <span v-else>{{ initials }}</span>
     </div>
     <CountryFlagBadge v-if="pilot.country" :country="pilot.country" :size="size ?? 'md'" />
@@ -50,26 +51,32 @@ const initials = computed(() =>
 }
 
 .avatar--sm {
-  width: 36px;
-  height: 36px;
-  font-size: 0.75rem;
+  width: 40px;
+  height: 40px;
+  font-size: 0.78rem;
 }
 
 .avatar--md {
-  width: 48px;
-  height: 48px;
-  font-size: 0.9rem;
+  width: 54px;
+  height: 54px;
+  font-size: 0.95rem;
 }
 
 .avatar--lg {
-  width: 72px;
-  height: 72px;
-  font-size: 1.1rem;
+  width: 84px;
+  height: 84px;
+  font-size: 1.15rem;
 }
 
 .avatar--xl {
-  width: 96px;
-  height: 96px;
-  font-size: 1.4rem;
+  width: 112px;
+  height: 112px;
+  font-size: 1.45rem;
+}
+
+.avatar--2xl {
+  width: 136px;
+  height: 136px;
+  font-size: 1.75rem;
 }
 </style>

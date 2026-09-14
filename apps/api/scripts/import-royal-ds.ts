@@ -105,7 +105,7 @@ async function main() {
   let photosFailed = 0;
 
   for (const pilot of data.pilots) {
-    const english = canonicalEnglishNames(pilot);
+    const english = canonicalEnglishNames({ ...pilot, slug: pilot.slug });
     const existing = await findMatchingPilot(
       prisma,
       {

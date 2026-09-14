@@ -100,6 +100,7 @@ function setLocale(next: 'en' | 'ru') {
   display: flex;
   align-items: center;
   gap: 1rem;
+  font-size: 1.05rem;
 }
 
 .header__nav a.router-link-active {
@@ -129,6 +130,6 @@ function setLocale(next: 'en' | 'ru') {
 }
 
 .main {
-  padding: 2rem 0 4rem;
+  padding: 2.25rem 0 4.5rem;
 }
 </style>

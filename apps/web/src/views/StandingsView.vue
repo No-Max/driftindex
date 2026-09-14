@@ -4,6 +4,8 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import { fetchStandings } from '../api/client';
+import SeriesLogo from '../components/SeriesLogo.vue';
+import { formatPilotName } from '../lib/formatPilotName';
 
 const route = useRoute();
 const { t, locale } = useI18n();
@@ -42,7 +44,7 @@ onMounted(load);
 watch(() => route.fullPath, load);
 
 function pilotName(row: SeasonStandingsResponse['standings'][0]) {
-  return `${row.firstName} ${row.lastName}`;
+  return formatPilotName(row);
 }
 
 function eventLabel(index: number) {
@@ -57,12 +59,22 @@ function eventLabel(index: number) {
 
     <template v-else-if="data">
       <div class="hero">
-        <div>
+        <div class="hero__head">
+          <SeriesLogo
+            v-if="data.series"
+            :slug="data.series.slug"
+            :name="data.series.name"
+            :logo-url="data.series.logoUrl"
+            :country="data.series.country"
+            size="xl"
+          />
+          <div>
           <h1 class="page-title">{{ seriesTitle }}</h1>
           <p class="page-subtitle">
             {{ data.season.year }} ·
             {{ t('standings.eventsProgress', { finished: data.season.finishedEventCount, total: data.season.eventCount }) }}
           </p>
+          </div>
         </div>
         <p v-if="data.source" class="source-meta">
           {{ t('standings.source') }}:
@@ -118,6 +130,12 @@ function eventLabel(index: number) {
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 1rem;
+}
+
+.hero__head {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 .source-meta {

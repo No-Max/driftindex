@@ -13,8 +13,10 @@ import { Router } from 'express';
 import { computeP4P } from '../lib/p4p.js';
 import { loadP4PInputs } from '../lib/p4pData.js';
 import { toPilotCard } from '../lib/pilot.js';
+import { resolvePilotDisplayNames } from '../lib/pilotNames.js';
 import { computePilotStats, toStatsInput } from '../lib/pilotStats.js';
 import { prisma } from '../lib/prisma.js';
+import { loadSeriesLogoMap, seriesLogoFromMap } from '../lib/seriesLogos.js';
 import { computePrestigeRanking, persistPrestigeRanking } from '../lib/seriesOverlap.js';
 import { computeStandings } from '../lib/standings.js';
 import { toTrackSummary } from '../lib/trackDto.js';
@@ -27,7 +29,10 @@ publicRouter.get('/health', (_req, res) => {
 
 publicRouter.get('/series/prestige', async (req, res) => {
   const year = parseOptionalYear(req.query.year);
-  const prestige = await computePrestigeRanking(prisma, year ?? undefined);
+  const [prestige, logoBySlug] = await Promise.all([
+    computePrestigeRanking(prisma, year ?? undefined),
+    loadSeriesLogoMap(prisma),
+  ]);
 
   const payload: SeriesPrestigeResponse = {
     year: year ?? null,
@@ -37,7 +42,10 @@ publicRouter.get('/series/prestige', async (req, res) => {
     historyFromYear: prestige.historyFromYear,
     historyToYear: prestige.historyToYear,
     source: prestige.source,
-    entries: prestige.entries,
+    entries: prestige.entries.map((entry) => ({
+      ...entry,
+      logoUrl: seriesLogoFromMap(logoBySlug, entry.slug),
+    })),
   };
 
   res.json(payload);
@@ -45,7 +53,10 @@ publicRouter.get('/series/prestige', async (req, res) => {
 
 publicRouter.post('/series/prestige/recalculate', async (req, res) => {
   const year = parseOptionalYear(req.query.year) ?? new Date().getFullYear();
-  const prestige = await persistPrestigeRanking(prisma, year);
+  const [prestige, logoBySlug] = await Promise.all([
+    persistPrestigeRanking(prisma, year),
+    loadSeriesLogoMap(prisma),
+  ]);
 
   const payload: SeriesPrestigeResponse = {
     year,
@@ -55,7 +66,10 @@ publicRouter.post('/series/prestige/recalculate', async (req, res) => {
     historyFromYear: prestige.historyFromYear,
     historyToYear: prestige.historyToYear,
     source: prestige.source,
-    entries: prestige.entries,
+    entries: prestige.entries.map((entry) => ({
+      ...entry,
+      logoUrl: seriesLogoFromMap(logoBySlug, entry.slug),
+    })),
   };
 
   res.json(payload);
@@ -78,6 +92,7 @@ publicRouter.get('/series', async (_req, res) => {
       name: s.name,
       shortName: s.shortName,
       country: s.country,
+      logoUrl: s.logoUrl,
       seasons: s.seasons.map((season) => ({
         year: season.year,
         nameEn: season.nameEn,
@@ -223,6 +238,7 @@ publicRouter.get('/series/:slug/seasons/:year/standings', async (req, res) => {
       name: series.name,
       shortName: series.shortName,
       country: series.country,
+      logoUrl: series.logoUrl,
     },
     season: {
       year: season.year,
@@ -300,6 +316,7 @@ publicRouter.get('/pilots', async (req, res) => {
       slug: row.bestSeriesSlug,
       name: row.bestSeriesName,
       shortName: row.bestSeriesShortName,
+      logoUrl: row.bestSeriesLogoUrl,
       weight: row.bestSeriesWeight,
       place: row.bestSeriesPlace,
       avgQualScore: row.bestSeriesAvgQual,
@@ -371,10 +388,11 @@ publicRouter.get('/pilots/:slug', async (req, res) => {
     ),
   );
 
+  const { firstName, lastName } = resolvePilotDisplayNames(pilot);
   const payload: PilotProfileResponse = {
     slug: pilot.slug,
-    firstName: pilot.firstName,
-    lastName: pilot.lastName,
+    firstName,
+    lastName,
     country: pilot.country,
     number: pilot.number,
     photoUrl: pilot.photoUrl,

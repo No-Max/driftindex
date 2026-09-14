@@ -2,6 +2,7 @@
 import type { HomeCalendarEvent } from '@drift-index/shared';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import SeriesLogo from '../SeriesLogo.vue';
 
 const props = defineProps<{
   year: number;
@@ -51,7 +52,15 @@ function statusClass(status: HomeCalendarEvent['status']) {
           <RouterLink :to="event.standingsPath" class="event-row">
             <span class="event-row__day">{{ formatDay(event.startsAt) }}</span>
             <span class="event-row__body">
-              <strong>{{ eventName(event) }}</strong>
+              <span class="event-row__title">
+                <SeriesLogo
+                  :slug="event.seriesSlug"
+                  :name="event.seriesName"
+                  :logo-url="event.logoUrl"
+                  size="sm"
+                />
+                <strong>{{ eventName(event) }}</strong>
+              </span>
               <span class="muted">
                 {{ seriesName(event) }} · R{{ event.roundNumber }}
                 <template v-if="event.track">
@@ -99,6 +108,12 @@ function statusClass(status: HomeCalendarEvent['status']) {
   padding: 0;
   display: grid;
   gap: 0.5rem;
+}
+
+.event-row__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
 }
 
 .event-row {

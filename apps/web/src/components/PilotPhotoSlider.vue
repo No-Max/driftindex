@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { PilotSeriesPhoto, PilotSummary } from '@drift-index/shared';
 import { computed, ref } from 'vue';
+import { formatPilotName } from '../lib/formatPilotName';
 import CountryFlagBadge from './CountryFlagBadge.vue';
 
 const props = defineProps<{
@@ -41,7 +42,7 @@ function next() {
           v-if="current"
           :key="current.photoUrl"
           :src="current.photoUrl"
-          :alt="`${pilot.firstName} ${pilot.lastName}`"
+          :alt="formatPilotName(pilot)"
         />
         <span v-else class="photo-slider__initials">{{ initials }}</span>
 

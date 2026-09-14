@@ -1,10 +1,12 @@
 import type { Pilot } from '@prisma/client';
+import { resolvePilotDisplayNames } from './pilotNames.js';
 
 export function toPilotCard(pilot: Pilot) {
+  const { firstName, lastName } = resolvePilotDisplayNames(pilot);
   return {
     slug: pilot.slug,
-    firstName: pilot.firstName,
-    lastName: pilot.lastName,
+    firstName,
+    lastName,
     country: pilot.country,
     number: pilot.number,
     photoUrl: pilot.photoUrl,
