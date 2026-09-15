@@ -185,23 +185,29 @@ async function main() {
     await prisma.eventResult.upsert({
       where: { eventId_pilotId: { eventId: event.id, pilotId: pilotRecord.id } },
       update: {
+        number: row.number,
         qualPosition: row.qualPosition,
         qualScore100,
         tandemPosition: row.tandemPosition,
+        tandemWins: row.tandemWins,
+        tandemBattles: row.tandemBattles,
         points: row.points,
         dataStatus: 'UNVERIFIED',
       },
       create: {
         eventId: event.id,
         pilotId: pilotRecord.id,
+        number: row.number,
         qualPosition: row.qualPosition,
         qualScore100,
         tandemPosition: row.tandemPosition,
+        tandemWins: row.tandemWins,
+        tandemBattles: row.tandemBattles,
         points: row.points,
         dataStatus: 'UNVERIFIED',
       },
     });
-    if (row.tandemPosition != null) tandemCount++;
+    if (row.tandemPosition != null || row.tandemBattles != null) tandemCount++;
     if (row.qualPosition != null || qualScore100 != null) qualCount++;
   }
 

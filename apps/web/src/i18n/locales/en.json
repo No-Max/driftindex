@@ -121,6 +121,15 @@
     "openSeries": "Seasons & events",
     "noSeason": "No season data yet"
   },
+  "eventDetail": {
+    "backToStandings": "Season standings",
+    "resultsTitle": "Event results",
+    "noResults": "No results for this event yet",
+    "tandemPlace": "Tandem place",
+    "tandemBattles": "Battles",
+    "tandemWins": "Wins",
+    "tandemWinPct": "Win %"
+  },
   "seriesDetail": {
     "back": "All series",
     "backToSeries": "Series overview",

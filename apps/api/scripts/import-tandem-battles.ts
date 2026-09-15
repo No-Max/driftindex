@@ -75,7 +75,10 @@ async function importSeasonBattles(seriesId: string, seasonYear: number): Promis
       continue;
     }
 
-    const participants = event.results.map((result) => result.pilot);
+    const participants = event.results.map((result) => ({
+      ...result.pilot,
+      number: result.number ?? result.pilot.number,
+    }));
     const qualPositionByPilotId = new Map(
       event.results.map((result) => [result.pilotId, result.qualPosition]),
     );

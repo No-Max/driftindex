@@ -54,16 +54,27 @@ export interface StandingRow {
   eventQual: Array<StandingQualCell | null>;
 }
 
+export function seriesEventPath(seriesSlug: string, seasonYear: number, eventSlug: string): string {
+  return `/series/${seriesSlug}/${seasonYear}/${eventSlug}`;
+}
+
+export function seriesStandingsPath(seriesSlug: string, seasonYear: number): string {
+  return `/series/${seriesSlug}/${seasonYear}`;
+}
+
+export interface SeasonEventSummary {
+  slug: string;
+  roundNumber: number;
+  name: string;
+  track: TrackSummary | null;
+  status: EventStatus;
+  eventPath: string;
+}
+
 export interface SeasonStandingsResponse {
   series: SeriesSummary;
   season: SeasonSummary;
-  events: Array<{
-    slug: string;
-    roundNumber: number;
-    name: string;
-    track: TrackSummary | null;
-    status: EventStatus;
-  }>;
+  events: SeasonEventSummary[];
   standings: StandingRow[];
   source: DataSource | null;
 }
@@ -76,6 +87,38 @@ export interface SeriesProfileEvent {
   status: EventStatus;
   startsAt: string | null;
   standingsPath: string;
+  eventPath: string;
+}
+
+export interface SeasonEventResultRow {
+  pilotSlug: string;
+  firstName: string;
+  lastName: string;
+  country: string | null;
+  number: number | null;
+  qualPosition: number | null;
+  qualScore100: number | null;
+  qualPoints: number | null;
+  tandemPosition: number | null;
+  tandemBattles: number | null;
+  tandemWins: number | null;
+  points: number;
+}
+
+export interface SeasonEventResponse {
+  series: SeriesSummary;
+  season: SeasonSummary;
+  event: {
+    slug: string;
+    roundNumber: number;
+    name: string;
+    track: TrackSummary | null;
+    status: EventStatus;
+    startsAt: string | null;
+    standingsPath: string;
+  };
+  source: DataSource | null;
+  results: SeasonEventResultRow[];
 }
 
 export interface SeriesProfileSeason {
@@ -281,6 +324,7 @@ export interface PilotProfileResponse extends PilotSummary {
     track: TrackSummary | null;
     startsAt: string | null;
     roundNumber: number;
+    number: number | null;
     qualPosition: number | null;
     qualScore100: number | null;
     qualPoints: number | null;
@@ -325,5 +369,6 @@ export interface TrackProfileResponse extends TrackSummary {
     startsAt: string | null;
     status: EventStatus;
     standingsPath: string;
+    eventPath: string;
   }>;
 }

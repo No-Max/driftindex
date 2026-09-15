@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
 import PilotView from '../views/PilotView.vue';
 import PilotsView from '../views/PilotsView.vue';
+import EventView from '../views/EventView.vue';
 import SeriesDetailView from '../views/SeriesDetailView.vue';
 import SeriesView from '../views/SeriesView.vue';
 import StandingsView from '../views/StandingsView.vue';
@@ -12,6 +13,11 @@ export const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/', name: 'home', component: HomeView },
+    {
+      path: '/series/:slug/:year/:eventSlug',
+      name: 'event',
+      component: EventView,
+    },
     {
       path: '/series/:slug/:year',
       name: 'standings',

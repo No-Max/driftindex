@@ -121,6 +121,15 @@
     "openSeries": "Сезоны и этапы",
     "noSeason": "Нет данных по сезону"
   },
+  "eventDetail": {
+    "backToStandings": "Таблица сезона",
+    "resultsTitle": "Результаты этапа",
+    "noResults": "Результатов по этому этапу пока нет",
+    "tandemPlace": "Место (парные)",
+    "tandemBattles": "Заезды",
+    "tandemWins": "Победы",
+    "tandemWinPct": "% побед"
+  },
   "seriesDetail": {
     "back": "Все серии",
     "backToSeries": "Обзор серии",

@@ -83,7 +83,10 @@ function formatDate(iso: string | null): string {
                 <td class="muted">{{ formatDate(event.startsAt) }}</td>
                 <td>{{ event.seriesShortName ?? event.seriesName }} {{ event.seasonYear }}</td>
                 <td>
-                  <RouterLink :to="event.standingsPath" class="event-link">
+                  <RouterLink
+                    :to="event.status === 'FINISHED' ? event.eventPath : event.standingsPath"
+                    class="event-link"
+                  >
                     {{ event.eventName }}
                   </RouterLink>
                 </td>

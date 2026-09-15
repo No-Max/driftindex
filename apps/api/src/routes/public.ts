@@ -4,9 +4,12 @@ import {
   type PilotListEntry,
   type PilotProfileResponse,
   type PilotsListResponse,
+  type SeasonEventResponse,
   type SeasonStandingsResponse,
   type SeriesPrestigeResponse,
   type SeriesProfileResponse,
+  seriesEventPath,
+  seriesStandingsPath,
   type TrackProfileResponse,
   type TracksListResponse,
 } from '@drift-index/shared';
@@ -14,6 +17,7 @@ import { Router } from 'express';
 import { computeP4P } from '../lib/p4p.js';
 import { loadP4PInputs } from '../lib/p4pData.js';
 import { toPilotCard } from '../lib/pilot.js';
+import { resultDisplayNumber } from '../lib/resultNumber.js';
 import { resolvePilotDisplayNames } from '../lib/pilotNames.js';
 import { computePilotStats, toStatsInput } from '../lib/pilotStats.js';
 import { prisma } from '../lib/prisma.js';
@@ -151,7 +155,7 @@ publicRouter.get('/series/:slug', async (req, res) => {
         eventCount: events.length,
         finishedEventCount: events.filter((event) => event.status === 'FINISHED').length,
         source,
-        standingsPath: `/series/${series.slug}/${season.year}`,
+        standingsPath: seriesStandingsPath(series.slug, season.year),
         events: events.map((event) => ({
           slug: event.slug,
           roundNumber: event.roundNumber,
@@ -159,7 +163,8 @@ publicRouter.get('/series/:slug', async (req, res) => {
           track: toTrackSummary(event.track),
           status: event.status,
           startsAt: event.startsAt?.toISOString() ?? null,
-          standingsPath: `/series/${series.slug}/${season.year}`,
+          standingsPath: seriesStandingsPath(series.slug, season.year),
+          eventPath: seriesEventPath(series.slug, season.year, event.slug),
         })),
       };
     }),
@@ -244,8 +249,110 @@ publicRouter.get('/tracks/:slug', async (req, res) => {
       roundNumber: event.roundNumber,
       startsAt: event.startsAt?.toISOString() ?? null,
       status: event.status,
-      standingsPath: `/series/${event.season.series.slug}/${event.season.year}`,
+      standingsPath: seriesStandingsPath(event.season.series.slug, event.season.year),
+      eventPath: seriesEventPath(
+        event.season.series.slug,
+        event.season.year,
+        event.slug,
+      ),
     })),
+  };
+
+  res.json(payload);
+});
+
+publicRouter.get('/series/:slug/seasons/:year/events/:eventSlug', async (req, res) => {
+  const year = Number(req.params.year);
+  if (!Number.isFinite(year)) {
+    res.status(400).json({ error: 'Invalid year' });
+    return;
+  }
+
+  const series = await prisma.series.findUnique({
+    where: { slug: req.params.slug },
+    include: {
+      seasons: {
+        where: { year },
+        include: {
+          events: {
+            where: { slug: req.params.eventSlug },
+            include: {
+              track: true,
+              results: {
+                include: { pilot: true },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const season = series?.seasons[0];
+  const event = season?.events[0];
+  if (!series || !season || !event) {
+    res.status(404).json({ error: 'Event not found' });
+    return;
+  }
+
+  const results = [...event.results].sort((a, b) => {
+    const aTandem = a.tandemPosition;
+    const bTandem = b.tandemPosition;
+    if (aTandem != null && bTandem != null) return aTandem - bTandem;
+    if (aTandem != null) return -1;
+    if (bTandem != null) return 1;
+
+    const aQual = a.qualPosition;
+    const bQual = b.qualPosition;
+    if (aQual != null && bQual != null) return aQual - bQual;
+    if (aQual != null) return -1;
+    if (bQual != null) return 1;
+
+    return b.points - a.points || a.pilot.lastName.localeCompare(b.pilot.lastName);
+  });
+
+  const payload: SeasonEventResponse = {
+    series: {
+      slug: series.slug,
+      name: series.name,
+      shortName: series.shortName,
+      country: series.country,
+      logoUrl: series.logoUrl,
+    },
+    season: {
+      year: season.year,
+      nameEn: season.nameEn,
+      nameRu: season.nameRu,
+      eventCount: 0,
+      finishedEventCount: 0,
+    },
+    event: {
+      slug: event.slug,
+      roundNumber: event.roundNumber,
+      name: event.name,
+      track: toTrackSummary(event.track),
+      status: event.status,
+      startsAt: event.startsAt?.toISOString() ?? null,
+      standingsPath: seriesStandingsPath(series.slug, season.year),
+    },
+    source: seasonSource(season),
+    results: results.map((result) => {
+      const { firstName, lastName } = resolvePilotDisplayNames(result.pilot);
+      return {
+        pilotSlug: result.pilot.slug,
+        firstName,
+        lastName,
+        country: result.pilot.country,
+        number: resultDisplayNumber(result),
+        qualPosition: result.qualPosition,
+        qualScore100: result.qualScore100,
+        qualPoints: result.qualPoints,
+        tandemPosition: result.tandemPosition,
+        tandemBattles: result.tandemBattles,
+        tandemWins: result.tandemWins,
+        points: result.points,
+      };
+    }),
   };
 
   res.json(payload);
@@ -292,7 +399,7 @@ publicRouter.get('/series/:slug/seasons/:year/standings', async (req, res) => {
     firstName: row.pilot.firstName,
     lastName: row.pilot.lastName,
     country: row.pilot.country,
-    number: row.pilot.number,
+    number: row.number,
     totalPoints: row.totalPoints,
     eventPoints: row.eventPoints,
     eventQual: row.eventQual,
@@ -319,6 +426,7 @@ publicRouter.get('/series/:slug/seasons/:year/standings', async (req, res) => {
       name: event.name,
       track: toTrackSummary(event.track),
       status: event.status,
+      eventPath: seriesEventPath(series.slug, season.year, event.slug),
     })),
     standings,
     source: seasonSource(season),
@@ -460,7 +568,7 @@ publicRouter.get('/pilots/:slug', async (req, res) => {
     firstName,
     lastName,
     country: pilot.country,
-    number: pilot.number,
+    number: null,
     photoUrl: pilot.photoUrl,
     photos: pilot.seriesPhotos
       .filter((entry) => entry.photoUrl)
@@ -485,6 +593,7 @@ publicRouter.get('/pilots/:slug', async (req, res) => {
       qualScore100: result.qualScore100,
       qualPoints: result.qualPoints,
       eventPlace: result.tandemPosition,
+      number: resultDisplayNumber(result),
       tandemBattles: result.tandemBattles,
       tandemWins: result.tandemWins,
       points: result.points,

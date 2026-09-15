@@ -189,14 +189,12 @@ async function upsertPilotsAndResults(
       update: {
         firstName: english.firstName,
         lastName: english.lastName,
-        number: pilot.number,
       },
       create: {
         slug: pilot.slug,
         firstName: english.firstName,
         lastName: english.lastName,
         country: pilot.country,
-        number: pilot.number,
       },
     });
     await upsertPilotSeriesAlias(db, { pilotId: pilotRecord.id, seriesId, name: pilot.nameAlias });
@@ -231,6 +229,7 @@ async function upsertPilotsAndResults(
       await db.eventResult.upsert({
         where: { eventId_pilotId: { eventId: event.id, pilotId: pilotRecord.id } },
         update: {
+          number: pilot.number,
           qualPosition: stage.qualifyingPosition,
           qualPoints: stage.qualifyingPoints,
           qualScore100,
@@ -241,6 +240,7 @@ async function upsertPilotsAndResults(
         create: {
           eventId: event.id,
           pilotId: pilotRecord.id,
+          number: pilot.number,
           qualPosition: stage.qualifyingPosition,
           qualPoints: stage.qualifyingPoints,
           qualScore100,

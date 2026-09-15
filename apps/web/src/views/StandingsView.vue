@@ -68,6 +68,10 @@ function hasAnyQualData(standings: SeasonStandingsResponse['standings']) {
     row.eventQual.some((qual) => qual != null && (qual.qualScore100 != null || qual.qualPosition != null)),
   );
 }
+
+function isEventClickable(event: SeasonStandingsResponse['events'][0]) {
+  return event.status === 'FINISHED';
+}
 </script>
 
 <template>
@@ -115,8 +119,15 @@ function hasAnyQualData(standings: SeasonStandingsResponse['standings']) {
             <tr>
               <th>{{ t('standings.rank') }}</th>
               <th>{{ t('standings.pilot') }}</th>
-              <th v-for="(_, index) in data.events" :key="data.events[index].slug">
-                {{ eventLabel(index) }}
+              <th v-for="(event, index) in data.events" :key="event.slug" class="round-col">
+                <RouterLink
+                  v-if="isEventClickable(event)"
+                  :to="event.eventPath"
+                  class="round-link"
+                >
+                  {{ eventLabel(index) }}
+                </RouterLink>
+                <span v-else>{{ eventLabel(index) }}</span>
               </th>
               <th>{{ t('standings.total') }}</th>
             </tr>
@@ -131,10 +142,22 @@ function hasAnyQualData(standings: SeasonStandingsResponse['standings']) {
                 </RouterLink>
               </td>
               <td v-for="(points, index) in row.eventPoints" :key="index" class="event-cell">
-                <span class="event-cell__points">{{ points ?? '—' }}</span>
-                <span v-if="showQual" class="event-cell__qual muted">
-                  {{ formatQualCellForRow(row, index) }}
-                </span>
+                <RouterLink
+                  v-if="isEventClickable(data.events[index])"
+                  :to="data.events[index].eventPath"
+                  class="event-cell-link"
+                >
+                  <span class="event-cell__points">{{ points ?? '—' }}</span>
+                  <span v-if="showQual" class="event-cell__qual muted">
+                    {{ formatQualCellForRow(row, index) }}
+                  </span>
+                </RouterLink>
+                <template v-else>
+                  <span class="event-cell__points">{{ points ?? '—' }}</span>
+                  <span v-if="showQual" class="event-cell__qual muted">
+                    {{ formatQualCellForRow(row, index) }}
+                  </span>
+                </template>
               </td>
               <td><strong>{{ row.totalPoints }}</strong></td>
             </tr>
@@ -197,5 +220,21 @@ function hasAnyQualData(standings: SeasonStandingsResponse['standings']) {
 .event-cell__qual {
   display: block;
   font-size: 0.78rem;
+}
+
+.round-link,
+.event-cell-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.round-link:hover,
+.event-cell-link:hover {
+  color: var(--accent);
+}
+
+.round-link:hover .event-cell__points,
+.event-cell-link:hover .event-cell__points {
+  text-decoration: underline;
 }
 </style>

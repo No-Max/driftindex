@@ -8,8 +8,7 @@
  * Winter Training (Serres, Feb) and Gonco Fest (Bulgaria) are not championship rounds.
  * Round 4 moved from Wałbrzych to Trackwood (reverse layout).
  *
- * Tandem places are stored only when a labeled Pro recap names them.
- * Round 4 Pro 1–4: drifting.hu Trackwood recap (Valainis / Petricevic / Brandner / Cselőtei).
+ * Round 4 Pro tandem 1–4: drifting.hu Trackwood recap; full Top 32 battles/wins from live bracket.
  *
  * Qualifying is partial. Live scoring at drift.rs/dk.html is empty off-air and currently
  * holds a 3-driver "Test Race" sheet for Round 5 — that test data is not imported.
@@ -440,13 +439,63 @@ export const DK_2026_DRIVERS: readonly Dk2026Driver[] = [
   },
 ];
 
+export interface Dk2026TandemRow {
+  name: string;
+  aliases?: readonly string[];
+  number: number | null;
+  tandemPosition: number | null;
+  tandemWins: number;
+  tandemBattles: number;
+}
+
+/** Round 4 Trackwood Top 32 bracket — Telegram live-scoring screenshot. */
+export const DK_2026_R4_TANDEM: readonly Dk2026TandemRow[] = [
+  { name: 'Gustas Valainis', number: 9, tandemPosition: 1, tandemWins: 5, tandemBattles: 5 },
+  { name: 'Adrian Petricevic', number: 114, tandemPosition: 2, tandemWins: 4, tandemBattles: 5 },
+  { name: 'Daniel Brandner', number: 83, tandemPosition: 3, tandemWins: 4, tandemBattles: 5 },
+  { name: 'Patrik Cselőtei', number: 80, tandemPosition: 4, tandemWins: 3, tandemBattles: 5 },
+  { name: 'Franz Kuncic', number: 116, tandemPosition: null, tandemWins: 2, tandemBattles: 3 },
+  { name: 'Vaclav Burian', number: 115, tandemPosition: null, tandemWins: 2, tandemBattles: 3 },
+  { name: 'Gediminas Levickas', number: 1, tandemPosition: null, tandemWins: 2, tandemBattles: 3 },
+  { name: 'Kordian Trela-Muchewicz', number: 112, tandemPosition: null, tandemWins: 2, tandemBattles: 3 },
+  { name: 'Claudiu Adam', number: 85, tandemPosition: null, tandemWins: 1, tandemBattles: 2 },
+  { name: 'Artur Havrylenko', number: 117, tandemPosition: null, tandemWins: 1, tandemBattles: 2 },
+  { name: 'Viktor Andersson', number: 71, tandemPosition: null, tandemWins: 1, tandemBattles: 2 },
+  { name: 'Dmitriy Illyuk', aliases: ['Dmitri Ilyuk'], number: 109, tandemPosition: null, tandemWins: 1, tandemBattles: 2 },
+  { name: 'Bartosz Stolarski', number: 77, tandemPosition: null, tandemWins: 1, tandemBattles: 2 },
+  { name: 'Mátyás Druzsin', number: 104, tandemPosition: null, tandemWins: 1, tandemBattles: 2 },
+  { name: 'Péter Révhelyi', aliases: ['Peter Revhelyi', 'Revhelyi Peter'], number: 73, tandemPosition: null, tandemWins: 1, tandemBattles: 2 },
+  { name: 'Rareș Gîrda', number: 27, tandemPosition: null, tandemWins: 1, tandemBattles: 2 },
+  { name: 'Erik Lobmayer', number: 3, tandemPosition: null, tandemWins: 0, tandemBattles: 1 },
+  { name: 'Markus Dokter', number: 7, tandemPosition: null, tandemWins: 0, tandemBattles: 1 },
+  { name: 'Valeri Moscovciuc', number: 110, tandemPosition: null, tandemWins: 0, tandemBattles: 1 },
+  { name: 'Peter Brolli', number: 88, tandemPosition: null, tandemWins: 0, tandemBattles: 1 },
+  { name: 'Sandra Janušauskaitė', number: 2, tandemPosition: null, tandemWins: 0, tandemBattles: 1 },
+  { name: 'Tamás Magyar', number: 74, tandemPosition: null, tandemWins: 0, tandemBattles: 1 },
+  { name: 'Călin Calota', aliases: ['Catalin Calota'], number: 17, tandemPosition: null, tandemWins: 0, tandemBattles: 1 },
+  { name: 'Kane Pisani', number: 79, tandemPosition: null, tandemWins: 0, tandemBattles: 1 },
+  { name: 'Sylvestras Bieliauskas', number: 119, tandemPosition: null, tandemWins: 0, tandemBattles: 1 },
+  { name: 'Filip Vimpel', number: 72, tandemPosition: null, tandemWins: 0, tandemBattles: 1 },
+  { name: 'Augustinas Jankevičius', number: 10, tandemPosition: null, tandemWins: 0, tandemBattles: 1 },
+  { name: 'Mattias Karlsson', number: 120, tandemPosition: null, tandemWins: 0, tandemBattles: 1 },
+  { name: 'Péter Porkoláb', number: 90, tandemPosition: null, tandemWins: 0, tandemBattles: 1 },
+  { name: 'Miklos Laszlo', aliases: ['Miklós László'], number: 81, tandemPosition: null, tandemWins: 0, tandemBattles: 1 },
+  { name: 'Csaba Cselőtei', number: 84, tandemPosition: null, tandemWins: 0, tandemBattles: 1 },
+  { name: 'Luca Alberici', number: 89, tandemPosition: null, tandemWins: 0, tandemBattles: 1 },
+];
+
+const DK_2026_R4_TANDEM_BY_NAME = new Map(DK_2026_R4_TANDEM.map((row) => [row.name, row]));
+
 export interface Dk2026ResultRow {
   eventSlug: string;
   roundNumber: number;
   name: string;
   aliases: readonly string[];
   points: number;
+  number: number | null;
   tandemPosition: number | null;
+  tandemWins: number | null;
+  tandemBattles: number | null;
   qualPosition: number | null;
   qualScore100: number | null;
 }
@@ -458,24 +507,52 @@ function podiumPlace(roundNumber: number, name: string): number | null {
   return index >= 0 ? index + 1 : null;
 }
 
-export const DK_2026_RESULTS: Dk2026ResultRow[] = DK_2026_DRIVERS.flatMap((driver) =>
-  driver.points.flatMap((points, index) => {
-    if (points <= 0) return [];
-    const roundNumber = index + 1;
-    return [
-      {
-        eventSlug: `dk-r${roundNumber}`,
-        roundNumber,
-        name: driver.name,
-        aliases: driver.aliases ?? [],
-        points,
-        tandemPosition: podiumPlace(roundNumber, driver.name),
-        qualPosition: DK_2026_QUALIFYING[roundNumber]?.[driver.name]?.position ?? null,
-        qualScore100: DK_2026_QUALIFYING[roundNumber]?.[driver.name]?.score ?? null,
-      },
-    ];
-  }),
-);
+function buildDk2026Results(): Dk2026ResultRow[] {
+  const rows: Dk2026ResultRow[] = DK_2026_DRIVERS.flatMap((driver) =>
+    driver.points.flatMap((points, index) => {
+      if (points <= 0) return [];
+      const roundNumber = index + 1;
+      const r4Tandem = roundNumber === 4 ? DK_2026_R4_TANDEM_BY_NAME.get(driver.name) : undefined;
+      return [
+        {
+          eventSlug: `dk-r${roundNumber}`,
+          roundNumber,
+          name: driver.name,
+          aliases: driver.aliases ?? [],
+          points,
+          number: r4Tandem?.number ?? null,
+          tandemPosition: r4Tandem?.tandemPosition ?? podiumPlace(roundNumber, driver.name),
+          tandemWins: r4Tandem?.tandemWins ?? null,
+          tandemBattles: r4Tandem?.tandemBattles ?? null,
+          qualPosition: DK_2026_QUALIFYING[roundNumber]?.[driver.name]?.position ?? null,
+          qualScore100: DK_2026_QUALIFYING[roundNumber]?.[driver.name]?.score ?? null,
+        },
+      ];
+    }),
+  );
+
+  const r4Names = new Set(rows.filter((row) => row.roundNumber === 4).map((row) => row.name));
+  for (const tandem of DK_2026_R4_TANDEM) {
+    if (r4Names.has(tandem.name)) continue;
+    rows.push({
+      eventSlug: 'dk-r4',
+      roundNumber: 4,
+      name: tandem.name,
+      aliases: tandem.aliases ?? [],
+      points: 0,
+      number: tandem.number,
+      tandemPosition: tandem.tandemPosition,
+      tandemWins: tandem.tandemWins,
+      tandemBattles: tandem.tandemBattles,
+      qualPosition: DK_2026_QUALIFYING[4]?.[tandem.name]?.position ?? null,
+      qualScore100: DK_2026_QUALIFYING[4]?.[tandem.name]?.score ?? null,
+    });
+  }
+
+  return rows;
+}
+
+export const DK_2026_RESULTS: Dk2026ResultRow[] = buildDk2026Results();
 
 function assertKnownDriversExist() {
   const names = new Set(DK_2026_DRIVERS.map((driver) => driver.name));

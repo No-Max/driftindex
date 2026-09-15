@@ -175,7 +175,7 @@ export async function applyDriftMastersQualBackfill(
       if (existing) {
         await prisma.eventResult.update({
           where: { id: existing.id },
-          data: { qualPosition: qual.rank, qualScore100 },
+          data: { qualPosition: qual.rank, qualScore100, number: qual.bib },
         });
         qualMatched++;
         continue;
@@ -185,6 +185,7 @@ export async function applyDriftMastersQualBackfill(
         data: {
           eventId: event.id,
           pilotId: pilotRecord.id,
+          number: qual.bib,
           qualPosition: qual.rank,
           qualScore100,
           points: 0,

@@ -136,7 +136,7 @@ function isEventClickable(status: SeriesProfileResponse['seasons'][0]['events'][
                 <td>
                   <RouterLink
                     v-if="isEventClickable(event.status)"
-                    :to="event.standingsPath"
+                    :to="event.eventPath"
                     class="event-link"
                   >
                     {{ event.name }}

@@ -4,6 +4,7 @@ import { computeP4P } from '../lib/p4p.js';
 import { loadP4PInputs } from '../lib/p4pData.js';
 import { buildP4PBestSeriesEvents } from '../lib/p4pSeasonEvents.js';
 import { toPilotCard } from '../lib/pilot.js';
+import { resultDisplayNumber } from '../lib/resultNumber.js';
 import { computePilotStats, toStatsInput } from '../lib/pilotStats.js';
 import { loadSeriesLogoMap, seriesLogoFromMap } from '../lib/seriesLogos.js';
 import { computePrestigeRanking } from '../lib/seriesOverlap.js';
@@ -67,7 +68,7 @@ homeRouter.get('/home', async (req, res) => {
       },
       seasonYear: season.year,
       seriesStartYear: startYearBySeriesId.get(series.id) ?? season.year,
-      leader: leader ? toPilotCard(leader.pilot) : null,
+      leader: leader ? toPilotCard(leader.pilot, leader.number) : null,
       leaderPoints: leader?.totalPoints ?? null,
       standingsPath: `/series/${series.slug}/${season.year}`,
     });
@@ -84,7 +85,7 @@ homeRouter.get('/home', async (req, res) => {
           .sort((a, b) => (b.qualScore100 ?? 0) - (a.qualScore100 ?? 0))[0];
 
         qualWinners.push({
-          pilot: toPilotCard(qualWinner.pilot),
+          pilot: toPilotCard(qualWinner.pilot, resultDisplayNumber(qualWinner)),
           series: {
             slug: series.slug,
             name: series.name,

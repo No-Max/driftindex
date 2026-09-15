@@ -76,7 +76,6 @@ function formatQual(result: PilotProfileResponse['results'][0]) {
         <div>
           <h1 class="page-title">{{ displayName }}</h1>
           <p class="page-subtitle">
-            <span v-if="pilot.number">#{{ pilot.number }} · </span>
             <span v-if="pilot.country">{{ pilot.country }}</span>
           </p>
         </div>
@@ -105,6 +104,7 @@ function formatQual(result: PilotProfileResponse['results'][0]) {
                 </RouterLink>
               </td>
               <td>
+                <span v-if="result.number" class="muted">#{{ result.number }} · </span>
                 <span>{{ eventName(result) }}</span>
                 <RouterLink
                   v-if="result.track"

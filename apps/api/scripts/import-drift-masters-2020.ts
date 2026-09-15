@@ -129,7 +129,6 @@ async function main() {
         slug: pilotSlug,
         firstName: english.firstName,
         lastName: english.lastName,
-        number: row.bib,
       },
     });
     await upsertPilotSeriesAlias(prisma, {
@@ -144,6 +143,7 @@ async function main() {
     await prisma.eventResult.upsert({
       where: { eventId_pilotId: { eventId: event.id, pilotId: pilotRecord.id } },
       update: {
+        number: row.bib,
         qualPosition: row.qualPosition,
         qualScore100,
         tandemPosition: row.tandemPosition,
@@ -153,6 +153,7 @@ async function main() {
       create: {
         eventId: event.id,
         pilotId: pilotRecord.id,
+        number: row.bib,
         qualPosition: row.qualPosition,
         qualScore100,
         tandemPosition: row.tandemPosition,

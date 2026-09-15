@@ -1,5 +1,6 @@
 import type { Pilot } from '@prisma/client';
 import { averageQualScore100 } from './qualScore.js';
+import { seasonStandingNumber } from './resultNumber.js';
 import { GRID_REFERENCE } from './stageCoefficient.js';
 
 /** Imputed place for a missed round when averaging over the full season. */
@@ -44,6 +45,7 @@ export interface SeasonEventWithResults {
   results: Array<{
     pilotId: string;
     points: number;
+    number: number | null;
     qualPosition: number | null;
     qualPoints: number | null;
     qualScore100: number | null;
@@ -126,6 +128,7 @@ export interface EventQualCell {
 export interface ComputedStandingRow {
   rank: number;
   pilot: Pilot;
+  number: number | null;
   totalPoints: number;
   eventPoints: Array<number | null>;
   eventQual: Array<EventQualCell | null>;
@@ -139,6 +142,11 @@ export function computeStandings(events: SeasonEventWithResults[]): ComputedStan
       pilot: Pilot;
       byEvent: Map<string, number>;
       qualByEvent: Map<string, EventQualCell>;
+      results: Array<{
+        number: number | null;
+        pilot: Pilot;
+        event: { roundNumber: number; status: string };
+      }>;
       total: number;
     }
   >();
@@ -149,12 +157,18 @@ export function computeStandings(events: SeasonEventWithResults[]): ComputedStan
         pilot: result.pilot,
         byEvent: new Map<string, number>(),
         qualByEvent: new Map<string, EventQualCell>(),
+        results: [],
         total: 0,
       };
       entry.byEvent.set(event.id, result.points);
       entry.qualByEvent.set(event.id, {
         qualPosition: result.qualPosition,
         qualScore100: result.qualScore100,
+      });
+      entry.results.push({
+        number: result.number,
+        pilot: result.pilot,
+        event: { roundNumber: event.roundNumber, status: event.status },
       });
       entry.total += result.points;
       pointsByPilot.set(result.pilotId, entry);
@@ -166,6 +180,7 @@ export function computeStandings(events: SeasonEventWithResults[]): ComputedStan
     .map((row, index) => ({
       rank: index + 1,
       pilot: row.pilot,
+      number: seasonStandingNumber(row.results),
       totalPoints: row.total,
       eventPoints: events.map((event) => row.byEvent.get(event.id) ?? null),
       eventQual: events.map((event) => row.qualByEvent.get(event.id) ?? null),

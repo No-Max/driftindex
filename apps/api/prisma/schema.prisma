@@ -191,6 +191,7 @@ model EventResult {
   pilot          Pilot      @relation(fields: [pilotId], references: [id], onDelete: Cascade)
   teamId         String?
   team           Team?      @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  number         Int?
   qualPosition   Int?
   qualPoints     Float?
   qualScore100   Float?

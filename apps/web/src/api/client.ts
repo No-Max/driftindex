@@ -2,6 +2,7 @@ import type {
   HomeResponse,
   PilotProfileResponse,
   PilotsListResponse,
+  SeasonEventResponse,
   SeasonStandingsResponse,
   SeriesPrestigeResponse,
   SeriesProfileResponse,
@@ -54,6 +55,12 @@ export function fetchSeriesProfile(slug: string) {
 
 export function fetchStandings(slug: string, year: number) {
   return getJson<SeasonStandingsResponse>(`/api/series/${slug}/seasons/${year}/standings`);
+}
+
+export function fetchSeasonEvent(slug: string, year: number, eventSlug: string) {
+  return getJson<SeasonEventResponse>(
+    `/api/series/${slug}/seasons/${year}/events/${eventSlug}`,
+  );
 }
 
 export function fetchPilots(year?: number) {

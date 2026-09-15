@@ -138,14 +138,12 @@ async function importSeason(year: number, seriesId: string) {
         firstName: english.firstName,
         lastName: english.lastName,
         country: pilot.country,
-        number: pilot.number,
       },
       create: {
         slug: pilotSlug,
         firstName: english.firstName,
         lastName: english.lastName,
         country: pilot.country,
-        number: pilot.number,
       },
     });
     await upsertPilotSeriesAlias(prisma, { pilotId: pilotRecord.id, seriesId, name: pilot.nameAlias });
@@ -172,6 +170,7 @@ async function importSeason(year: number, seriesId: string) {
       await prisma.eventResult.upsert({
         where: { eventId_pilotId: { eventId: event.id, pilotId: pilotRecord.id } },
         update: {
+          number: pilot.number,
           qualPosition: stage.qualifyingPosition,
           qualPoints: stage.qualifyingPoints,
           qualScore100,
@@ -183,6 +182,7 @@ async function importSeason(year: number, seriesId: string) {
         create: {
           eventId: event.id,
           pilotId: pilotRecord.id,
+          number: pilot.number,
           qualPosition: stage.qualifyingPosition,
           qualPoints: stage.qualifyingPoints,
           qualScore100,
