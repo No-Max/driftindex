@@ -105,25 +105,78 @@ export interface Dk2026Quali {
 }
 
 /**
- * Confirmed Pro qualifying fragments only.
- * Do not treat this as a complete grid — R1 P1–P3 + P8, R2 P2/P12, R3 P1/P2/P15/P22.
+ * Pro qualifying from Telegram live-scoring screenshots (screens/DK/_extracted/qualifying-curated.json).
+ * Full grids for R1–R3; R4 includes scored leaders plus bracket seeds for scored drivers.
  */
 export const DK_2026_QUALIFYING: Record<number, Record<string, Dk2026Quali>> = {
   1: {
     'Erik Lobmayer': { position: 1, score: 94 },
     'Gediminas Levickas': { position: 2, score: 91 },
     'Andrius Vasiliauskas': { position: 3, score: 89 },
-    'Péter Porkoláb': { position: 8, score: null },
+    'Roene Zwanenburg': { position: 4, score: 89 },
+    'Denise Ritzmann': { position: 6, score: 86 },
+    'Artur Havrylenko': { position: 7, score: 85 },
+    'Péter Porkoláb': { position: 8, score: 83 },
+    'Roger Stöckli': { position: 10, score: 82 },
   },
   2: {
+    'Kevin Jozou': { position: 1, score: 93 },
     'Gediminas Levickas': { position: 2, score: 93 },
+    'Enzo Surace': { position: 3, score: 89 },
+    'Erik Lobmayer': { position: 4, score: 88 },
+    'Frederic Adam': { position: 5, score: 88 },
+    'Cedric Latscha': { position: 6, score: 83 },
+    'Péter Porkoláb': { position: 7, score: 83 },
+    'Michael Perrottet': { position: 8, score: 82 },
+    'Dylan Kaynak': { position: 9, score: 81 },
+    'Logan Postigo': { position: 11, score: 79 },
     'Sandra Janušauskaitė': { position: 12, score: 78 },
+    'Luc Metz': { position: 13, score: 78 },
+    'Severin Stoeckli': { position: 14, score: 78 },
+    'Uwe Sener': { position: 15, score: 74 },
+    'Sacha Aleksic': { position: 17, score: 73 },
+    'Valeri Moscovciuc': { position: 18, score: 73 },
+    'Dylan Mougenot': { position: 20, score: 70 },
+    'Pieter Van Hoorick': { position: 22, score: 64 },
   },
   3: {
     'Gediminas Levickas': { position: 1, score: 91.5 },
-    'Patrik Cselőtei': { position: 2, score: null },
+    'Patrik Cselőtei': { position: 2, score: 91 },
+    'Mátyás Druzsin': { position: 3, score: 89.5 },
+    'Erik Lobmayer': { position: 4, score: 88.5 },
+    'Markus Dokter': { position: 5, score: 85.5 },
+    'Adrian Petricevic': { position: 6, score: 85 },
+    'Péter Porkoláb': { position: 7, score: 84.5 },
+    'Marcin Banowicz': { position: 8, score: 84.5 },
+    'Tamás Magyar': { position: 9, score: 84 },
+    'Nikola Ilic': { position: 10, score: 81.5 },
+    'Natalia Iocsak': { position: 11, score: 81 },
+    'Rareș Gîrda': { position: 13, score: 80 },
+    'Jan Hejda': { position: 14, score: 75.5 },
     'Arnas Kazokevičius': { position: 15, score: 74.5 },
-    'Sandra Janušauskaitė': { position: 22, score: null },
+    'Logan Postigo': { position: 16, score: 72.5 },
+    'Vlad Stanescu': { position: 17, score: 70 },
+    'Csaba Cselőtei': { position: 19, score: 67 },
+    'Rafael Nagy': { position: 20, score: 66 },
+    'Valeri Moscovciuc': { position: 21, score: 61 },
+    'Sandra Janušauskaitė': { position: 22, score: 61 },
+  },
+  4: {
+    'Erik Lobmayer': { position: 1, score: 92 },
+    'Patrik Cselőtei': { position: 2, score: 90 },
+    'Adrian Petricevic': { position: 3, score: 89.5 },
+    'Gustas Valainis': { position: 4, score: 88 },
+    'Kordian Trela-Muchewicz': { position: 5, score: 85.5 },
+    'Csaba Cselőtei': { position: 6, score: 84 },
+    'Gediminas Levickas': { position: 7, score: null },
+    'Daniel Brandner': { position: 8, score: 82.5 },
+    'Viktor Andersson': { position: 13, score: 86 },
+    'Markus Dokter': { position: 17, score: null },
+    'Tamás Magyar': { position: 20, score: null },
+    'Vaclav Burian': { position: 22, score: null },
+    'Mátyás Druzsin': { position: 23, score: null },
+    'Rareș Gîrda': { position: 27, score: null },
+    'Sandra Janušauskaitė': { position: 29, score: null },
   },
 };
 

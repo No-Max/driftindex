@@ -1,0 +1,1912 @@
+[
+  {
+    "year": 2024,
+    "event": "asia-final-indonesia",
+    "type": "top32",
+    "sources": [
+      "screens/DK/2024/asia-final-indonesia/photo_2026-09-15_10-35-03.jpg",
+      "screens/DK/2024/asia-final-indonesia/photo_2026-09-15_10-35-22.jpg"
+    ],
+    "podium": [
+      {
+        "place": 1,
+        "name": "Emmanuelle Adwitya A",
+        "number": 55
+      },
+      {
+        "place": 2,
+        "name": "Rio SB",
+        "number": 210
+      },
+      {
+        "place": 3,
+        "name": "Alvito Anugrah Hardianto",
+        "number": 156
+      },
+      {
+        "place": 4,
+        "name": "AAA",
+        "number": 17
+      }
+    ],
+    "notes": "Full bracket with results through final."
+  },
+  {
+    "year": 2024,
+    "event": "dk-r1",
+    "type": "top32",
+    "sources": [
+      "screens/DK/2024/dk-r1/photo_2026-09-15_10-39-34.jpg"
+    ],
+    "top32": [
+      {
+        "seed": 1,
+        "number": 84,
+        "name": "Kevin Piskolty"
+      },
+      {
+        "seed": 2,
+        "number": 22,
+        "name": "Tamás Treitl"
+      },
+      {
+        "seed": 3,
+        "number": 11,
+        "name": "Donatas Macpreikšas"
+      },
+      {
+        "seed": 4,
+        "number": 3,
+        "name": "Gediminas Levickas"
+      },
+      {
+        "seed": 5,
+        "number": 19,
+        "name": "Petyo Radichev"
+      },
+      {
+        "seed": 6,
+        "number": 1,
+        "name": "Giorgos Christoforou"
+      },
+      {
+        "seed": 7,
+        "number": 7,
+        "name": "Silvestras Bieliauskas"
+      },
+      {
+        "seed": 8,
+        "number": 147,
+        "name": "Homan Zsolt"
+      },
+      {
+        "seed": 9,
+        "number": 130,
+        "name": "Patrik Cselőtei"
+      },
+      {
+        "seed": 10,
+        "number": 5,
+        "name": "Sandra Janušauskaitė"
+      },
+      {
+        "seed": 11,
+        "number": 67,
+        "name": "Alice Ene"
+      },
+      {
+        "seed": 12,
+        "number": 70,
+        "name": "Nikos Zahos"
+      },
+      {
+        "seed": 13,
+        "number": 90,
+        "name": "Péter Porkoláb"
+      },
+      {
+        "seed": 14,
+        "number": 66,
+        "name": "Gabor Kanalovics"
+      },
+      {
+        "seed": 15,
+        "number": 69,
+        "name": "Mattia Conti"
+      },
+      {
+        "seed": 16,
+        "number": 38,
+        "name": "Csaba Cselőtei"
+      },
+      {
+        "seed": 17,
+        "number": 68,
+        "name": "Ivan Vogrig"
+      },
+      {
+        "seed": 18,
+        "number": 6,
+        "name": "Andros Antoniou"
+      },
+      {
+        "seed": 19,
+        "number": 4,
+        "name": "Francesco Giori"
+      },
+      {
+        "seed": 20,
+        "number": 17,
+        "name": "Gerson Junginger"
+      },
+      {
+        "seed": 21,
+        "number": 81,
+        "name": "Massimo Checchin"
+      },
+      {
+        "seed": 22,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 23,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 24,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 25,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 26,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 27,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 28,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 29,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 30,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 31,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 32,
+        "number": null,
+        "name": "Bye Run"
+      }
+    ]
+  },
+  {
+    "year": 2024,
+    "event": "nations-cup",
+    "type": "top32",
+    "sources": [
+      "screens/DK/2024/nations-cup/photo_2026-09-15_10-36-37.jpg",
+      "screens/DK/2024/nations-cup/photo_2026-09-15_10-36-54.jpg"
+    ],
+    "podium": [
+      {
+        "place": 1,
+        "name": "Gediminas Levickas",
+        "number": 128
+      },
+      {
+        "place": 2,
+        "name": "Stavros Grillis",
+        "number": 137
+      },
+      {
+        "place": 3,
+        "name": "Enver Haskasap",
+        "number": 535
+      },
+      {
+        "place": 4,
+        "name": "Ioannis Vernicos",
+        "number": 129
+      }
+    ],
+    "notes": "Individual driver bracket; separate nations bracket also captured."
+  },
+  {
+    "year": 2024,
+    "event": "nations-cup",
+    "type": "nations",
+    "sources": [
+      "screens/DK/2024/nations-cup/photo_2026-09-15_10-35-49.jpg"
+    ],
+    "podium": [
+      {
+        "place": 1,
+        "name": "Greece",
+        "number": null
+      },
+      {
+        "place": 2,
+        "name": "Lithuania",
+        "number": null
+      },
+      {
+        "place": 3,
+        "name": "Romania",
+        "number": null
+      },
+      {
+        "place": 4,
+        "name": "Cyprus",
+        "number": null
+      }
+    ],
+    "notes": "Nations Cup team bracket: Greece beat Lithuania in final."
+  },
+  {
+    "year": 2025,
+    "event": "dk-r1",
+    "type": "top32",
+    "sources": [
+      "screens/DK/2025/dk-r1/photo_2026-09-15_10-34-20.jpg"
+    ],
+    "top32": [
+      {
+        "seed": 1,
+        "number": 95,
+        "name": "Itay Sadeh"
+      },
+      {
+        "seed": 2,
+        "number": 99,
+        "name": "Archie Harmer"
+      },
+      {
+        "seed": 3,
+        "number": 68,
+        "name": "Steve Leiber"
+      },
+      {
+        "seed": 4,
+        "number": 20,
+        "name": "Péter Utasi"
+      },
+      {
+        "seed": 5,
+        "number": 53,
+        "name": "Benoît Berton"
+      },
+      {
+        "seed": 6,
+        "number": 55,
+        "name": "Marco Zakouril"
+      },
+      {
+        "seed": 7,
+        "number": 89,
+        "name": "Juha Pöytöläakso"
+      },
+      {
+        "seed": 8,
+        "number": 3,
+        "name": "Uwe Sener"
+      },
+      {
+        "seed": 9,
+        "number": 4,
+        "name": "Luke Woodham"
+      },
+      {
+        "seed": 10,
+        "number": 77,
+        "name": "Roene Zwanenburg"
+      },
+      {
+        "seed": 11,
+        "number": 63,
+        "name": "Jarkko Jylhä"
+      },
+      {
+        "seed": 12,
+        "number": 555,
+        "name": "Elio Surace"
+      },
+      {
+        "seed": 13,
+        "number": 81,
+        "name": "Massimo Checchin"
+      },
+      {
+        "seed": 14,
+        "number": 22,
+        "name": "Denise Ritzmann"
+      },
+      {
+        "seed": 15,
+        "number": 18,
+        "name": "Rick Van Goethem"
+      },
+      {
+        "seed": 16,
+        "number": 147,
+        "name": "Dennis Peistrup"
+      },
+      {
+        "seed": 17,
+        "number": 90,
+        "name": "Péter Porkoláb"
+      },
+      {
+        "seed": 18,
+        "number": 1,
+        "name": "Gediminas Levickas"
+      },
+      {
+        "seed": 19,
+        "number": 56,
+        "name": "Karel Vanbranteghem"
+      },
+      {
+        "seed": 20,
+        "number": 13,
+        "name": "Jan Behrendt"
+      },
+      {
+        "seed": 21,
+        "number": 228,
+        "name": "Luc Metz"
+      },
+      {
+        "seed": 22,
+        "number": 850,
+        "name": "Michael Reichert"
+      },
+      {
+        "seed": 23,
+        "number": 66,
+        "name": "Xavier Diebold"
+      },
+      {
+        "seed": 24,
+        "number": 46,
+        "name": "Niels Kos"
+      },
+      {
+        "seed": 25,
+        "number": 6,
+        "name": "François Garcia"
+      },
+      {
+        "seed": 26,
+        "number": 14,
+        "name": "Frank Voorderhake"
+      },
+      {
+        "seed": 27,
+        "number": 15,
+        "name": "Dylan Mougenot"
+      },
+      {
+        "seed": 28,
+        "number": 12,
+        "name": "Gerson Junginger"
+      },
+      {
+        "seed": 29,
+        "number": 113,
+        "name": "Kain Hendrickx"
+      },
+      {
+        "seed": 30,
+        "number": 171,
+        "name": "Melvin Krier"
+      },
+      {
+        "seed": 31,
+        "number": 977,
+        "name": "Arunas Atkociunas"
+      },
+      {
+        "seed": 32,
+        "number": 8,
+        "name": "Melvin Lakämper"
+      }
+    ]
+  },
+  {
+    "year": 2025,
+    "event": "dk-r2",
+    "type": "top32",
+    "sources": [
+      "screens/DK/2025/dk-r2/photo_2026-09-15_10-33-32.jpg"
+    ],
+    "top32": [
+      {
+        "seed": 1,
+        "number": 1,
+        "name": "Gediminas Levickas"
+      },
+      {
+        "seed": 2,
+        "number": 81,
+        "name": "Massimo Checchin"
+      },
+      {
+        "seed": 3,
+        "number": 7,
+        "name": "Dylan Mougenot"
+      },
+      {
+        "seed": 4,
+        "number": 45,
+        "name": "Cyril Breney"
+      },
+      {
+        "seed": 5,
+        "number": 2,
+        "name": "Sandra Janušauskaitė"
+      },
+      {
+        "seed": 6,
+        "number": 40,
+        "name": "Axel François"
+      },
+      {
+        "seed": 7,
+        "number": 535,
+        "name": "Enver Haskasap"
+      },
+      {
+        "seed": 8,
+        "number": 15,
+        "name": "Enzo Surace"
+      },
+      {
+        "seed": 9,
+        "number": 42,
+        "name": "Arnaud Fischer"
+      },
+      {
+        "seed": 10,
+        "number": 24,
+        "name": "Dion Kajtazi"
+      },
+      {
+        "seed": 11,
+        "number": 28,
+        "name": "David Karatas"
+      },
+      {
+        "seed": 12,
+        "number": 14,
+        "name": "Dylan Kaynak"
+      },
+      {
+        "seed": 13,
+        "number": 23,
+        "name": "Luc Metz"
+      },
+      {
+        "seed": 14,
+        "number": 37,
+        "name": "Logan Postigo"
+      },
+      {
+        "seed": 15,
+        "number": 16,
+        "name": "Michael Perrottet"
+      },
+      {
+        "seed": 16,
+        "number": 17,
+        "name": "Benoît Berton"
+      },
+      {
+        "seed": 17,
+        "number": 27,
+        "name": "Robin Raphoz"
+      },
+      {
+        "seed": 18,
+        "number": 22,
+        "name": "Severin Stoeckli"
+      },
+      {
+        "seed": 19,
+        "number": 35,
+        "name": "Cédric Latscha"
+      },
+      {
+        "seed": 20,
+        "number": 47,
+        "name": "Steve Leiber"
+      },
+      {
+        "seed": 21,
+        "number": 21,
+        "name": "Laurent Nikitin"
+      },
+      {
+        "seed": 22,
+        "number": 4,
+        "name": "Jan Hejda"
+      },
+      {
+        "seed": 23,
+        "number": 31,
+        "name": "Killian Trosset"
+      },
+      {
+        "seed": 24,
+        "number": 29,
+        "name": "Xavier Diebold"
+      },
+      {
+        "seed": 25,
+        "number": 39,
+        "name": "Pieter Van Hoorick"
+      },
+      {
+        "seed": 26,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 27,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 28,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 29,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 30,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 31,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 32,
+        "number": null,
+        "name": "Bye Run"
+      }
+    ]
+  },
+  {
+    "year": 2025,
+    "event": "dk-r3",
+    "type": "top32",
+    "sources": [
+      "screens/DK/2025/dk-r3/photo_2026-09-15_10-32-55.jpg"
+    ],
+    "top32": [
+      {
+        "seed": 1,
+        "number": 130,
+        "name": "Norbert Zamecz"
+      },
+      {
+        "seed": 2,
+        "number": 140,
+        "name": "Adrian Petricevic"
+      },
+      {
+        "seed": 3,
+        "number": 142,
+        "name": "Péter Utasi"
+      },
+      {
+        "seed": 4,
+        "number": 144,
+        "name": "Tamás Magyar"
+      },
+      {
+        "seed": 5,
+        "number": 122,
+        "name": "Miklos Laszlo"
+      },
+      {
+        "seed": 6,
+        "number": 129,
+        "name": "Petyo Radichev"
+      },
+      {
+        "seed": 7,
+        "number": 121,
+        "name": "Mátyás Druzsin"
+      },
+      {
+        "seed": 8,
+        "number": 1,
+        "name": "Gediminas Levickas"
+      },
+      {
+        "seed": 9,
+        "number": 55,
+        "name": "Claudiu Adam"
+      },
+      {
+        "seed": 10,
+        "number": 134,
+        "name": "Rafał Kochanowski"
+      },
+      {
+        "seed": 11,
+        "number": 143,
+        "name": "Tudor Ciortan"
+      },
+      {
+        "seed": 12,
+        "number": 139,
+        "name": "Szucskó Martin"
+      },
+      {
+        "seed": 13,
+        "number": 133,
+        "name": "Bimbó József"
+      },
+      {
+        "seed": 14,
+        "number": 136,
+        "name": "Michele Landolfi"
+      },
+      {
+        "seed": 15,
+        "number": 535,
+        "name": "Enver Haskasap"
+      },
+      {
+        "seed": 16,
+        "number": 135,
+        "name": "Valeri Moscovciuc"
+      },
+      {
+        "seed": 17,
+        "number": 2,
+        "name": "Sandra Janušauskaitė"
+      },
+      {
+        "seed": 18,
+        "number": 146,
+        "name": "Kovacs Karoly Levente"
+      },
+      {
+        "seed": 19,
+        "number": 90,
+        "name": "Péter Porkoláb"
+      },
+      {
+        "seed": 20,
+        "number": 124,
+        "name": "Artur Havrylenko"
+      },
+      {
+        "seed": 21,
+        "number": 128,
+        "name": "Ola Fijal"
+      },
+      {
+        "seed": 22,
+        "number": 141,
+        "name": "Nikola Ilic"
+      },
+      {
+        "seed": 23,
+        "number": 126,
+        "name": "Nikola Popov"
+      },
+      {
+        "seed": 24,
+        "number": 138,
+        "name": "Cselőtei Csaba"
+      },
+      {
+        "seed": 25,
+        "number": 137,
+        "name": "Richárd Miklós"
+      },
+      {
+        "seed": 26,
+        "number": 81,
+        "name": "Massimo Checchin"
+      },
+      {
+        "seed": 27,
+        "number": 132,
+        "name": "Marios Daktylides"
+      },
+      {
+        "seed": 28,
+        "number": 127,
+        "name": "Zilizi Krisztián"
+      },
+      {
+        "seed": 29,
+        "number": 131,
+        "name": "Spiros Giannakopoulos"
+      },
+      {
+        "seed": 30,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 31,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 32,
+        "number": null,
+        "name": "Bye Run"
+      }
+    ]
+  },
+  {
+    "year": 2025,
+    "event": "dk-r4",
+    "type": "top16",
+    "sources": [
+      "screens/DK/2025/dk-r4/photo_2026-09-15_10-32-29.jpg",
+      "screens/DK/2025/dk-r4/photo_2026-09-15_10-32-34.jpg"
+    ],
+    "top16": [
+      {
+        "seed": 1,
+        "number": 148,
+        "name": "Norbert Zamecz"
+      },
+      {
+        "seed": 2,
+        "number": 32,
+        "name": "Luca Fuschini"
+      },
+      {
+        "seed": 3,
+        "number": 1,
+        "name": "Gediminas Levickas"
+      },
+      {
+        "seed": 4,
+        "number": 50,
+        "name": "Dmitri Illyuk"
+      },
+      {
+        "seed": 5,
+        "number": 36,
+        "name": "Miklos Laszlo"
+      },
+      {
+        "seed": 6,
+        "number": 26,
+        "name": "Daniel Brandner"
+      },
+      {
+        "seed": 7,
+        "number": 81,
+        "name": "Massimo Checchin"
+      },
+      {
+        "seed": 8,
+        "number": 49,
+        "name": "Calin Ciortan"
+      },
+      {
+        "seed": 9,
+        "number": 2,
+        "name": "Sandra Janušauskaitė"
+      },
+      {
+        "seed": 10,
+        "number": 46,
+        "name": "Michele Landolfi"
+      },
+      {
+        "seed": 11,
+        "number": 149,
+        "name": "Nikola Popov"
+      },
+      {
+        "seed": 12,
+        "number": 127,
+        "name": "Zilizi Krisztián"
+      },
+      {
+        "seed": 13,
+        "number": 90,
+        "name": "Péter Porkoláb"
+      },
+      {
+        "seed": 14,
+        "number": 535,
+        "name": "Enver Haskasap"
+      },
+      {
+        "seed": 15,
+        "number": 138,
+        "name": "Cselőtei Csaba"
+      },
+      {
+        "seed": 16,
+        "number": 150,
+        "name": "Nagy Ferenc"
+      }
+    ]
+  },
+  {
+    "year": 2025,
+    "event": "dk-r6",
+    "type": "top32",
+    "sources": [
+      "screens/DK/2025/dk-r6/photo_2026-09-15_10-31-38.jpg"
+    ],
+    "top32": [
+      {
+        "seed": 1,
+        "number": 301,
+        "name": "Gediminas Levickas"
+      },
+      {
+        "seed": 2,
+        "number": 100,
+        "name": "Alexis Georgiou"
+      },
+      {
+        "seed": 3,
+        "number": 61,
+        "name": "Natalia Iocsak"
+      },
+      {
+        "seed": 4,
+        "number": 310,
+        "name": "Efthios Christodolou"
+      },
+      {
+        "seed": 5,
+        "number": 73,
+        "name": "Piotr Kozlowski"
+      },
+      {
+        "seed": 6,
+        "number": 85,
+        "name": "Simos Tikkis"
+      },
+      {
+        "seed": 7,
+        "number": 86,
+        "name": "Pambos Charalambous"
+      },
+      {
+        "seed": 8,
+        "number": 304,
+        "name": "Bartosz Stolarski"
+      },
+      {
+        "seed": 9,
+        "number": 307,
+        "name": "Christos Loizou"
+      },
+      {
+        "seed": 10,
+        "number": 90,
+        "name": "Péter Porkoláb"
+      },
+      {
+        "seed": 11,
+        "number": 319,
+        "name": "Pambos Nikolaou"
+      },
+      {
+        "seed": 12,
+        "number": 316,
+        "name": "Kiros Artemiou"
+      },
+      {
+        "seed": 13,
+        "number": 308,
+        "name": "Dimitrakis Christodoulou"
+      },
+      {
+        "seed": 14,
+        "number": 64,
+        "name": "Savvas Spirou"
+      },
+      {
+        "seed": 15,
+        "number": 315,
+        "name": "Giorgos Tziapouras"
+      },
+      {
+        "seed": 16,
+        "number": 320,
+        "name": "Pambos Tsouris"
+      },
+      {
+        "seed": 17,
+        "number": 311,
+        "name": "Alekos Hasikos"
+      },
+      {
+        "seed": 18,
+        "number": 324,
+        "name": "Sergios Grigoriou"
+      },
+      {
+        "seed": 19,
+        "number": 305,
+        "name": "Charalambos Christoforou"
+      },
+      {
+        "seed": 20,
+        "number": 92,
+        "name": "Kostas Konstantinou"
+      },
+      {
+        "seed": 21,
+        "number": 83,
+        "name": "Andreas Andreou"
+      },
+      {
+        "seed": 22,
+        "number": 302,
+        "name": "Sandra Janušauskaitė"
+      },
+      {
+        "seed": 23,
+        "number": 72,
+        "name": "Kiriakos Mariou"
+      },
+      {
+        "seed": 24,
+        "number": 309,
+        "name": "Doros Frantzeskou"
+      },
+      {
+        "seed": 25,
+        "number": 313,
+        "name": "George Tsiellepis"
+      },
+      {
+        "seed": 26,
+        "number": 303,
+        "name": "Antonis Nikolaou"
+      },
+      {
+        "seed": 27,
+        "number": 306,
+        "name": "Christoforos Koinis"
+      },
+      {
+        "seed": 28,
+        "number": 318,
+        "name": "Neofitos Fikardos"
+      },
+      {
+        "seed": 29,
+        "number": 314,
+        "name": "Giannis Ioannides"
+      },
+      {
+        "seed": 30,
+        "number": 317,
+        "name": "Konstantinos Christoforou"
+      },
+      {
+        "seed": 31,
+        "number": 323,
+        "name": "Savvas Ioannou"
+      },
+      {
+        "seed": 32,
+        "number": 326,
+        "name": "Theodoros Theodorou"
+      }
+    ]
+  },
+  {
+    "year": 2026,
+    "event": "dk-r1",
+    "type": "top32",
+    "sources": [
+      "screens/DK/2026/dk-r1/photo_2026-09-15_10-30-22.jpg"
+    ],
+    "top32": [
+      {
+        "seed": 1,
+        "number": 107,
+        "name": "Erik Lobmayer"
+      },
+      {
+        "seed": 2,
+        "number": 1,
+        "name": "Gediminas Levickas"
+      },
+      {
+        "seed": 3,
+        "number": 111,
+        "name": "Andrius Vasiliauskas"
+      },
+      {
+        "seed": 4,
+        "number": 77,
+        "name": "Roene Zwanenburg"
+      },
+      {
+        "seed": 5,
+        "number": 88,
+        "name": "Christian Schirmer"
+      },
+      {
+        "seed": 6,
+        "number": 22,
+        "name": "Denise Ritzmann"
+      },
+      {
+        "seed": 7,
+        "number": 106,
+        "name": "Artur Havrylenko"
+      },
+      {
+        "seed": 8,
+        "number": 90,
+        "name": "Péter Porkoláb"
+      },
+      {
+        "seed": 9,
+        "number": 7,
+        "name": "Niels Visser"
+      },
+      {
+        "seed": 10,
+        "number": 28,
+        "name": "Roger Stöckli"
+      },
+      {
+        "seed": 11,
+        "number": 62,
+        "name": "Sinan Arslan"
+      },
+      {
+        "seed": 12,
+        "number": 33,
+        "name": "Manuel Schrimpf"
+      },
+      {
+        "seed": 13,
+        "number": 46,
+        "name": "Niels Kos"
+      },
+      {
+        "seed": 14,
+        "number": 3,
+        "name": "Uwe Sener"
+      },
+      {
+        "seed": 15,
+        "number": 81,
+        "name": "Massimo Checchin"
+      },
+      {
+        "seed": 16,
+        "number": 735,
+        "name": "Holger Kern"
+      },
+      {
+        "seed": 17,
+        "number": 515,
+        "name": "Gregoire Dupasquier"
+      },
+      {
+        "seed": 18,
+        "number": 15,
+        "name": "Dylan Mougenot"
+      },
+      {
+        "seed": 19,
+        "number": 180,
+        "name": "Sacha Aleksic"
+      },
+      {
+        "seed": 20,
+        "number": 333,
+        "name": "Maron Kosak"
+      },
+      {
+        "seed": 21,
+        "number": 96,
+        "name": "Michael Müller"
+      },
+      {
+        "seed": 22,
+        "number": 13,
+        "name": "Jan Behrendt"
+      },
+      {
+        "seed": 23,
+        "number": 78,
+        "name": "Piotr Kozlowski"
+      },
+      {
+        "seed": 24,
+        "number": 286,
+        "name": "Dennis Kos"
+      },
+      {
+        "seed": 25,
+        "number": 11,
+        "name": "Steve Rinsoz"
+      },
+      {
+        "seed": 26,
+        "number": 8,
+        "name": "Lars Visser"
+      },
+      {
+        "seed": 27,
+        "number": 92,
+        "name": "Fabien Schneider"
+      },
+      {
+        "seed": 28,
+        "number": 56,
+        "name": "Karel Vanbranteghem"
+      },
+      {
+        "seed": 29,
+        "number": 2,
+        "name": "Sandra Janušauskaitė"
+      },
+      {
+        "seed": 30,
+        "number": 91,
+        "name": "Stefan Maier"
+      },
+      {
+        "seed": 31,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 32,
+        "number": null,
+        "name": "Bye Run"
+      }
+    ]
+  },
+  {
+    "year": 2026,
+    "event": "dk-r2",
+    "type": "top32",
+    "sources": [
+      "screens/DK/2026/dk-r2/photo_2026-09-15_10-29-29.jpg"
+    ],
+    "top32": [
+      {
+        "seed": 1,
+        "number": 35,
+        "name": "Kevin Jozou"
+      },
+      {
+        "seed": 2,
+        "number": 1,
+        "name": "Gediminas Levickas"
+      },
+      {
+        "seed": 3,
+        "number": 23,
+        "name": "Enzo Surace"
+      },
+      {
+        "seed": 4,
+        "number": 3,
+        "name": "Erik Lobmayer"
+      },
+      {
+        "seed": 5,
+        "number": 37,
+        "name": "Frederic Adam"
+      },
+      {
+        "seed": 6,
+        "number": 28,
+        "name": "Cedric Latscha"
+      },
+      {
+        "seed": 7,
+        "number": 90,
+        "name": "Péter Porkoláb"
+      },
+      {
+        "seed": 8,
+        "number": 11,
+        "name": "Michael Perrottet"
+      },
+      {
+        "seed": 9,
+        "number": 32,
+        "name": "Dylan Kaynak"
+      },
+      {
+        "seed": 10,
+        "number": 38,
+        "name": "Alexandru Dumitru"
+      },
+      {
+        "seed": 11,
+        "number": 16,
+        "name": "Logan Postigo"
+      },
+      {
+        "seed": 12,
+        "number": 2,
+        "name": "Sandra Janušauskaitė"
+      },
+      {
+        "seed": 13,
+        "number": 21,
+        "name": "Luc Metz"
+      },
+      {
+        "seed": 14,
+        "number": 26,
+        "name": "Severin Stoeckli"
+      },
+      {
+        "seed": 15,
+        "number": 19,
+        "name": "Uwe Sener"
+      },
+      {
+        "seed": 16,
+        "number": 14,
+        "name": "Pierre Alessio"
+      },
+      {
+        "seed": 17,
+        "number": 25,
+        "name": "Sacha Aleksic"
+      },
+      {
+        "seed": 18,
+        "number": 4,
+        "name": "Valeri Moscovciuc"
+      },
+      {
+        "seed": 19,
+        "number": 22,
+        "name": "Robin Raphoz"
+      },
+      {
+        "seed": 20,
+        "number": 12,
+        "name": "Dylan Mougenot"
+      },
+      {
+        "seed": 21,
+        "number": 18,
+        "name": "Filipe Gonçalves"
+      },
+      {
+        "seed": 22,
+        "number": 15,
+        "name": "Pieter Van Hoorick"
+      },
+      {
+        "seed": 23,
+        "number": 13,
+        "name": "David Meunier"
+      },
+      {
+        "seed": 24,
+        "number": 6,
+        "name": "Philip Jaeger"
+      },
+      {
+        "seed": 25,
+        "number": 36,
+        "name": "Florent Magard"
+      },
+      {
+        "seed": 26,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 27,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 28,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 29,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 30,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 31,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 32,
+        "number": null,
+        "name": "Bye Run"
+      }
+    ]
+  },
+  {
+    "year": 2026,
+    "event": "dk-r3",
+    "type": "top32",
+    "sources": [
+      "screens/DK/2026/dk-r3/photo_2026-09-15_10-29-03.jpg"
+    ],
+    "top32": [
+      {
+        "seed": 1,
+        "number": 1,
+        "name": "Gediminas Levickas"
+      },
+      {
+        "seed": 2,
+        "number": 128,
+        "name": "Patrik Cselőtei"
+      },
+      {
+        "seed": 3,
+        "number": 104,
+        "name": "Mátyás Druzsin"
+      },
+      {
+        "seed": 4,
+        "number": 3,
+        "name": "Erik Lobmayer"
+      },
+      {
+        "seed": 5,
+        "number": 127,
+        "name": "Markus Dokter"
+      },
+      {
+        "seed": 6,
+        "number": 124,
+        "name": "Adrian Petricevic"
+      },
+      {
+        "seed": 7,
+        "number": 90,
+        "name": "Péter Porkoláb"
+      },
+      {
+        "seed": 8,
+        "number": 87,
+        "name": "Marcin Banowicz"
+      },
+      {
+        "seed": 9,
+        "number": 106,
+        "name": "Tamás Magyar"
+      },
+      {
+        "seed": 10,
+        "number": 122,
+        "name": "Nikola Ilic"
+      },
+      {
+        "seed": 11,
+        "number": 96,
+        "name": "Natalia Iocsak"
+      },
+      {
+        "seed": 12,
+        "number": 121,
+        "name": "Petyo Radichev"
+      },
+      {
+        "seed": 13,
+        "number": 97,
+        "name": "Rareș Gîrda"
+      },
+      {
+        "seed": 14,
+        "number": 105,
+        "name": "Jan Hejda"
+      },
+      {
+        "seed": 15,
+        "number": 125,
+        "name": "Arnas Kazokevičius"
+      },
+      {
+        "seed": 16,
+        "number": 16,
+        "name": "Logan Postigo"
+      },
+      {
+        "seed": 17,
+        "number": 111,
+        "name": "Vlad Stanescu"
+      },
+      {
+        "seed": 18,
+        "number": 123,
+        "name": "Ivan Markic"
+      },
+      {
+        "seed": 19,
+        "number": 103,
+        "name": "Csaba Cselőtei"
+      },
+      {
+        "seed": 20,
+        "number": 99,
+        "name": "Rafael Nagy"
+      },
+      {
+        "seed": 21,
+        "number": 98,
+        "name": "Valeri Moscovciuc"
+      },
+      {
+        "seed": 22,
+        "number": 2,
+        "name": "Sandra Janušauskaitė"
+      },
+      {
+        "seed": 23,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 24,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 25,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 26,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 27,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 28,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 29,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 30,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 31,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 32,
+        "number": null,
+        "name": "Bye Run"
+      }
+    ]
+  },
+  {
+    "year": 2026,
+    "event": "dk-r4",
+    "type": "top32",
+    "sources": [
+      "screens/DK/2026/dk-r4/photo_2026-09-15_10-27-34.jpg",
+      "screens/DK/2026/dk-r4/photo_2026-09-15_10-27-47.jpg"
+    ],
+    "podium": [
+      {
+        "place": 1,
+        "name": "Gustas Valainis",
+        "number": 9
+      },
+      {
+        "place": 2,
+        "name": "Adrian Petricevic",
+        "number": 114
+      },
+      {
+        "place": 3,
+        "name": "Daniel Brandner",
+        "number": 83
+      },
+      {
+        "place": 4,
+        "name": "Patrik Cselőtei",
+        "number": 80
+      }
+    ],
+    "top32": [
+      {
+        "seed": 1,
+        "number": 3,
+        "name": "Erik Lobmayer"
+      },
+      {
+        "seed": 2,
+        "number": 80,
+        "name": "Patrik Cselőtei"
+      },
+      {
+        "seed": 3,
+        "number": 114,
+        "name": "Adrian Petricevic"
+      },
+      {
+        "seed": 4,
+        "number": 9,
+        "name": "Gustas Valainis"
+      },
+      {
+        "seed": 5,
+        "number": 112,
+        "name": "Kordian Trela-Muchewicz"
+      },
+      {
+        "seed": 6,
+        "number": 84,
+        "name": "Csaba Cselőtei"
+      },
+      {
+        "seed": 7,
+        "number": 1,
+        "name": "Gediminas Levickas"
+      },
+      {
+        "seed": 8,
+        "number": 83,
+        "name": "Daniel Brandner"
+      },
+      {
+        "seed": 9,
+        "number": 88,
+        "name": "Peter Brolli"
+      },
+      {
+        "seed": 10,
+        "number": 120,
+        "name": "Mattias Karlsson"
+      },
+      {
+        "seed": 11,
+        "number": 89,
+        "name": "Luca Alberici"
+      },
+      {
+        "seed": 12,
+        "number": 79,
+        "name": "Kane Pisani"
+      },
+      {
+        "seed": 13,
+        "number": 71,
+        "name": "Viktor Andersson"
+      },
+      {
+        "seed": 14,
+        "number": 73,
+        "name": "Révhelyi Péter"
+      },
+      {
+        "seed": 15,
+        "number": 77,
+        "name": "Bartosz Stolarski"
+      },
+      {
+        "seed": 16,
+        "number": 116,
+        "name": "Franz Kuncic"
+      },
+      {
+        "seed": 17,
+        "number": 7,
+        "name": "Markus Dokter"
+      },
+      {
+        "seed": 18,
+        "number": 72,
+        "name": "Filip Vimpel"
+      },
+      {
+        "seed": 19,
+        "number": 81,
+        "name": "Miklos Laszlo"
+      },
+      {
+        "seed": 20,
+        "number": 74,
+        "name": "Tamás Magyar"
+      },
+      {
+        "seed": 21,
+        "number": 109,
+        "name": "Dmitriy Illyuk"
+      },
+      {
+        "seed": 22,
+        "number": 115,
+        "name": "Vaclav Burian"
+      },
+      {
+        "seed": 23,
+        "number": 104,
+        "name": "Mátyás Druzsin"
+      },
+      {
+        "seed": 24,
+        "number": 117,
+        "name": "Artur Havrylenko"
+      },
+      {
+        "seed": 25,
+        "number": 110,
+        "name": "Valeri Moscovciuc"
+      },
+      {
+        "seed": 26,
+        "number": 10,
+        "name": "Augustinas Jankevičius"
+      },
+      {
+        "seed": 27,
+        "number": 27,
+        "name": "Rareș Gîrda"
+      },
+      {
+        "seed": 28,
+        "number": 17,
+        "name": "Călin Calota"
+      },
+      {
+        "seed": 29,
+        "number": 2,
+        "name": "Sandra Janušauskaitė"
+      },
+      {
+        "seed": 30,
+        "number": 90,
+        "name": "Péter Porkoláb"
+      },
+      {
+        "seed": 31,
+        "number": 119,
+        "name": "Sylvestras Bieliauskas"
+      },
+      {
+        "seed": 32,
+        "number": 85,
+        "name": "Claudiu Adam"
+      }
+    ],
+    "notes": "Full bracket with results through final."
+  },
+  {
+    "year": 2026,
+    "event": "gonco-fest",
+    "type": "top32",
+    "sources": [
+      "screens/DK/2026/gonco-fest/photo_2026-09-15_10-29-58.jpg"
+    ],
+    "top32": [
+      {
+        "seed": 1,
+        "number": 3,
+        "name": "Angel Karanyotov"
+      },
+      {
+        "seed": 2,
+        "number": 1,
+        "name": "Gediminas Levickas"
+      },
+      {
+        "seed": 3,
+        "number": 69,
+        "name": "Nikola Popov"
+      },
+      {
+        "seed": 4,
+        "number": 9,
+        "name": "Pavlin Penev"
+      },
+      {
+        "seed": 5,
+        "number": 18,
+        "name": "Petyo Radichev"
+      },
+      {
+        "seed": 6,
+        "number": 42,
+        "name": "Boyan Dekov"
+      },
+      {
+        "seed": 7,
+        "number": 2,
+        "name": "Sandra Janušauskaitė"
+      },
+      {
+        "seed": 8,
+        "number": 24,
+        "name": "Svetoslav Dekov"
+      },
+      {
+        "seed": 9,
+        "number": 667,
+        "name": "Luka Popovic"
+      },
+      {
+        "seed": 10,
+        "number": 80,
+        "name": "Kristaps Bluss"
+      },
+      {
+        "seed": 11,
+        "number": 222,
+        "name": "Tudor Ciortan"
+      },
+      {
+        "seed": 12,
+        "number": 777,
+        "name": "Ivan Bojkov"
+      },
+      {
+        "seed": 13,
+        "number": 20,
+        "name": "Dimitris Giannopoulos"
+      },
+      {
+        "seed": 14,
+        "number": 22,
+        "name": "Yordan Andreev"
+      },
+      {
+        "seed": 15,
+        "number": 276,
+        "name": "Gabriel Minkov"
+      },
+      {
+        "seed": 16,
+        "number": 14,
+        "name": "Borislav Terziyski"
+      },
+      {
+        "seed": 17,
+        "number": 333,
+        "name": "Artur Havrylenko"
+      },
+      {
+        "seed": 18,
+        "number": 28,
+        "name": "Nedko Buyukliev"
+      },
+      {
+        "seed": 19,
+        "number": 33,
+        "name": "Dimo Georgiev"
+      },
+      {
+        "seed": 20,
+        "number": 6,
+        "name": "Dobromir Lukanov"
+      },
+      {
+        "seed": 21,
+        "number": 19,
+        "name": "Kristian Dodev"
+      },
+      {
+        "seed": 22,
+        "number": 5,
+        "name": "Alice Ene"
+      },
+      {
+        "seed": 23,
+        "number": 10,
+        "name": "Preslav Cholakov"
+      },
+      {
+        "seed": 24,
+        "number": 83,
+        "name": "Martin Nikolov"
+      },
+      {
+        "seed": 25,
+        "number": 7,
+        "name": "Cvetan Eftimov"
+      },
+      {
+        "seed": 26,
+        "number": 4,
+        "name": "Iva Rusinova"
+      },
+      {
+        "seed": 27,
+        "number": 34,
+        "name": "Kemal Soylu"
+      },
+      {
+        "seed": 28,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 29,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 30,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 31,
+        "number": null,
+        "name": "Bye Run"
+      },
+      {
+        "seed": 32,
+        "number": null,
+        "name": "Bye Run"
+      }
+    ]
+  }
+]

@@ -37,6 +37,11 @@ export interface TrackSummary {
   photoUrl: string | null;
 }
 
+export interface StandingQualCell {
+  qualPosition: number | null;
+  qualScore100: number | null;
+}
+
 export interface StandingRow {
   rank: number;
   pilotSlug: string;
@@ -46,6 +51,7 @@ export interface StandingRow {
   number: number | null;
   totalPoints: number;
   eventPoints: Array<number | null>;
+  eventQual: Array<StandingQualCell | null>;
 }
 
 export interface SeasonStandingsResponse {

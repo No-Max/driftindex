@@ -6,6 +6,7 @@ import { useRoute } from 'vue-router';
 import { fetchStandings } from '../api/client';
 import SeriesLogo from '../components/SeriesLogo.vue';
 import { formatPilotName } from '../lib/formatPilotName';
+import { formatQualCell } from '../lib/formatQualCell';
 
 const route = useRoute();
 const { t, locale } = useI18n();
@@ -26,6 +27,8 @@ const sourceLabel = computed(() => {
   if (!data.value?.source) return '';
   return locale.value === 'ru' ? data.value.source.labelRu : data.value.source.labelEn;
 });
+
+const showQual = computed(() => (data.value ? hasAnyQualData(data.value.standings) : false));
 
 async function load() {
   loading.value = true;
@@ -49,6 +52,21 @@ function pilotName(row: SeasonStandingsResponse['standings'][0]) {
 
 function eventLabel(index: number) {
   return t('standings.round', { n: data.value?.events[index]?.roundNumber ?? index + 1 });
+}
+
+function formatQualCellForRow(
+  row: SeasonStandingsResponse['standings'][0],
+  index: number,
+) {
+  const qual = row.eventQual[index];
+  if (!qual) return '—';
+  return formatQualCell(qual.qualScore100, qual.qualPosition, locale.value);
+}
+
+function hasAnyQualData(standings: SeasonStandingsResponse['standings']) {
+  return standings.some((row) =>
+    row.eventQual.some((qual) => qual != null && (qual.qualScore100 != null || qual.qualPosition != null)),
+  );
 }
 </script>
 
@@ -112,8 +130,11 @@ function eventLabel(index: number) {
                   {{ pilotName(row) }}
                 </RouterLink>
               </td>
-              <td v-for="(points, index) in row.eventPoints" :key="index" class="muted">
-                {{ points ?? '—' }}
+              <td v-for="(points, index) in row.eventPoints" :key="index" class="event-cell">
+                <span class="event-cell__points">{{ points ?? '—' }}</span>
+                <span v-if="showQual" class="event-cell__qual muted">
+                  {{ formatQualCellForRow(row, index) }}
+                </span>
               </td>
               <td><strong>{{ row.totalPoints }}</strong></td>
             </tr>
@@ -163,5 +184,18 @@ function eventLabel(index: number) {
 
 .source-meta a:hover {
   text-decoration: underline;
+}
+
+.event-cell {
+  line-height: 1.35;
+}
+
+.event-cell__points {
+  display: block;
+}
+
+.event-cell__qual {
+  display: block;
+  font-size: 0.78rem;
 }
 </style>

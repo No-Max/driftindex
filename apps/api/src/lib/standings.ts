@@ -118,25 +118,44 @@ export function computeSeasonP4PMetrics(events: SeasonEventWithResults[]): Seaso
   return rows;
 }
 
+export interface EventQualCell {
+  qualPosition: number | null;
+  qualScore100: number | null;
+}
+
 export interface ComputedStandingRow {
   rank: number;
   pilot: Pilot;
   totalPoints: number;
   eventPoints: Array<number | null>;
+  eventQual: Array<EventQualCell | null>;
 }
 
 export function computeStandings(events: SeasonEventWithResults[]): ComputedStandingRow[] {
   const finishedEvents = events.filter((e) => e.status === 'FINISHED');
-  const pointsByPilot = new Map<string, { pilot: Pilot; byEvent: Map<string, number>; total: number }>();
+  const pointsByPilot = new Map<
+    string,
+    {
+      pilot: Pilot;
+      byEvent: Map<string, number>;
+      qualByEvent: Map<string, EventQualCell>;
+      total: number;
+    }
+  >();
 
   for (const event of finishedEvents) {
     for (const result of event.results) {
       const entry = pointsByPilot.get(result.pilotId) ?? {
         pilot: result.pilot,
         byEvent: new Map<string, number>(),
+        qualByEvent: new Map<string, EventQualCell>(),
         total: 0,
       };
       entry.byEvent.set(event.id, result.points);
+      entry.qualByEvent.set(event.id, {
+        qualPosition: result.qualPosition,
+        qualScore100: result.qualScore100,
+      });
       entry.total += result.points;
       pointsByPilot.set(result.pilotId, entry);
     }
@@ -149,5 +168,6 @@ export function computeStandings(events: SeasonEventWithResults[]): ComputedStan
       pilot: row.pilot,
       totalPoints: row.total,
       eventPoints: events.map((event) => row.byEvent.get(event.id) ?? null),
+      eventQual: events.map((event) => row.qualByEvent.get(event.id) ?? null),
     }));
 }

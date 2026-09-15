@@ -295,6 +295,7 @@ publicRouter.get('/series/:slug/seasons/:year/standings', async (req, res) => {
     number: row.pilot.number,
     totalPoints: row.totalPoints,
     eventPoints: row.eventPoints,
+    eventQual: row.eventQual,
   }));
 
   const payload: SeasonStandingsResponse = {
