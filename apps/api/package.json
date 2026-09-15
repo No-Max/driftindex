@@ -39,7 +39,10 @@
     "db:import:formula-drift:probe": "tsx scripts/import-formula-drift.ts --probe-archives",
     "db:import:d1gp": "tsx scripts/import-d1gp.ts",
     "db:import:d1gp:list": "tsx scripts/import-d1gp.ts --list-seasons",
-    "db:import:d1gp:all": "tsx scripts/import-d1gp.ts --all"
+    "db:import:d1gp:all": "tsx scripts/import-d1gp.ts --all",
+    "db:import:drift-kings": "tsx scripts/import-drift-kings.ts",
+    "db:import:drift-kings:all": "tsx scripts/import-drift-kings.ts --all",
+    "db:import:drift-kings:2026": "tsx scripts/import-drift-kings-2026.ts"
   },
   "dependencies": {
     "@drift-index/shared": "*",
