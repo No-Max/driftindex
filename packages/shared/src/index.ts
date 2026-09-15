@@ -62,6 +62,32 @@ export interface SeasonStandingsResponse {
   source: DataSource | null;
 }
 
+export interface SeriesProfileEvent {
+  slug: string;
+  roundNumber: number;
+  name: string;
+  track: TrackSummary | null;
+  status: EventStatus;
+  startsAt: string | null;
+  standingsPath: string;
+}
+
+export interface SeriesProfileSeason {
+  year: number;
+  nameEn: string | null;
+  nameRu: string | null;
+  eventCount: number;
+  finishedEventCount: number;
+  source: DataSource | null;
+  standingsPath: string;
+  events: SeriesProfileEvent[];
+}
+
+export interface SeriesProfileResponse {
+  series: SeriesSummary;
+  seasons: SeriesProfileSeason[];
+}
+
 export interface PilotStats {
   eventsCount: number;
   seasonsCount: number;

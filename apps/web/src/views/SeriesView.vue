@@ -128,10 +128,6 @@ function groupContributions(contributions: OverlapContribution[]): GroupedOverla
     }));
 }
 
-function latestSeasonYear(item: SeriesListItem) {
-  return item.seasons[0]?.year;
-}
-
 const prestigeColumnKeys = ['rank', 'series', 'hardness', 'samples'] as const;
 </script>
 
@@ -289,13 +285,11 @@ const prestigeColumnKeys = ['rank', 'series', 'hardness', 'samples'] as const;
               </div>
             </div>
             <RouterLink
-              v-if="latestSeasonYear(item)"
-              :to="`/series/${item.slug}/${latestSeasonYear(item)}`"
+              :to="`/series/${item.slug}`"
               class="catalog-link"
             >
-              {{ t('seriesPage.openStandings', { year: latestSeasonYear(item) }) }} →
+              {{ t('seriesPage.openSeries') }} →
             </RouterLink>
-            <p v-else class="muted catalog-empty">{{ t('seriesPage.noSeason') }}</p>
           </article>
         </div>
       </section>

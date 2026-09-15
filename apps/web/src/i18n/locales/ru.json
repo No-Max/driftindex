@@ -118,7 +118,19 @@
     "catalogLead": "Standings по каждой серии · {year}",
     "seasonCount": "{count} сезонов в базе",
     "openStandings": "Таблица {year}",
+    "openSeries": "Сезоны и этапы",
     "noSeason": "Нет данных по сезону"
+  },
+  "seriesDetail": {
+    "back": "Все серии",
+    "backToSeries": "Обзор серии",
+    "seasonCount": "Сезонов в базе: {count}",
+    "noSeasons": "Нет данных по сезонам",
+    "noEvents": "В этом сезоне нет этапов",
+    "openStandings": "Таблица сезона",
+    "date": "Дата",
+    "track": "Трасса",
+    "status": "Статус"
   },
   "pilots": {
     "title": "Пилоты",

@@ -69,6 +69,7 @@ function eventLabel(index: number) {
             size="xl"
           />
           <div>
+          <RouterLink :to="`/series/${slug}`" class="back-link">← {{ t('seriesDetail.backToSeries') }}</RouterLink>
           <h1 class="page-title">{{ seriesTitle }}</h1>
           <p class="page-subtitle">
             {{ data.season.year }} ·
@@ -136,6 +137,17 @@ function eventLabel(index: number) {
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 0.35rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.back-link:hover {
+  color: var(--accent);
 }
 
 .source-meta {

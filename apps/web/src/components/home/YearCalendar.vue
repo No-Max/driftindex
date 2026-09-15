@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { HomeCalendarEvent } from '@drift-index/shared';
 import { computed } from 'vue';
+import { RouterLink } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useCardSlider } from '../../composables/useCardSlider';
 import SeriesLogo from '../SeriesLogo.vue';
@@ -117,6 +118,10 @@ function statusClass(status: HomeCalendarEvent['status']) {
   return status === 'FINISHED' ? 'done' : status === 'CANCELLED' ? 'cancelled' : 'upcoming';
 }
 
+function isEventClickable(status: HomeCalendarEvent['status']) {
+  return status === 'FINISHED';
+}
+
 function isCurrentMonth(monthIndex: number) {
   const now = new Date();
   return props.year === now.getFullYear() && monthIndex === now.getMonth();
@@ -166,10 +171,12 @@ function isCurrentMonth(monthIndex: number) {
             <h3>{{ month.label }}</h3>
             <ul>
               <li v-for="event in month.events" :key="`${event.seriesSlug}-${event.eventSlug}`">
-                <RouterLink
-                  :to="event.standingsPath"
+                <component
+                  :is="isEventClickable(event.status) ? RouterLink : 'div'"
+                  :to="isEventClickable(event.status) ? event.standingsPath : undefined"
                   class="event-row"
-                  @click="onLinkClick"
+                  :class="{ 'event-row--static': !isEventClickable(event.status) }"
+                  @click="isEventClickable(event.status) && onLinkClick($event)"
                 >
                   <span class="event-row__day">{{ formatDay(event.startsAt) }}</span>
                   <span class="event-row__body">
@@ -187,19 +194,21 @@ function isCurrentMonth(monthIndex: number) {
                       <template v-if="event.track">
                         ·
                         <RouterLink
+                          v-if="isEventClickable(event.status)"
                           class="track-link"
                           :to="`/tracks/${event.track.slug}`"
                           @click="onLinkClick"
                         >
                           {{ event.track.name }}
                         </RouterLink>
+                        <span v-else>{{ event.track.name }}</span>
                       </template>
                     </span>
                   </span>
                   <span class="event-row__status" :class="statusClass(event.status)">
                     {{ t(`home.eventStatus.${event.status.toLowerCase()}`) }}
                   </span>
-                </RouterLink>
+                </component>
               </li>
             </ul>
           </article>
@@ -356,6 +365,10 @@ function isCurrentMonth(monthIndex: number) {
   border-top: 1px solid var(--border);
 }
 
+.event-row--static {
+  cursor: default;
+}
+
 .event-row__day {
   font-family: Oswald, sans-serif;
   font-size: 1.1rem;
@@ -387,13 +400,13 @@ function isCurrentMonth(monthIndex: number) {
 }
 
 .event-row__status.done {
-  background: rgba(34, 197, 94, 0.12);
-  color: var(--verified);
+  background: rgba(139, 151, 171, 0.12);
+  color: var(--muted);
 }
 
 .event-row__status.upcoming {
-  background: var(--accent-soft);
-  color: var(--accent);
+  background: rgba(34, 197, 94, 0.12);
+  color: var(--verified);
 }
 
 .event-row__status.cancelled {

@@ -4,6 +4,7 @@ import type {
   PilotsListResponse,
   SeasonStandingsResponse,
   SeriesPrestigeResponse,
+  SeriesProfileResponse,
   TrackProfileResponse,
   TracksListResponse,
 } from '@drift-index/shared';
@@ -45,6 +46,10 @@ export function fetchTracks() {
 
 export function fetchTrack(slug: string) {
   return getJson<TrackProfileResponse>(`/api/tracks/${slug}`);
+}
+
+export function fetchSeriesProfile(slug: string) {
+  return getJson<SeriesProfileResponse>(`/api/series/${slug}`);
 }
 
 export function fetchStandings(slug: string, year: number) {

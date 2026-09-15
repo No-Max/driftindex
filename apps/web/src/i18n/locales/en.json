@@ -118,7 +118,19 @@
     "catalogLead": "Open season standings for each tracked series · {year}",
     "seasonCount": "{count} seasons in database",
     "openStandings": "Standings {year}",
+    "openSeries": "Seasons & events",
     "noSeason": "No season data yet"
+  },
+  "seriesDetail": {
+    "back": "All series",
+    "backToSeries": "Series overview",
+    "seasonCount": "{count} seasons tracked",
+    "noSeasons": "No season data yet",
+    "noEvents": "No events in this season",
+    "openStandings": "Season standings",
+    "date": "Date",
+    "track": "Track",
+    "status": "Status"
   },
   "pilots": {
     "title": "Pilots",

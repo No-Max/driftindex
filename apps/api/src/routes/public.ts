@@ -6,6 +6,7 @@ import {
   type PilotsListResponse,
   type SeasonStandingsResponse,
   type SeriesPrestigeResponse,
+  type SeriesProfileResponse,
   type TrackProfileResponse,
   type TracksListResponse,
 } from '@drift-index/shared';
@@ -101,6 +102,70 @@ publicRouter.get('/series', async (_req, res) => {
       })),
     })),
   );
+});
+
+publicRouter.get('/series/:slug', async (req, res) => {
+  const series = await prisma.series.findUnique({
+    where: { slug: req.params.slug },
+    include: {
+      seasons: {
+        orderBy: { year: 'desc' },
+        include: {
+          events: {
+            orderBy: { roundNumber: 'asc' },
+            include: { track: true },
+          },
+        },
+      },
+    },
+  });
+
+  if (!series) {
+    res.status(404).json({ error: 'Series not found' });
+    return;
+  }
+
+  const payload: SeriesProfileResponse = {
+    series: {
+      slug: series.slug,
+      name: series.name,
+      shortName: series.shortName,
+      country: series.country,
+      logoUrl: series.logoUrl,
+    },
+    seasons: series.seasons.map((season) => {
+      const events = season.events;
+      const source: DataSource | null =
+        season.sourceLabelEn || season.sourceLabelRu
+          ? {
+              labelEn: season.sourceLabelEn ?? season.sourceLabelRu ?? '',
+              labelRu: season.sourceLabelRu ?? season.sourceLabelEn ?? '',
+              url: season.sourceUrl,
+            }
+          : null;
+
+      return {
+        year: season.year,
+        nameEn: season.nameEn,
+        nameRu: season.nameRu,
+        eventCount: events.length,
+        finishedEventCount: events.filter((event) => event.status === 'FINISHED').length,
+        source,
+        standingsPath: `/series/${series.slug}/${season.year}`,
+        events: events.map((event) => ({
+          slug: event.slug,
+          roundNumber: event.roundNumber,
+          name: event.name,
+          track: toTrackSummary(event.track),
+          status: event.status,
+          startsAt: event.startsAt?.toISOString() ?? null,
+          standingsPath: `/series/${series.slug}/${season.year}`,
+        })),
+      };
+    }),
+  };
+
+  res.json(payload);
 });
 
 publicRouter.get('/tracks', async (_req, res) => {
