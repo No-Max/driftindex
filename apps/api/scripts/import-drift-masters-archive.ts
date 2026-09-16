@@ -1,10 +1,12 @@
 import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import { DM_2019_EVENTS } from '../src/data/drift-masters-2019-events.js';
+import { DM_2021_EVENTS } from '../src/data/drift-masters-2021-events.js';
 import { applyArchiveResultOverrides } from '../src/data/drift-masters-archive-overrides.js';
 import {
   applyArchiveDriverNumbersFromWayback,
   applyArchivePilotNumbers,
+  applyCrossSeasonBibCatalog,
 } from '../src/data/drift-masters-pilot-numbers.js';
 import {
   DM_ARCHIVE_SEASONS,
@@ -70,10 +72,14 @@ async function importSeason(year: number, seriesId: string) {
   console.log(`\n=== Drift Masters ${year} (archive) ===`);
   const data = await fetchDriftMastersArchiveSeason(year);
   const driverNumbersApplied = await applyArchiveDriverNumbersFromWayback(data.seasonYear, data.pilots);
+  const catalogNumbersApplied = applyCrossSeasonBibCatalog(data.pilots);
   applyArchivePilotNumbers(data.seasonYear, data.pilots);
+  const numbersApplied = driverNumbersApplied + catalogNumbersApplied;
   console.log(
     `Loaded ${data.pilots.length} pilots, ${data.events.length} events` +
-      (driverNumbersApplied > 0 ? ` (${driverNumbersApplied} start numbers from /drivers)` : ''),
+      (numbersApplied > 0
+        ? ` (${driverNumbersApplied} from /drivers, ${catalogNumbersApplied} from bib catalog)`
+        : ''),
   );
 
   const qualByRound = await fetchDriftMastersQualByRound(year, data.events.length);
@@ -108,7 +114,7 @@ async function importSeason(year: number, seriesId: string) {
       nameRu: `Drift Masters ${data.seasonYear}`,
       sourceLabelEn: 'Drift Masters — archived standings',
       sourceLabelRu: 'Drift Masters — архив таблицы',
-      sourceUrl: data.sourceUrl,
+      sourceUrl: year === 2021 ? 'https://drift.news/dmec-2021/' : data.sourceUrl,
     },
     create: {
       seriesId,
@@ -117,12 +123,20 @@ async function importSeason(year: number, seriesId: string) {
       nameRu: `Drift Masters ${data.seasonYear}`,
       sourceLabelEn: 'Drift Masters — archived standings',
       sourceLabelRu: 'Drift Masters — архив таблицы',
-      sourceUrl: data.sourceUrl,
+      sourceUrl: year === 2021 ? 'https://drift.news/dmec-2021/' : data.sourceUrl,
     },
   });
 
-  const eventMetaByRound =
-    year === 2019 ? new Map(DM_2019_EVENTS.map((event) => [event.roundNumber, event])) : null;
+  const eventMetaByYear: Partial<
+    Record<number, ReadonlyArray<{ roundNumber: number; name: string; trackName: string; startsAt: string }>>
+  > = {
+    2019: DM_2019_EVENTS,
+    2021: DM_2021_EVENTS,
+  };
+  const eventMetaList = eventMetaByYear[year];
+  const eventMetaByRound = eventMetaList
+    ? new Map(eventMetaList.map((event) => [event.roundNumber, event]))
+    : null;
 
   const eventRecords = new Map<string, { id: string }>();
   for (const event of data.events) {

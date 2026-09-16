@@ -40,6 +40,12 @@ const DM_ARCHIVE_STANDINGS_EVENT_TRACKS: Partial<
     { roundNumber: 5, trackName: 'Biķernieki Circuit', month: 7, day: 12 },
     { roundNumber: 6, trackName: 'Hockenheimring', month: 7, day: 26 },
   ],
+  2021: [
+    { roundNumber: 1, trackName: 'PS Racing Center Greinbach', month: 7, day: 10 },
+    { roundNumber: 2, trackName: 'PS Racing Center Greinbach', month: 7, day: 11 },
+    { roundNumber: 3, trackName: 'Biķernieki Trase, Riga', month: 7, day: 31 },
+    { roundNumber: 4, trackName: 'Biķernieki Trase, Riga', month: 8, day: 1 },
+  ],
   2018: [
     { roundNumber: 1, trackName: 'Stadion Wisły Płock', month: 5, day: 8 },
     { roundNumber: 2, trackName: 'Rabócsiring Máriapócs', month: 5, day: 22 },
