@@ -101,11 +101,12 @@ export const DK_2026_PODIUMS: Record<number, readonly string[]> = {
 export interface Dk2026Quali {
   position: number;
   score: number | null;
+  number?: number;
 }
 
 /**
  * Pro qualifying from Telegram live-scoring screenshots (screens/DK/_extracted/qualifying-curated.json).
- * Full grids for R1–R3; R4 includes scored leaders plus bracket seeds for scored drivers.
+ * R4 Hungary PRO: full 40-driver grid from Trackwood live-scoring (2026-09-15).
  */
 export const DK_2026_QUALIFYING: Record<number, Record<string, Dk2026Quali>> = {
   1: {
@@ -161,23 +162,57 @@ export const DK_2026_QUALIFYING: Record<number, Record<string, Dk2026Quali>> = {
     'Sandra Janušauskaitė': { position: 22, score: 61 },
   },
   4: {
-    'Erik Lobmayer': { position: 1, score: 92 },
-    'Patrik Cselőtei': { position: 2, score: 90 },
-    'Adrian Petricevic': { position: 3, score: 89.5 },
-    'Gustas Valainis': { position: 4, score: 88 },
-    'Kordian Trela-Muchewicz': { position: 5, score: 85.5 },
-    'Csaba Cselőtei': { position: 6, score: 84 },
-    'Gediminas Levickas': { position: 7, score: null },
-    'Daniel Brandner': { position: 8, score: 82.5 },
-    'Viktor Andersson': { position: 13, score: 86 },
-    'Markus Dokter': { position: 17, score: null },
-    'Tamás Magyar': { position: 20, score: null },
-    'Vaclav Burian': { position: 22, score: null },
-    'Mátyás Druzsin': { position: 23, score: null },
-    'Rareș Gîrda': { position: 27, score: null },
-    'Sandra Janušauskaitė': { position: 29, score: null },
+    'Erik Lobmayer': { position: 1, score: 92, number: 3 },
+    'Patrik Cselőtei': { position: 2, score: 90, number: 80 },
+    'Adrian Petricevic': { position: 3, score: 89.5, number: 114 },
+    'Gustas Valainis': { position: 4, score: 88, number: 9 },
+    'Kordian Trela-Muchewicz': { position: 5, score: 85.5, number: 112 },
+    'Csaba Cselőtei': { position: 6, score: 85.5, number: 84 },
+    'Gediminas Levickas': { position: 7, score: 85, number: 1 },
+    'Daniel Brandner': { position: 8, score: 84.5, number: 83 },
+    'Peter Brolli': { position: 9, score: 83.5, number: 88 },
+    'Mattias Karlsson': { position: 10, score: 83, number: 120 },
+    'Luca Alberici': { position: 11, score: 82, number: 89 },
+    'Kane Pisani': { position: 12, score: 82, number: 79 },
+    'Viktor Andersson': { position: 13, score: 80, number: 71 },
+    'Péter Révhelyi': { position: 14, score: 80, number: 73 },
+    'Bartosz Stolarski': { position: 15, score: 79.7, number: 77 },
+    'Franz Kuncic': { position: 16, score: 78.5, number: 116 },
+    'Markus Dokter': { position: 17, score: 77.5, number: 7 },
+    'Filip Vimpel': { position: 18, score: 77, number: 72 },
+    'Miklos Laszlo': { position: 19, score: 77, number: 81 },
+    'Tamás Magyar': { position: 20, score: 76, number: 74 },
+    'Dmitriy Illyuk': { position: 21, score: 75.5, number: 109 },
+    'Vaclav Burian': { position: 22, score: 75, number: 115 },
+    'Mátyás Druzsin': { position: 23, score: 75, number: 104 },
+    'Artur Havrylenko': { position: 24, score: 75, number: 117 },
+    'Valeri Moscovciuc': { position: 25, score: 74.5, number: 110 },
+    'Augustinas Jankevičius': { position: 26, score: 74, number: 10 },
+    'Rareș Gîrda': { position: 27, score: 73, number: 27 },
+    'Călin Calota': { position: 28, score: 70, number: 17 },
+    'Sandra Janušauskaitė': { position: 29, score: 70, number: 2 },
+    'Péter Porkoláb': { position: 30, score: 69, number: 90 },
+    'Sylvestras Bieliauskas': { position: 31, score: 67, number: 119 },
+    'Claudiu Adam': { position: 32, score: 66.5, number: 85 },
+    'Marcin Banowicz': { position: 33, score: 46, number: 76 },
+    'Rafael Nagy': { position: 34, score: 0, number: 78 },
+    'Vlad Stanescu': { position: 35, score: 0, number: 82 },
+    'Orest Michalczuk': { position: 36, score: 0, number: 86 },
+    'Lőrincz Nagyházi': { position: 37, score: 0, number: 87 },
+    'Eva Nox': { position: 38, score: 0, number: 111 },
+    'Lukáš Hamrák': { position: 39, score: 0, number: 113 },
+    'Nikola Popov': { position: 40, score: 0, number: 118 },
   },
 };
+
+/** R4 qual-only drivers (no tandem bracket / no championship points). */
+export const DK_2026_R4_QUAL_ONLY: readonly { name: string; aliases?: readonly string[] }[] = [
+  { name: 'Orest Michalczuk' },
+  { name: 'Lőrincz Nagyházi', aliases: ['Lorincz Nagyhazi'] },
+  { name: 'Eva Nox' },
+  { name: 'Lukáš Hamrák', aliases: ['Lukas Hamrak'] },
+  { name: 'Nikola Popov' },
+];
 
 export interface Dk2026Driver {
   name: string;
@@ -513,6 +548,7 @@ function buildDk2026Results(): Dk2026ResultRow[] {
       if (points <= 0) return [];
       const roundNumber = index + 1;
       const r4Tandem = roundNumber === 4 ? DK_2026_R4_TANDEM_BY_NAME.get(driver.name) : undefined;
+      const qual = DK_2026_QUALIFYING[roundNumber]?.[driver.name];
       return [
         {
           eventSlug: `dk-r${roundNumber}`,
@@ -520,12 +556,12 @@ function buildDk2026Results(): Dk2026ResultRow[] {
           name: driver.name,
           aliases: driver.aliases ?? [],
           points,
-          number: r4Tandem?.number ?? null,
+          number: qual?.number ?? r4Tandem?.number ?? null,
           tandemPosition: r4Tandem?.tandemPosition ?? podiumPlace(roundNumber, driver.name),
           tandemWins: r4Tandem?.tandemWins ?? null,
           tandemBattles: r4Tandem?.tandemBattles ?? null,
-          qualPosition: DK_2026_QUALIFYING[roundNumber]?.[driver.name]?.position ?? null,
-          qualScore100: DK_2026_QUALIFYING[roundNumber]?.[driver.name]?.score ?? null,
+          qualPosition: qual?.position ?? null,
+          qualScore100: qual?.score ?? null,
         },
       ];
     }),
@@ -534,18 +570,39 @@ function buildDk2026Results(): Dk2026ResultRow[] {
   const r4Names = new Set(rows.filter((row) => row.roundNumber === 4).map((row) => row.name));
   for (const tandem of DK_2026_R4_TANDEM) {
     if (r4Names.has(tandem.name)) continue;
+    const qual = DK_2026_QUALIFYING[4]?.[tandem.name];
     rows.push({
       eventSlug: 'dk-r4',
       roundNumber: 4,
       name: tandem.name,
       aliases: tandem.aliases ?? [],
       points: 0,
-      number: tandem.number,
+      number: qual?.number ?? tandem.number,
       tandemPosition: tandem.tandemPosition,
       tandemWins: tandem.tandemWins,
       tandemBattles: tandem.tandemBattles,
-      qualPosition: DK_2026_QUALIFYING[4]?.[tandem.name]?.position ?? null,
-      qualScore100: DK_2026_QUALIFYING[4]?.[tandem.name]?.score ?? null,
+      qualPosition: qual?.position ?? null,
+      qualScore100: qual?.score ?? null,
+    });
+    r4Names.add(tandem.name);
+  }
+
+  for (const entry of DK_2026_R4_QUAL_ONLY) {
+    if (r4Names.has(entry.name)) continue;
+    const qual = DK_2026_QUALIFYING[4]?.[entry.name];
+    if (!qual) continue;
+    rows.push({
+      eventSlug: 'dk-r4',
+      roundNumber: 4,
+      name: entry.name,
+      aliases: entry.aliases ?? [],
+      points: 0,
+      number: qual.number ?? null,
+      tandemPosition: null,
+      tandemWins: null,
+      tandemBattles: null,
+      qualPosition: qual.position,
+      qualScore100: qual.score,
     });
   }
 
@@ -555,18 +612,27 @@ function buildDk2026Results(): Dk2026ResultRow[] {
 export const DK_2026_RESULTS: Dk2026ResultRow[] = buildDk2026Results();
 
 function assertKnownDriversExist() {
-  const names = new Set(DK_2026_DRIVERS.map((driver) => driver.name));
+  const driverNames = new Set(DK_2026_DRIVERS.map((driver) => driver.name));
+  const resultNamesByRound = new Map<number, Set<string>>();
+  for (const row of DK_2026_RESULTS) {
+    const names = resultNamesByRound.get(row.roundNumber) ?? new Set<string>();
+    names.add(row.name);
+    resultNamesByRound.set(row.roundNumber, names);
+  }
+
   for (const [round, podium] of Object.entries(DK_2026_PODIUMS)) {
     for (const name of podium) {
-      if (!names.has(name)) {
+      if (!driverNames.has(name)) {
         throw new Error(`DK 2026 podium driver missing from standings: R${round} ${name}`);
       }
     }
   }
   for (const [round, quali] of Object.entries(DK_2026_QUALIFYING)) {
+    const roundNumber = Number(round);
+    const resultNames = resultNamesByRound.get(roundNumber) ?? new Set<string>();
     for (const name of Object.keys(quali)) {
-      if (!names.has(name)) {
-        throw new Error(`DK 2026 qualifying driver missing from standings: R${round} ${name}`);
+      if (!resultNames.has(name)) {
+        throw new Error(`DK 2026 qualifying driver missing from results: R${round} ${name}`);
       }
     }
   }
