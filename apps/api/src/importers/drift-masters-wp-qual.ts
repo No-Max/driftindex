@@ -83,6 +83,109 @@ function looksLikeBib(value: string): boolean {
   return parsed >= 1 && parsed <= 999;
 }
 
+/** drift.news tables: # | Drifter | Best run / Score */
+export function parseDriftMastersDriftNewsQualTable(html: string, roundNumber: number): DmQualResult[] {
+  const $ = cheerio.load(html);
+  const results: DmQualResult[] = [];
+
+  $('table').each((_, table) => {
+    const headerCells = $(table)
+      .find('tr')
+      .first()
+      .find('th, td')
+      .toArray()
+      .map((cell) => $(cell).text().replace(/\s+/g, ' ').trim().toLowerCase());
+    const rankCol = headerCells.some((cell) => cell === '#' || cell === 'pos' || cell === 'position');
+    const driverCol = headerCells.some((cell) => cell.includes('drifter') || cell === 'name');
+    const scoreCol = headerCells.some(
+      (cell) =>
+        cell.includes('best run') ||
+        cell.includes('best') ||
+        cell === 'score' ||
+        cell.includes('highest'),
+    );
+    if (!rankCol || !driverCol || !scoreCol) return;
+
+    $(table)
+      .find('tbody tr, tr')
+      .slice(1)
+      .each((__, row) => {
+        const cells = $(row)
+          .find('td')
+          .toArray()
+          .map((cell) => $(cell).text().replace(/\s+/g, ' ').trim());
+        if (cells.length < 3) return;
+
+        const rank = Number.parseInt(cells[0] ?? '', 10);
+        if (!Number.isFinite(rank) || rank <= 0) return;
+
+        const name = cells[1] ?? '';
+        if (!name || /average score/i.test(name)) return;
+
+        const qualScore100 = parseQualScoreCell(cells[2] ?? '');
+        if (qualScore100 == null) return;
+
+        const { firstName, lastName } = parseDriverName(name);
+        results.push({
+          roundNumber,
+          rank,
+          qualScore100,
+          firstName,
+          lastName,
+          fullName: name,
+          nationality: null,
+          bib: null,
+        });
+      });
+  });
+
+  return results;
+}
+
+const DM_DRIFT_NEWS_QUAL_ARTICLES: Partial<Record<number, Array<{ roundNumber: number; url: string }>>> =
+  {
+    2023: [
+      {
+        roundNumber: 3,
+        url: 'https://drift.news/dmec2023r3q/',
+      },
+      {
+        roundNumber: 5,
+        url: 'https://drift.news/dmec2023r5q/',
+      },
+    ],
+  };
+
+export async function fetchDriftMastersDriftNewsQualByRound(
+  seasonYear: number,
+  roundCount = 7,
+): Promise<Map<number, DmQualResult[]>> {
+  const articles = DM_DRIFT_NEWS_QUAL_ARTICLES[seasonYear];
+  const byRound = new Map<number, DmQualResult[]>();
+  if (!articles?.length) return byRound;
+
+  for (const article of articles) {
+    if (article.roundNumber > roundCount) continue;
+    try {
+      const response = await fetch(article.url, {
+        headers: { accept: 'text/html', 'user-agent': 'DriftIndexImporter/1.0' },
+      });
+      if (!response.ok) {
+        console.warn(`drift.news qual fetch failed ${article.url}: ${response.status}`);
+        continue;
+      }
+      const html = await response.text();
+      const rows = parseDriftMastersDriftNewsQualTable(html, article.roundNumber);
+      if (rows.length > 0) byRound.set(article.roundNumber, rows);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.warn(`drift.news qual error round ${article.roundNumber}: ${message}`);
+    }
+  }
+
+  return byRound;
+}
+
 /** Table rows: Pos, Name, [bib], Run1, Run2, Highest (header omits bib column). */
 export function parseDriftMastersWpQualTable(html: string, roundNumber: number): DmQualResult[] {
   const $ = cheerio.load(html);

@@ -27,3 +27,37 @@ export async function fetchRawMotionContestRounds(
 ): Promise<unknown[]> {
   return fetchRawMotionJson<unknown[]>(`/event/${eventId}/contest/${contestNumber}/rounds`);
 }
+
+interface RawMotionContestMeta {
+  externalId: string;
+  name: string;
+}
+
+const rawMotionContestIdByRoundCache = new Map<string, Map<number, number>>();
+
+/** RawMotion `contest` id often differs from championship round (e.g. 2024 R2 → contest 4). */
+export async function resolveRawMotionContestId(
+  eventId: string,
+  roundNumber: number,
+): Promise<number> {
+  let byRound = rawMotionContestIdByRoundCache.get(eventId);
+  if (!byRound) {
+    const contests = await fetchRawMotionJson<RawMotionContestMeta[]>(`/event/${eventId}/contests`);
+    byRound = new Map();
+    for (const contest of contests) {
+      const match = contest.name.match(/^Round\s+(\d+)\b/i);
+      if (!match) continue;
+      const round = Number.parseInt(match[1]!, 10);
+      const contestId = Number.parseInt(contest.externalId, 10);
+      if (!Number.isFinite(round) || round <= 0 || !Number.isFinite(contestId)) continue;
+      byRound.set(round, contestId);
+    }
+    rawMotionContestIdByRoundCache.set(eventId, byRound);
+  }
+
+  const contestId = byRound.get(roundNumber);
+  if (contestId == null) {
+    throw new Error(`RawMotion contest not found for round ${roundNumber}`);
+  }
+  return contestId;
+}

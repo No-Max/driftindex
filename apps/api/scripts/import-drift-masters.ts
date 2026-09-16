@@ -7,6 +7,10 @@ import {
   listDriftMastersSeasons,
 } from '../src/importers/drift-masters.js';
 import type { DmPilot } from '../src/importers/drift-masters.js';
+import {
+  fetchDriftMastersDriftNewsQualByRound,
+  fetchDriftMastersLocalQualByRound,
+} from '../src/importers/drift-masters-wp-qual.js';
 import { applyDriftMastersQualBackfill } from '../src/lib/driftMastersQualImport.js';
 import { applyDriftMastersTandemBackfill } from '../src/lib/driftMastersTandemImport.js';
 import { fetchDriftMastersTandemByRound } from '../src/importers/drift-masters-rawmotion-tandem.js';
@@ -58,6 +62,14 @@ async function importSeason(year: number, seriesId: string) {
   console.log(`Loaded ${data.pilots.length} pilots, ${data.events.length} events`);
 
   const qualByRound = await fetchDriftMastersQualByRound(year, data.events.length);
+  const driftNewsQualByRound = await fetchDriftMastersDriftNewsQualByRound(year, data.events.length);
+  for (const [roundNumber, rows] of driftNewsQualByRound) {
+    qualByRound.set(roundNumber, rows);
+  }
+  const localQualByRound = await fetchDriftMastersLocalQualByRound(year);
+  for (const [roundNumber, rows] of localQualByRound) {
+    if (rows.length > 0) qualByRound.set(roundNumber, rows);
+  }
   for (const [roundNumber, rows] of qualByRound) {
     console.log(`Loaded ${rows.length} qual results for round ${roundNumber}`);
   }

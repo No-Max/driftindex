@@ -6,6 +6,7 @@ const SITE = 'https://dm.gp';
 import {
   RAWMOTION_DM_EVENT_IDS,
   fetchRawMotionJson,
+  resolveRawMotionContestId,
 } from './drift-masters-rawmotion.js';
 
 /** dm.gp season metadata — used when /seasons API is unavailable. */
@@ -208,8 +209,9 @@ async function loadRawMotionAthleteNamesForEvent(
 
   for (let roundNumber = 1; roundNumber <= 7; roundNumber++) {
     try {
+      const contestId = await resolveRawMotionContestId(eventId, roundNumber);
       const rounds = await fetchRawMotionJson<RawMotionRoundMeta[]>(
-        `/event/${eventId}/contest/${roundNumber}/rounds`,
+        `/event/${eventId}/contest/${contestId}/rounds`,
       );
       const qualRound =
         rounds.find((round) => round.name === 'Qualifying') ??
@@ -218,7 +220,7 @@ async function loadRawMotionAthleteNamesForEvent(
       if (!qualRound) continue;
 
       const heats = await fetchRawMotionJson<RawMotionHeat[]>(
-        `/event/${eventId}/contest/${roundNumber}/round/${qualRound.externalId}/heat/0`,
+        `/event/${eventId}/contest/${contestId}/round/${qualRound.externalId}/heat/0`,
       );
       for (const row of heats[0]?.results ?? []) {
         if (!row.externalAthleteId || !row.firstname || !row.lastname) continue;
@@ -241,8 +243,9 @@ async function fetchRawMotionRoundQual(
   roundNumber: number,
 ): Promise<DmQualResult[]> {
   const athleteNames = await loadRawMotionAthleteNamesForEvent(eventId);
+  const contestId = await resolveRawMotionContestId(eventId, roundNumber);
   const rounds = await fetchRawMotionJson<RawMotionRoundMeta[]>(
-    `/event/${eventId}/contest/${roundNumber}/rounds`,
+    `/event/${eventId}/contest/${contestId}/rounds`,
   );
   const qualRound =
     rounds.find((round) => round.name === 'Qualifying') ??
@@ -253,7 +256,7 @@ async function fetchRawMotionRoundQual(
   }
 
   const heats = await fetchRawMotionJson<RawMotionHeat[]>(
-    `/event/${eventId}/contest/${roundNumber}/round/${qualRound.externalId}/heat/0`,
+    `/event/${eventId}/contest/${contestId}/round/${qualRound.externalId}/heat/0`,
   );
   const results = heats[0]?.results ?? [];
 
@@ -345,7 +348,15 @@ function absoluteMediaUrl(path: string | null | undefined): string | null {
   return `${SITE}${path.startsWith('/') ? path : `/${path}`}`;
 }
 
-function mapEventStatus(endDate: string): DmEvent['status'] {
+/** Rounds cancelled on dm.gp calendar but still listed (no competition). */
+const DM_CANCELLED_EVENT_ROUNDS: Partial<Record<number, number[]>> = {
+  2025: [1], // Vallelunga — national mourning after Pope Francis (Apr 2025)
+};
+
+function mapEventStatus(seasonYear: number, roundNumber: number, endDate: string): DmEvent['status'] {
+  if (DM_CANCELLED_EVENT_ROUNDS[seasonYear]?.includes(roundNumber)) {
+    return 'CANCELLED';
+  }
   const end = Date.parse(endDate);
   if (!Number.isFinite(end)) return 'SCHEDULED';
   return end < Date.now() ? 'FINISHED' : 'SCHEDULED';
@@ -404,7 +415,7 @@ export async function fetchDriftMastersSeason(seasonYear: number): Promise<DmSea
         name,
         trackName,
         startsAt: round.startDate,
-        status: mapEventStatus(round.endDate),
+        status: mapEventStatus(seasonYear, round.roundNumber, round.endDate),
       };
     });
 

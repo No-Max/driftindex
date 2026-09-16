@@ -154,9 +154,10 @@ function formatTandemWinPct(row: SeasonEventResponse['results'][0]) {
         </p>
       </div>
 
-      <h2 class="section-title">{{ t('eventDetail.resultsTitle') }}</h2>
+      <h2 v-if="data.event.status !== 'CANCELLED'" class="section-title">{{ t('eventDetail.resultsTitle') }}</h2>
 
-      <p v-if="data.results.length === 0" class="muted">{{ t('eventDetail.noResults') }}</p>
+      <p v-if="data.event.status === 'CANCELLED'" class="muted">{{ t('eventDetail.eventCancelled') }}</p>
+      <p v-else-if="data.results.length === 0" class="muted">{{ t('eventDetail.noResults') }}</p>
 
       <div v-else class="card table-wrap">
         <table>

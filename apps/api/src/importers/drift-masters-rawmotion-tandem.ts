@@ -1,4 +1,8 @@
-import { RAWMOTION_DM_EVENT_IDS, fetchRawMotionContestRounds } from './drift-masters-rawmotion.js';
+import {
+  RAWMOTION_DM_EVENT_IDS,
+  fetchRawMotionContestRounds,
+  resolveRawMotionContestId,
+} from './drift-masters-rawmotion.js';
 
 export interface DmTandemResult {
   roundNumber: number;
@@ -295,9 +299,10 @@ export async function fetchDriftMastersTandemByRound(
   const byRound = new Map<number, DmTandemResult[]>();
   for (let roundNumber = 1; roundNumber <= roundCount; roundNumber++) {
     try {
+      const contestId = await resolveRawMotionContestId(eventId, roundNumber);
       const rounds = (await fetchRawMotionContestRounds(
         eventId,
-        roundNumber,
+        contestId,
       )) as RawMotionRound[];
       const parsed = parseRawMotionTandemPlacements(rounds).map((row) => ({
         ...row,
