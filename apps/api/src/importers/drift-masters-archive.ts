@@ -4,13 +4,75 @@ import { normalizeCountryCode } from '../lib/countryCode.js';
 
 const WAYBACK = 'https://web.archive.org/web';
 
-/** Best archived driftmasters.gp/standings/ snapshot per season year. */
+/** Best archived driftmasters.gp snapshot per season year. */
 export const DM_ARCHIVE_SNAPSHOTS: Record<number, string> = {
+  /** /klasyfikacja-2015/ — per-round qual+fin totals (10 rounds). */
+  2015: '20151121005140',
+  /** /article/klasyfikacja-generalna — Eliminacje + Finały × 12 rounds. */
+  2016: '20161221160808',
   2017: '20181217014814',
   2018: '20181217014814',
   2019: '20191122200048',
   2021: '20220104225713',
   2022: '20221203083725',
+};
+
+/** Typos on archived klasyfikacja pages. */
+const DM_LEGACY_DRIVER_NAME_FIX: Record<string, string> = {
+  'James Dean': 'James Deane',
+  'Marek Wartalowicz': 'Marek Wartałowicz',
+  'Phil Morisson': 'Phil Morrison',
+  'Christaps Bluss': 'Kristaps Bluss',
+};
+
+interface DmLegacySeasonMeta {
+  path: string;
+  roundCount: number;
+  /** kw + fin + total per round (2015 klasyfikacja page). */
+  columnsPerRound: 2 | 3;
+  tableSelector: 'klasyfikacja' | 'article-table';
+  eventTracks: Array<{ roundNumber: number; trackName: string; month: number; day: number }>;
+}
+
+const DM_LEGACY_SEASON_META: Partial<Record<number, DmLegacySeasonMeta>> = {
+  2015: {
+    path: 'klasyfikacja-2015/',
+    roundCount: 10,
+    columnsPerRound: 3,
+    tableSelector: 'klasyfikacja',
+    eventTracks: [
+      { roundNumber: 1, trackName: 'Autodrom Jastrząb', month: 4, day: 2 },
+      { roundNumber: 2, trackName: 'Autodrom Jastrząb', month: 4, day: 3 },
+      { roundNumber: 3, trackName: 'Tor Poznań', month: 4, day: 30 },
+      { roundNumber: 4, trackName: 'Tor Poznań', month: 5, day: 1 },
+      { roundNumber: 5, trackName: 'Stadion Wisły Płock', month: 5, day: 20 },
+      { roundNumber: 6, trackName: 'Stadion Wisły Płock', month: 5, day: 21 },
+      { roundNumber: 7, trackName: 'INEA Stadion', month: 8, day: 5 },
+      { roundNumber: 8, trackName: 'INEA Stadion', month: 8, day: 6 },
+      { roundNumber: 9, trackName: 'Motoarena Toruń', month: 9, day: 17 },
+      { roundNumber: 10, trackName: 'Motoarena Toruń', month: 9, day: 18 },
+    ],
+  },
+  2016: {
+    path: 'article/klasyfikacja-generalna',
+    roundCount: 12,
+    columnsPerRound: 2,
+    tableSelector: 'article-table',
+    eventTracks: [
+      { roundNumber: 1, trackName: 'Tor Poznań', month: 3, day: 9 },
+      { roundNumber: 2, trackName: 'Tor Poznań', month: 3, day: 10 },
+      { roundNumber: 3, trackName: 'Stadion Wisły Płock', month: 5, day: 4 },
+      { roundNumber: 4, trackName: 'Stadion Wisły Płock', month: 5, day: 5 },
+      { roundNumber: 5, trackName: 'Ptak Warsaw Expo', month: 5, day: 18 },
+      { roundNumber: 6, trackName: 'Ptak Warsaw Expo', month: 5, day: 19 },
+      { roundNumber: 7, trackName: 'Biķernieki Circuit', month: 8, day: 17 },
+      { roundNumber: 8, trackName: 'Biķernieki Circuit', month: 8, day: 18 },
+      { roundNumber: 9, trackName: 'AmberExpo Gdańsk', month: 8, day: 24 },
+      { roundNumber: 10, trackName: 'AmberExpo Gdańsk', month: 8, day: 25 },
+      { roundNumber: 11, trackName: 'Stadion Wisły Płock', month: 9, day: 15 },
+      { roundNumber: 12, trackName: 'Stadion Wisły Płock', month: 9, day: 16 },
+    ],
+  },
 };
 
 export const DM_ARCHIVE_SEASONS = Object.keys(DM_ARCHIVE_SNAPSHOTS)
@@ -19,6 +81,186 @@ export const DM_ARCHIVE_SEASONS = Object.keys(DM_ARCHIVE_SNAPSHOTS)
 
 function archiveStandingsUrl(snapshot: string): string {
   return `${WAYBACK}/${snapshot}/https://driftmasters.gp/standings/`;
+}
+
+function archiveLegacyClassificationUrl(snapshot: string, path: string): string {
+  return `${WAYBACK}/${snapshot}/http://www.driftmasters.gp/${path}`;
+}
+
+function parseLegacyDriverCell(raw: string): { name: string; number: number | null } {
+  const match = raw.match(/^(.+?)\s*\((\d+)\)$/);
+  if (match) {
+    return { name: match[1]!.trim(), number: Number.parseInt(match[2]!, 10) };
+  }
+  return { name: raw.trim(), number: null };
+}
+
+function parseLegacyRoundCell(cell: string): number {
+  if (!cell || cell === '----') return 0;
+  const parsed = Number.parseFloat(cell.replace(',', '.'));
+  return Number.isFinite(parsed) ? Math.round(parsed) : 0;
+}
+
+interface LegacyRoundCell {
+  kw: number;
+  fin: number;
+  total: number;
+}
+
+interface LegacyDriverRow {
+  name: string;
+  rawName: string;
+  number: number | null;
+  rounds: LegacyRoundCell[];
+  totalPoints: number;
+}
+
+function fixLegacyDriverName(name: string): string {
+  return DM_LEGACY_DRIVER_NAME_FIX[name] ?? name;
+}
+
+function parseLegacyDriverRowsFromCells(
+  cells: string[],
+  meta: DmLegacySeasonMeta,
+): LegacyDriverRow | null {
+  if (cells.length < 2 + meta.roundCount * meta.columnsPerRound + 1) return null;
+
+  const place = Number.parseInt(cells[0] ?? '', 10);
+  if (!Number.isFinite(place) || place <= 0) return null;
+
+  const rawName = cells[1] ?? '';
+  const parsedCell = parseLegacyDriverCell(rawName);
+  const name = fixLegacyDriverName(parsedCell.name);
+  const number = parsedCell.number;
+
+  const rounds: LegacyRoundCell[] = [];
+  for (let roundIndex = 0; roundIndex < meta.roundCount; roundIndex++) {
+    const base = 2 + roundIndex * meta.columnsPerRound;
+    const kw = parseLegacyRoundCell(cells[base] ?? '');
+    const fin = parseLegacyRoundCell(cells[base + 1] ?? '');
+    if (meta.columnsPerRound === 3) {
+      const totalFromCells = parseLegacyRoundCell(cells[base + 2] ?? '');
+      rounds.push({
+        kw,
+        fin,
+        total: totalFromCells > 0 ? totalFromCells : kw + fin,
+      });
+    } else {
+      rounds.push({ kw, fin, total: kw + fin });
+    }
+  }
+
+  const totalRaw = cells[cells.length - 1] ?? '';
+  const totalFromRow = Number.parseFloat(totalRaw.replace(',', '.'));
+  const totalPoints = Number.isFinite(totalFromRow)
+    ? Math.round(totalFromRow)
+    : rounds.reduce((sum, round) => sum + round.total, 0);
+  if (totalPoints <= 0) return null;
+
+  return { name, rawName: rawName || name, number, rounds, totalPoints };
+}
+
+/** Competition rank (1,2,2,4…) on a numeric key; higher is better. */
+function legacyRoundRank(
+  rows: LegacyDriverRow[],
+  roundIndex: number,
+  key: 'kw' | 'fin',
+): Map<number, number> {
+  const entries = rows
+    .map((row, rowIndex) => ({
+      rowIndex,
+      value: row.rounds[roundIndex]?.[key] ?? 0,
+      tieBreak: key === 'kw' ? (row.rounds[roundIndex]?.fin ?? 0) : (row.rounds[roundIndex]?.kw ?? 0),
+    }))
+    .filter((entry) => entry.value > 0);
+
+  entries.sort((a, b) => b.value - a.value || b.tieBreak - a.tieBreak);
+
+  const rankByRow = new Map<number, number>();
+  for (let i = 0; i < entries.length; i++) {
+    const entry = entries[i]!;
+    const prev = entries[i - 1];
+    const rank = i === 0 || entry.value !== prev!.value ? i + 1 : rankByRow.get(prev!.rowIndex)!;
+    rankByRow.set(entry.rowIndex, rank);
+  }
+  return rankByRow;
+}
+
+function buildSeasonFromLegacyClassification(
+  html: string,
+  sourceUrl: string,
+  seasonYear: number,
+  meta: DmLegacySeasonMeta,
+): DmSeasonData {
+  const $ = cheerio.load(html);
+  const driverRows: LegacyDriverRow[] = [];
+  const rowSelector =
+    meta.tableSelector === 'klasyfikacja' ? 'table.klasyfikacja tr' : 'table.table tr';
+
+  $(rowSelector).each((_, row) => {
+    const cells = $(row)
+      .find('td')
+      .toArray()
+      .map((cell) => $(cell).text().replace(/\s+/g, ' ').trim());
+    if (!/^\d+$/.test(cells[0] ?? '')) return;
+    const parsed = parseLegacyDriverRowsFromCells(cells, meta);
+    if (parsed) driverRows.push(parsed);
+  });
+
+  const qualRankByRound: Map<number, number>[] = [];
+  const tandemRankByRound: Map<number, number>[] = [];
+  for (let roundIndex = 0; roundIndex < meta.roundCount; roundIndex++) {
+    qualRankByRound.push(legacyRoundRank(driverRows, roundIndex, 'kw'));
+    tandemRankByRound.push(legacyRoundRank(driverRows, roundIndex, 'fin'));
+  }
+
+  const pilots: DmPilot[] = driverRows.map((driver, rowIndex) => {
+    const stages: DmStageResult[] = driver.rounds
+      .map((round, roundIndex) => {
+        if (round.total <= 0 && round.kw <= 0 && round.fin <= 0) return null;
+        const roundNumber = roundIndex + 1;
+        return {
+          eventSlug: eventSlug(roundNumber),
+          roundNumber,
+          qualifyingPosition: round.kw > 0 ? (qualRankByRound[roundIndex]?.get(rowIndex) ?? null) : null,
+          qualifyingPoints: round.kw > 0 ? round.kw : null,
+          tandemPosition: round.fin > 0 ? (tandemRankByRound[roundIndex]?.get(rowIndex) ?? null) : null,
+          points: round.total,
+        } satisfies DmStageResult;
+      })
+      .filter((stage): stage is DmStageResult => stage != null);
+
+    const { firstName, lastName } = parseDriverName(driver.name);
+    return {
+      slug: `dm-${driverSlugFromName(driver.name)}`,
+      firstName,
+      lastName,
+      nameAlias: driver.rawName,
+      country: null,
+      number: driver.number,
+      photoSourceUrl: null,
+      team: null,
+      totalPoints: driver.totalPoints,
+      stages,
+    };
+  });
+
+  const events: DmEvent[] = meta.eventTracks.map((track) => ({
+    slug: eventSlug(track.roundNumber),
+    roundNumber: track.roundNumber,
+    name: `Round ${track.roundNumber}`,
+    trackName: track.trackName,
+    startsAt: new Date(Date.UTC(seasonYear, track.month, track.day, 12, 0, 0)).toISOString(),
+    status: 'FINISHED' as const,
+  }));
+
+  return {
+    sourceUrl,
+    seasonYear,
+    seasonId: `archive-${seasonYear}`,
+    events,
+    pilots,
+  };
 }
 
 function eventSlug(roundNumber: number): string {
@@ -269,6 +511,19 @@ export async function fetchDriftMastersArchiveSeason(seasonYear: number): Promis
     throw new Error(
       `No archived Drift Masters snapshot for ${seasonYear}. Available: ${DM_ARCHIVE_SEASONS.join(', ')}`,
     );
+  }
+
+  const legacyMeta = DM_LEGACY_SEASON_META[seasonYear];
+  if (legacyMeta) {
+    const sourceUrl = archiveLegacyClassificationUrl(snapshot, legacyMeta.path);
+    const response = await fetch(sourceUrl, {
+      headers: { accept: 'text/html', 'user-agent': 'DriftIndexImporter/1.0' },
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to fetch archived classification ${sourceUrl}: ${response.status}`);
+    }
+    const html = await response.text();
+    return buildSeasonFromLegacyClassification(html, sourceUrl, seasonYear, legacyMeta);
   }
 
   const sourceUrl = archiveStandingsUrl(snapshot);
