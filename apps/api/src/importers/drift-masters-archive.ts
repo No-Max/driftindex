@@ -23,6 +23,31 @@ const DM_LEGACY_DRIVER_NAME_FIX: Record<string, string> = {
   'Marek Wartalowicz': 'Marek Wartałowicz',
   'Phil Morisson': 'Phil Morrison',
   'Christaps Bluss': 'Kristaps Bluss',
+  'Pawlonka Artur': 'Artur Pawlonka',
+  'Marcehl Uhlig': 'Marcel Uhlig',
+  'Redl Roland': 'Roland Redl',
+};
+
+/** Known venues/dates for archive standings seasons (generic event placeholders otherwise). */
+const DM_ARCHIVE_STANDINGS_EVENT_TRACKS: Partial<
+  Record<number, Array<{ roundNumber: number; trackName: string; month: number; day: number }>>
+> = {
+  2017: [
+    { roundNumber: 1, trackName: 'Tor Poznań', month: 3, day: 22 },
+    { roundNumber: 2, trackName: 'Nürburgring', month: 4, day: 20 },
+    { roundNumber: 3, trackName: 'Stadion Wisły Płock', month: 5, day: 10 },
+    { roundNumber: 4, trackName: 'Motoarena Toruń', month: 6, day: 8 },
+    { roundNumber: 5, trackName: 'Biķernieki Circuit', month: 7, day: 12 },
+    { roundNumber: 6, trackName: 'Hockenheimring', month: 7, day: 26 },
+  ],
+  2018: [
+    { roundNumber: 1, trackName: 'Stadion Wisły Płock', month: 5, day: 8 },
+    { roundNumber: 2, trackName: 'Rabócsiring Máriapócs', month: 5, day: 22 },
+    { roundNumber: 3, trackName: 'Biķernieki Circuit', month: 7, day: 3 },
+    { roundNumber: 4, trackName: 'Motoarena Toruń', month: 7, day: 17 },
+    { roundNumber: 5, trackName: 'Hockenheimring', month: 8, day: 7 },
+    { roundNumber: 6, trackName: 'Mondello Park', month: 8, day: 22 },
+  ],
 };
 
 interface DmLegacySeasonMeta {
@@ -83,6 +108,54 @@ function archiveStandingsUrl(snapshot: string): string {
   return `${WAYBACK}/${snapshot}/https://driftmasters.gp/standings/`;
 }
 
+function archiveDriversUrl(snapshot: string): string {
+  return `${WAYBACK}/${snapshot}/https://www.driftmasters.gp/drivers/`;
+}
+
+export interface DmArchiveDriverNumber {
+  number: number;
+  name: string;
+}
+
+/** Start numbers from archived driftmasters.gp/drivers (2019+ standings omit bibs). */
+export async function fetchDriftMastersArchiveDriverNumbers(
+  seasonYear: number,
+): Promise<DmArchiveDriverNumber[]> {
+  const snapshot = DM_ARCHIVE_SNAPSHOTS[seasonYear];
+  if (!snapshot) return [];
+
+  const sourceUrl = archiveDriversUrl(snapshot);
+  try {
+    const response = await fetch(sourceUrl, {
+      headers: { accept: 'text/html', 'user-agent': 'DriftIndexImporter/1.0' },
+    });
+    if (!response.ok) {
+      console.warn(`Archive drivers fetch failed ${sourceUrl}: ${response.status}`);
+      return [];
+    }
+    const html = await response.text();
+    const pairs: DmArchiveDriverNumber[] = [];
+    const pattern = /class="num">(\d+)\.<\/span>\s*([^<]+)/g;
+    for (const match of html.matchAll(pattern)) {
+      const number = Number.parseInt(match[1]!, 10);
+      const rawName = match[2]!
+        .replace(/&#[0-9]+;/g, (entity) => {
+          const code = Number.parseInt(entity.slice(2, -1), 10);
+          return Number.isFinite(code) ? String.fromCodePoint(code) : entity;
+        })
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (!Number.isFinite(number) || !rawName) continue;
+      pairs.push({ number, name: rawName });
+    }
+    return pairs;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn(`Archive drivers fetch error: ${message}`);
+    return [];
+  }
+}
+
 function archiveLegacyClassificationUrl(snapshot: string, path: string): string {
   return `${WAYBACK}/${snapshot}/http://www.driftmasters.gp/${path}`;
 }
@@ -111,6 +184,7 @@ interface LegacyDriverRow {
   name: string;
   rawName: string;
   number: number | null;
+  country: string | null;
   rounds: LegacyRoundCell[];
   totalPoints: number;
 }
@@ -157,7 +231,7 @@ function parseLegacyDriverRowsFromCells(
     : rounds.reduce((sum, round) => sum + round.total, 0);
   if (totalPoints <= 0) return null;
 
-  return { name, rawName: rawName || name, number, rounds, totalPoints };
+  return { name, rawName: rawName || name, number, country: null, rounds, totalPoints };
 }
 
 /** Competition rank (1,2,2,4…) on a numeric key; higher is better. */
@@ -186,35 +260,39 @@ function legacyRoundRank(
   return rankByRow;
 }
 
-function buildSeasonFromLegacyClassification(
-  html: string,
-  sourceUrl: string,
-  seasonYear: number,
-  meta: DmLegacySeasonMeta,
-): DmSeasonData {
-  const $ = cheerio.load(html);
-  const driverRows: LegacyDriverRow[] = [];
-  const rowSelector =
-    meta.tableSelector === 'klasyfikacja' ? 'table.klasyfikacja tr' : 'table.table tr';
+function parsePairRoundDetails(cells: string[], roundCount: number, dataStartCol: number): LegacyRoundCell[] {
+  const rounds: LegacyRoundCell[] = [];
+  for (let roundIndex = 0; roundIndex < roundCount; roundIndex++) {
+    const base = dataStartCol + roundIndex * 2;
+    const kw = parseIntCell(cells[base] ?? '') ?? 0;
+    const fin = parseIntCell(cells[base + 1] ?? '') ?? 0;
+    rounds.push({ kw, fin, total: kw + fin });
+  }
+  return rounds;
+}
 
-  $(rowSelector).each((_, row) => {
-    const cells = $(row)
-      .find('td')
-      .toArray()
-      .map((cell) => $(cell).text().replace(/\s+/g, ' ').trim());
-    if (!/^\d+$/.test(cells[0] ?? '')) return;
-    const parsed = parseLegacyDriverRowsFromCells(cells, meta);
-    if (parsed) driverRows.push(parsed);
-  });
+/** DMEC standings tab: per round A (appearance) + Q (qual points) + B (battle points). */
+function parseTripleRoundDetails(cells: string[], roundCount: number, dataStartCol: number): LegacyRoundCell[] {
+  const rounds: LegacyRoundCell[] = [];
+  for (let roundIndex = 0; roundIndex < roundCount; roundIndex++) {
+    const base = dataStartCol + roundIndex * 3;
+    const appearance = parseIntCell(cells[base] ?? '') ?? 0;
+    const kw = parseIntCell(cells[base + 1] ?? '') ?? 0;
+    const fin = parseIntCell(cells[base + 2] ?? '') ?? 0;
+    rounds.push({ kw, fin, total: appearance + kw + fin });
+  }
+  return rounds;
+}
 
+function pilotsFromLegacyDriverRows(driverRows: LegacyDriverRow[], roundCount: number): DmPilot[] {
   const qualRankByRound: Map<number, number>[] = [];
   const tandemRankByRound: Map<number, number>[] = [];
-  for (let roundIndex = 0; roundIndex < meta.roundCount; roundIndex++) {
+  for (let roundIndex = 0; roundIndex < roundCount; roundIndex++) {
     qualRankByRound.push(legacyRoundRank(driverRows, roundIndex, 'kw'));
     tandemRankByRound.push(legacyRoundRank(driverRows, roundIndex, 'fin'));
   }
 
-  const pilots: DmPilot[] = driverRows.map((driver, rowIndex) => {
+  return driverRows.map((driver, rowIndex) => {
     const stages: DmStageResult[] = driver.rounds
       .map((round, roundIndex) => {
         if (round.total <= 0 && round.kw <= 0 && round.fin <= 0) return null;
@@ -236,7 +314,7 @@ function buildSeasonFromLegacyClassification(
       firstName,
       lastName,
       nameAlias: driver.rawName,
-      country: null,
+      country: driver.country,
       number: driver.number,
       photoSourceUrl: null,
       team: null,
@@ -244,6 +322,56 @@ function buildSeasonFromLegacyClassification(
       stages,
     };
   });
+}
+
+function eventsForArchiveSeason(seasonYear: number, roundCount: number): DmEvent[] {
+  const tracks = DM_ARCHIVE_STANDINGS_EVENT_TRACKS[seasonYear];
+  if (tracks && tracks.length > 0) {
+    return tracks.slice(0, roundCount).map((track) => ({
+      slug: eventSlug(track.roundNumber),
+      roundNumber: track.roundNumber,
+      name: `Round ${track.roundNumber}`,
+      trackName: track.trackName,
+      startsAt: new Date(Date.UTC(seasonYear, track.month, track.day, 12, 0, 0)).toISOString(),
+      status: 'FINISHED' as const,
+    }));
+  }
+
+  return Array.from({ length: roundCount }, (_, index) => {
+    const roundNumber = index + 1;
+    return {
+      slug: eventSlug(roundNumber),
+      roundNumber,
+      name: `Round ${roundNumber}`,
+      trackName: `Round ${roundNumber}`,
+      startsAt: new Date(Date.UTC(seasonYear, index, 1, 12, 0, 0)).toISOString(),
+      status: 'FINISHED' as const,
+    };
+  });
+}
+
+function buildSeasonFromLegacyClassification(
+  html: string,
+  sourceUrl: string,
+  seasonYear: number,
+  meta: DmLegacySeasonMeta,
+): DmSeasonData {
+  const $ = cheerio.load(html);
+  const driverRows: LegacyDriverRow[] = [];
+  const rowSelector =
+    meta.tableSelector === 'klasyfikacja' ? 'table.klasyfikacja tr' : 'table.table tr';
+
+  $(rowSelector).each((_, row) => {
+    const cells = $(row)
+      .find('td')
+      .toArray()
+      .map((cell) => $(cell).text().replace(/\s+/g, ' ').trim());
+    if (!/^\d+$/.test(cells[0] ?? '')) return;
+    const parsed = parseLegacyDriverRowsFromCells(cells, meta);
+    if (parsed) driverRows.push(parsed);
+  });
+
+  const pilots = pilotsFromLegacyDriverRows(driverRows, meta.roundCount);
 
   const events: DmEvent[] = meta.eventTracks.map((track) => ({
     slug: eventSlug(track.roundNumber),
@@ -423,60 +551,92 @@ function buildSeasonFromTable(
     !!sampleRow &&
     sampleRow.length >= 3 + roundCount * 3 + 1;
 
-  const pilots: DmPilot[] = [];
+  let pilots: DmPilot[] = [];
 
-  for (const row of dataRows) {
-    if (row.length < 3) continue;
+  if (isDmgp2017 || isTripleFormat) {
+    const driverRows: LegacyDriverRow[] = [];
+    const dataStartCol = isDmgp2017 ? 2 : 3;
+    const minCells = isDmgp2017 ? 2 + roundCount * 2 + 1 : 3 + roundCount * 3 + 1;
 
-    const place = parseIntCell(row[0] ?? '');
-    if (place === null || place <= 0) continue;
+    for (const row of dataRows) {
+      if (row.length < minCells) continue;
+      const place = parseIntCell(row[0] ?? '');
+      if (place === null || place <= 0) continue;
 
-    const rawName = isDmgp2017 ? row[1]! : row[1]!;
-    const { firstName, lastName, number } = parseDriverName(rawName);
-    const countryRaw = isDmgp2017 ? null : row[2]!;
-    const country = normalizeCountryCode(countryRaw);
+      const rawName = row[1] ?? '';
+      const parsed = parseDriverName(rawName);
+      const name = fixLegacyDriverName(`${parsed.firstName} ${parsed.lastName}`);
+      const country = isTripleFormat ? normalizeCountryCode(row[2] ?? '') : null;
+      const rounds = isDmgp2017
+        ? parsePairRoundDetails(row, roundCount, dataStartCol)
+        : parseTripleRoundDetails(row, roundCount, dataStartCol);
+      const totalFromRow = parseIntCell(row[row.length - 1] ?? '');
+      const totalPoints =
+        totalFromRow ?? rounds.reduce((sum, round) => sum + round.total, 0);
+      if (totalPoints <= 0) continue;
 
-    let roundPoints: number[];
-    if (isDmgp2017) {
-      roundPoints = parsePairRoundRow(row, roundCount);
-    } else if (isTripleFormat) {
-      roundPoints = parseTripleRoundRow(row, roundCount);
-    } else {
-      roundPoints = parseSimpleRoundRow(row, roundCount);
+      driverRows.push({
+        name,
+        rawName,
+        number: parsed.number,
+        country,
+        rounds,
+        totalPoints,
+      });
     }
+    pilots = pilotsFromLegacyDriverRows(driverRows, roundCount);
+  } else {
+    for (const row of dataRows) {
+      if (row.length < 3) continue;
 
-    const totalFromRow = parseIntCell(row[row.length - 1] ?? '');
-    const totalPoints = totalFromRow ?? roundPoints.reduce((sum, value) => sum + value, 0);
-    if (totalPoints <= 0) continue;
+      const place = parseIntCell(row[0] ?? '');
+      if (place === null || place <= 0) continue;
 
-    const driverSlug = driverSlugFromName(rawName);
-    const stages: DmStageResult[] = roundPoints
-      .map((points, index) => ({
-        roundNumber: roundNumbers[index] ?? index + 1,
-        points,
-      }))
-      .filter((stage) => stage.points > 0)
-      .map((stage) => ({
-        eventSlug: eventSlug(stage.roundNumber),
-        roundNumber: stage.roundNumber,
-        qualifyingPosition: null,
-        qualifyingPoints: null,
-        tandemPosition: null,
-        points: stage.points,
-      }));
+      const rawName = row[1]!;
+      const { firstName, lastName, number } = parseDriverName(rawName);
+      const countryRaw = row[2]!;
+      const country = normalizeCountryCode(countryRaw);
 
-    pilots.push({
-      slug: `dm-${driverSlug}`,
-      firstName,
-      lastName,
-      nameAlias: rawName,
-      country,
-      number,
-      photoSourceUrl: null,
-      team: null,
-      totalPoints,
-      stages,
-    });
+      let roundPoints: number[];
+      if (isTripleFormat) {
+        roundPoints = parseTripleRoundRow(row, roundCount);
+      } else {
+        roundPoints = parseSimpleRoundRow(row, roundCount);
+      }
+
+      const totalFromRow = parseIntCell(row[row.length - 1] ?? '');
+      const totalPoints = totalFromRow ?? roundPoints.reduce((sum, value) => sum + value, 0);
+      if (totalPoints <= 0) continue;
+
+      const driverSlug = driverSlugFromName(rawName);
+      const stages: DmStageResult[] = roundPoints
+        .map((points, index) => ({
+          roundNumber: roundNumbers[index] ?? index + 1,
+          points,
+        }))
+        .filter((stage) => stage.points > 0)
+        .map((stage) => ({
+          eventSlug: eventSlug(stage.roundNumber),
+          roundNumber: stage.roundNumber,
+          qualifyingPosition: null,
+          qualifyingPoints: null,
+          tandemPosition: null,
+          points: stage.points,
+        }));
+
+      pilots.push({
+        slug: `dm-${driverSlug}`,
+        firstName,
+        lastName,
+        nameAlias: rawName,
+        country,
+        number,
+        photoSourceUrl: null,
+        team: null,
+        totalPoints,
+        stages,
+      });
+    }
   }
 
   const maxRound =
@@ -484,17 +644,7 @@ function buildSeasonFromTable(
       ? Math.max(...roundNumbers)
       : pilots.reduce((max, pilot) => Math.max(max, pilot.stages.length), 0);
 
-  const events: DmEvent[] = Array.from({ length: maxRound }, (_, index) => {
-    const roundNumber = index + 1;
-    return {
-      slug: eventSlug(roundNumber),
-      roundNumber,
-      name: `Round ${roundNumber}`,
-      trackName: `Round ${roundNumber}`,
-      startsAt: new Date(Date.UTC(seasonYear, index, 1, 12, 0, 0)).toISOString(),
-      status: 'FINISHED' as const,
-    };
-  });
+  const events = eventsForArchiveSeason(seasonYear, maxRound);
 
   return {
     sourceUrl,

@@ -16,6 +16,7 @@ export const DM_GP_SEASONS: DmSeasonMeta[] = [
 /** RawMotion event IDs for seasons where dm.gp omits qualifying data. */
 const RAWMOTION_DM_EVENT_IDS: Record<number, string> = {
   2019: '0c7108a1-8da7-11e9-909b-f171dc59e2a3',
+  2020: 'a50a8291-dbe3-11ea-9f2a-4501e44f4496',
   2022: '9d5cb870-caba-11ec-9b6a-07912c2ae072',
   2024: 'f8488bd1-0eb8-11ef-8e9f-db3243ea316e',
   2025: '6fa30551-2d00-11f0-9310-b544412bc579',

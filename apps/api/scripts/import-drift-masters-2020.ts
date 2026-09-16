@@ -1,6 +1,12 @@
 import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
-import { DM_2020_EVENT, DM_2020_RESULTS, DM_2020_SOURCE_URL } from '../src/data/drift-masters-2020.js';
+import {
+  DM_2020_EVENT,
+  DM_2020_RESULTS,
+  DM_2020_RESULTS_SOURCE_URL,
+  DM_2020_SOURCE_URL,
+} from '../src/data/drift-masters-2020.js';
+import { normalizeCountryCode } from '../src/lib/countryCode.js';
 import { findMatchingPilot } from '../src/lib/pilotMatch.js';
 import { canonicalEnglishNames } from '../src/lib/pilotNames.js';
 import { upsertPilotSeriesAlias } from '../src/lib/pilotSeriesAlias.js';
@@ -69,7 +75,7 @@ async function main() {
       nameRu: `Drift Masters ${YEAR}`,
       sourceLabelEn: 'Drift Masters — King of Riga 2020 (single event)',
       sourceLabelRu: 'Drift Masters — King of Riga 2020 (один этап)',
-      sourceUrl: DM_2020_SOURCE_URL,
+      sourceUrl: DM_2020_RESULTS_SOURCE_URL,
     },
     create: {
       seriesId: series.id,
@@ -78,7 +84,7 @@ async function main() {
       nameRu: `Drift Masters ${YEAR}`,
       sourceLabelEn: 'Drift Masters — King of Riga 2020 (single event)',
       sourceLabelRu: 'Drift Masters — King of Riga 2020 (один этап)',
-      sourceUrl: DM_2020_SOURCE_URL,
+      sourceUrl: DM_2020_RESULTS_SOURCE_URL,
     },
   });
 
@@ -118,17 +124,21 @@ async function main() {
     const pilotSlug = await resolvePilotSlug(english.firstName, english.lastName, slug, series.id);
     if (pilotSlug !== slug) merged++;
 
+    const country = normalizeCountryCode(row.country);
+
     const pilotRecord = await prisma.pilot.upsert({
       where: { slug: pilotSlug },
       update: {
         firstName: english.firstName,
         lastName: english.lastName,
         number: row.bib,
+        country,
       },
       create: {
         slug: pilotSlug,
         firstName: english.firstName,
         lastName: english.lastName,
+        country,
       },
     });
     await upsertPilotSeriesAlias(prisma, {

@@ -2,13 +2,20 @@ import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import { DM_2019_EVENTS } from '../src/data/drift-masters-2019-events.js';
 import { applyArchiveResultOverrides } from '../src/data/drift-masters-archive-overrides.js';
-import { applyArchivePilotNumbers } from '../src/data/drift-masters-pilot-numbers.js';
+import {
+  applyArchiveDriverNumbersFromWayback,
+  applyArchivePilotNumbers,
+} from '../src/data/drift-masters-pilot-numbers.js';
 import {
   DM_ARCHIVE_SEASONS,
   fetchDriftMastersArchiveSeason,
 } from '../src/importers/drift-masters-archive.js';
 import { fetchDriftMastersQualByRound } from '../src/importers/drift-masters.js';
-import type { DmPilot } from '../src/importers/drift-masters.js';
+import {
+  fetchDriftMastersArchiveQualByRound,
+  fetchDriftMastersLocalQualByRound,
+} from '../src/importers/drift-masters-wp-qual.js';
+import type { DmPilot, DmQualResult } from '../src/importers/drift-masters.js';
 import { applyDriftMastersQualBackfill } from '../src/lib/driftMastersQualImport.js';
 import { findMatchingPilot } from '../src/lib/pilotMatch.js';
 import { canonicalEnglishNames } from '../src/lib/pilotNames.js';
@@ -35,6 +42,15 @@ function parseYears(): number[] {
   return [...DM_ARCHIVE_SEASONS];
 }
 
+function qualRowsLackPilotNames(rows: DmQualResult[]): boolean {
+  return !rows.some(
+    (row) =>
+      row.fullName !== 'Unknown' &&
+      row.lastName.trim().length > 0 &&
+      row.firstName.trim().length > 0,
+  );
+}
+
 async function resolvePilotSlug(pilot: DmPilot, seriesId: string): Promise<string> {
   const match = await findMatchingPilot(
     prisma,
@@ -53,10 +69,25 @@ async function resolvePilotSlug(pilot: DmPilot, seriesId: string): Promise<strin
 async function importSeason(year: number, seriesId: string) {
   console.log(`\n=== Drift Masters ${year} (archive) ===`);
   const data = await fetchDriftMastersArchiveSeason(year);
+  const driverNumbersApplied = await applyArchiveDriverNumbersFromWayback(data.seasonYear, data.pilots);
   applyArchivePilotNumbers(data.seasonYear, data.pilots);
-  console.log(`Loaded ${data.pilots.length} pilots, ${data.events.length} events`);
+  console.log(
+    `Loaded ${data.pilots.length} pilots, ${data.events.length} events` +
+      (driverNumbersApplied > 0 ? ` (${driverNumbersApplied} start numbers from /drivers)` : ''),
+  );
 
   const qualByRound = await fetchDriftMastersQualByRound(year, data.events.length);
+  const archiveQualByRound = await fetchDriftMastersArchiveQualByRound(year, data.events.length);
+  for (const [roundNumber, rows] of archiveQualByRound) {
+    const existing = qualByRound.get(roundNumber);
+    if (!existing?.length || qualRowsLackPilotNames(existing)) {
+      if (rows.length > 0) qualByRound.set(roundNumber, rows);
+    }
+  }
+  const localQualByRound = await fetchDriftMastersLocalQualByRound(year);
+  for (const [roundNumber, rows] of localQualByRound) {
+    qualByRound.set(roundNumber, rows);
+  }
   for (const [roundNumber, rows] of qualByRound) {
     console.log(`Loaded ${rows.length} qual results for round ${roundNumber}`);
   }

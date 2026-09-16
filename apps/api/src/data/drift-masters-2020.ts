@@ -1,12 +1,16 @@
 /**
  * DMEC 2020 — single "King of Riga" event (COVID-shortened season).
- * Qual: official dm.gp press release screenshots (Q1/Q2 best runs).
- * Grid order: RawMotion dmec2020 Top 32 seeding.
- * Tandem top 4: official race report (James Deane crowned King of Riga).
+ * Tandem: drift.news final classification (all 32).
+ * Qual scores: dm.gp press release + RawMotion Q1/Q2 best runs.
+ * Bibs: RawMotion entry / Top 32 grid.
  */
 
 export const DM_2020_SOURCE_URL =
   'https://www.driftmasters.gp/2020/08/14/dmec-king-of-riga-2020-qualifying-results/';
+
+export const DM_2020_RESULTS_SOURCE_URL = 'https://drift.news/dmec-2020/';
+
+export const DM_2020_RAWMOTION_EVENT_ID = 'a50a8291-dbe3-11ea-9f2a-4501e44f4496';
 
 export const DM_2020_EVENT = {
   slug: 'dm-r1',
@@ -16,93 +20,103 @@ export const DM_2020_EVENT = {
   startsAt: '2020-08-14T09:00:00.000Z',
 } as const;
 
-/** Official Top 32 qual grid (RawMotion contest 1, Qualifying Top 32). */
-const TOP32_GRID_BIBS = [
-  215, 130, 59, 99, 29, 611, 601, 79, 80, 144, 42, 620, 61, 12, 609, 650, 229, 602, 93, 603, 96, 84,
-  88, 600, 630, 55, 850, 604, 612, 66, 607, 41,
-] as const;
-
-/** Best Q1/Q2 run per bib (dm.gp qual results screenshots). */
-const BEST_QUAL_SCORE: Record<number, number> = {
-  215: 94,
-  130: 92,
-  59: 90,
-  99: 87,
-  29: 81,
-  611: 80,
-  601: 80,
-  79: 79,
-  80: 79,
-  144: 77,
-  42: 75,
-  620: 75,
-  61: 74,
-  12: 74,
-  609: 72,
-  650: 72,
-  229: 89,
-  602: 88,
-  93: 86,
-  603: 85,
-  96: 80,
-  84: 73,
-  88: 72,
-  600: 72,
-  630: 69,
-  55: 68,
-  850: 66,
-  604: 65,
-  612: 64,
-  66: 63,
-  607: 63,
-  41: 52,
+/** Start numbers (RawMotion / entry list). */
+export const DM_2020_BIB_BY_NAME: Record<string, number> = {
+  'Piotr Więcek': 215,
+  'James Deane': 130,
+  'Jack Shanahan': 59,
+  'Grzegorz Hypki': 99,
+  'Adam Zalewski': 29,
+  'Gediminas Ivanauskas': 611,
+  'Nikolass Bertans': 601,
+  'Conor Shanahan': 79,
+  'Kristaps Bluss': 80,
+  'Jérôme Vassia': 144,
+  'Johannes Hountondji': 42,
+  'Ivo Cirulis': 620,
+  'Martin Richards': 61,
+  'Orjan Nilsen': 12,
+  'Harold Valdma': 609,
+  'Aurimas Vaskelis': 650,
+  'Elias Hountondji': 229,
+  'Janis Bralitis': 602,
+  'Benediktas Cirba': 93,
+  'Diogo Correia': 603,
+  'Victor Joensuu': 96,
+  'Max Heidrich': 84,
+  'Niko Mättälä': 88,
+  'Ingemars Jekabsons': 600,
+  'Mikkel Overgaard': 630,
+  'Marco Zakouřil': 55,
+  'Michal Reichert': 850,
+  'Janis Jurka': 604,
+  'Oliver Randalu': 612,
+  'Linus Joensuu': 66,
+  'Kristjan Salmre': 607,
+  'Joakim Andersson': 41,
+  'Wojciech Goździewicz': 77,
+  'Manuel Vacca': 19,
+  'Marcel Uhlig': 33,
+  'Axel Francois': 10,
+  'Christian Erlandsson': 68,
 };
 
-const DRIVER_BY_BIB: Record<number, string> = {
-  215: 'Piotr Więcek',
-  130: 'James Deane',
-  59: 'Jack Shanahan',
-  99: 'Grzegorz Hypki',
-  29: 'Adam Zalewski',
-  611: 'Gediminas Ivanauskas',
-  601: 'Nikolass Bertans',
-  79: 'Conor Shanahan',
-  80: 'Kristaps Bluss',
-  144: 'Jerome Vassia',
-  42: 'Johannes Hountondji',
-  620: 'Ivo Cirulis',
-  61: 'Martin Richards',
-  12: 'Orjan Nilsen',
-  609: 'Harold Valdma',
-  650: 'Aurimas Vaskelis',
-  229: 'Elias Hountondji',
-  602: 'Janis Bralitis',
-  93: 'Benediktas Cirba',
-  603: 'Diogo Correia',
-  96: 'Victor Joensuu',
-  84: 'Max Heidrich',
-  88: 'Niko Mättälä',
-  600: 'Ingemars Jekabsons',
-  630: 'Mikkel Overgaard',
-  55: 'Marco Zakouril',
-  850: 'Michal Reichert',
-  604: 'Janis Jurka',
-  612: 'Oliver Randalu',
-  66: 'Linus Joensuu',
-  607: 'Kristjan Salmre',
-  41: 'Joakim Andersson',
+/** Championship battle points (single-event season). */
+const TANDEM_POINTS: Record<number, number> = {
+  1: 100,
+  2: 88,
+  3: 76,
+  4: 70,
 };
 
-/** Verified tandem finishers (dm.gp final report). */
-const TANDEM_FINISH: Record<string, { position: number; points: number }> = {
-  'James Deane': { position: 1, points: 100 },
-  'Piotr Więcek': { position: 2, points: 88 },
-  'Jack Shanahan': { position: 3, points: 76 },
-  'Adam Zalewski': { position: 4, points: 70 },
-};
+/** Final tandem order + qual best (drift.news, Aug 2020). */
+const DM_2020_FINAL: Array<{
+  tandemPosition: number;
+  name: string;
+  country: string;
+  qualScore100: number;
+}> = [
+  { tandemPosition: 1, name: 'James Deane', country: 'IE', qualScore100: 92 },
+  { tandemPosition: 2, name: 'Piotr Więcek', country: 'PL', qualScore100: 94 },
+  { tandemPosition: 3, name: 'Jack Shanahan', country: 'IE', qualScore100: 90 },
+  { tandemPosition: 4, name: 'Adam Zalewski', country: 'PL', qualScore100: 81 },
+  { tandemPosition: 5, name: 'Kristaps Bluss', country: 'LV', qualScore100: 79 },
+  { tandemPosition: 6, name: 'Martin Richards', country: 'GB', qualScore100: 74 },
+  { tandemPosition: 7, name: 'Marco Zakouřil', country: 'CZ', qualScore100: 68 },
+  { tandemPosition: 8, name: 'Michal Reichert', country: 'CZ', qualScore100: 66 },
+  { tandemPosition: 9, name: 'Grzegorz Hypki', country: 'PL', qualScore100: 87 },
+  { tandemPosition: 10, name: 'Ivo Cirulis', country: 'LV', qualScore100: 75 },
+  { tandemPosition: 11, name: 'Harold Valdma', country: 'EE', qualScore100: 72 },
+  { tandemPosition: 12, name: 'Elias Hountondji', country: 'DE', qualScore100: 89 },
+  { tandemPosition: 13, name: 'Benediktas Cirba', country: 'LT', qualScore100: 86 },
+  { tandemPosition: 14, name: 'Max Heidrich', country: 'DE', qualScore100: 73 },
+  { tandemPosition: 15, name: 'Niko Mättälä', country: 'FI', qualScore100: 72 },
+  { tandemPosition: 16, name: 'Mikkel Overgaard', country: 'DK', qualScore100: 69 },
+  { tandemPosition: 17, name: 'Gediminas Ivanauskas', country: 'LT', qualScore100: 80 },
+  { tandemPosition: 18, name: 'Nikolass Bertans', country: 'LV', qualScore100: 80 },
+  { tandemPosition: 19, name: 'Conor Shanahan', country: 'IE', qualScore100: 79 },
+  { tandemPosition: 20, name: 'Jérôme Vassia', country: 'FR', qualScore100: 77 },
+  { tandemPosition: 21, name: 'Johannes Hountondji', country: 'DE', qualScore100: 75 },
+  { tandemPosition: 22, name: 'Orjan Nilsen', country: 'NO', qualScore100: 74 },
+  { tandemPosition: 23, name: 'Aurimas Vaskelis', country: 'LT', qualScore100: 72 },
+  { tandemPosition: 24, name: 'Janis Bralitis', country: 'LV', qualScore100: 88 },
+  { tandemPosition: 25, name: 'Diogo Correia', country: 'PT', qualScore100: 85 },
+  { tandemPosition: 26, name: 'Victor Joensuu', country: 'SE', qualScore100: 80 },
+  { tandemPosition: 27, name: 'Ingemars Jekabsons', country: 'LV', qualScore100: 72 },
+  { tandemPosition: 28, name: 'Janis Jurka', country: 'LV', qualScore100: 65 },
+  { tandemPosition: 29, name: 'Oliver Randalu', country: 'EE', qualScore100: 64 },
+  { tandemPosition: 30, name: 'Linus Joensuu', country: 'SE', qualScore100: 63 },
+  { tandemPosition: 31, name: 'Kristjan Salmre', country: 'EE', qualScore100: 63 },
+  { tandemPosition: 32, name: 'Joakim Andersson', country: 'SE', qualScore100: 52 },
+];
+
+/** Ran qualifying but missed Top 32 (RawMotion Q1/Q2, bib known). */
+const DM_2020_QUAL_ONLY: Array<{ name: string; country: string; bib: number; qualScore100: number }> =
+  [{ name: 'Wojciech Goździewicz', country: 'PL', bib: 77, qualScore100: 52 }];
 
 export interface Dm2020ResultRow {
   name: string;
+  country: string;
   bib: number;
   qualPosition: number;
   qualScore100: number;
@@ -110,15 +124,48 @@ export interface Dm2020ResultRow {
   points: number;
 }
 
-export const DM_2020_RESULTS: Dm2020ResultRow[] = TOP32_GRID_BIBS.map((bib, index) => {
-  const name = DRIVER_BY_BIB[bib]!;
-  const tandem = TANDEM_FINISH[name];
-  return {
-    name,
-    bib,
-    qualPosition: index + 1,
-    qualScore100: BEST_QUAL_SCORE[bib]!,
-    tandemPosition: tandem?.position ?? null,
-    points: tandem?.points ?? 0,
-  };
-});
+function assignQualPositions(
+  rows: Array<{ qualScore100: number; qualPosition: number }>,
+): void {
+  const sorted = [...rows].sort((a, b) => b.qualScore100 - a.qualScore100);
+  for (let index = 0; index < sorted.length; index++) {
+    sorted[index]!.qualPosition = index + 1;
+  }
+}
+
+function buildDm2020Results(): Dm2020ResultRow[] {
+  const rows: Dm2020ResultRow[] = [];
+
+  for (const row of DM_2020_FINAL) {
+    const bib = DM_2020_BIB_BY_NAME[row.name];
+    if (bib == null) {
+      throw new Error(`Missing bib for ${row.name}`);
+    }
+    rows.push({
+      name: row.name,
+      country: row.country,
+      bib,
+      qualScore100: row.qualScore100,
+      qualPosition: 0,
+      tandemPosition: row.tandemPosition,
+      points: TANDEM_POINTS[row.tandemPosition] ?? 0,
+    });
+  }
+
+  for (const row of DM_2020_QUAL_ONLY) {
+    rows.push({
+      name: row.name,
+      country: row.country,
+      bib: row.bib,
+      qualScore100: row.qualScore100,
+      qualPosition: 0,
+      tandemPosition: null,
+      points: 0,
+    });
+  }
+
+  assignQualPositions(rows);
+  return rows;
+}
+
+export const DM_2020_RESULTS: Dm2020ResultRow[] = buildDm2020Results();
