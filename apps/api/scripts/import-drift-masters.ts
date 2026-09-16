@@ -8,6 +8,8 @@ import {
 } from '../src/importers/drift-masters.js';
 import type { DmPilot } from '../src/importers/drift-masters.js';
 import { applyDriftMastersQualBackfill } from '../src/lib/driftMastersQualImport.js';
+import { applyDriftMastersTandemBackfill } from '../src/lib/driftMastersTandemImport.js';
+import { fetchDriftMastersTandemByRound } from '../src/importers/drift-masters-rawmotion-tandem.js';
 import { upsertPilotSeriesPhoto } from '../src/lib/media/pilotPhoto.js';
 import { findMatchingPilot } from '../src/lib/pilotMatch.js';
 import { canonicalEnglishNames } from '../src/lib/pilotNames.js';
@@ -208,11 +210,23 @@ async function importSeason(year: number, seriesId: string) {
   qualOnly += qualBackfill.qualOnly;
   resultCount += qualBackfill.resultCount;
 
+  const tandemByRound = await fetchDriftMastersTandemByRound(year, data.events.length);
+  const tandemBackfill = await applyDriftMastersTandemBackfill(prisma, {
+    seriesId,
+    pilots: data.pilots,
+    tandemByRound,
+    eventRecords,
+    pilotRecordsBySlug,
+    resolvePilotSlug,
+  });
+
   const stageCount = await refreshStageCoefficientsForSeason(prisma, season.id);
 
   console.log(
     `Import complete: ${data.pilots.length} pilots (${merged} merged with existing), ` +
-      `${resultCount} results (${qualMatched} with qual scores, ${qualOnly} qual-only), ` +
+      `${resultCount} results (${qualMatched} with qual scores, ${qualOnly} qual-only` +
+      (tandemBackfill.tandemMatched > 0 ? `, ${tandemBackfill.tandemMatched} tandem from RawMotion` : '') +
+      '), ' +
       `${photosMirrored} photos mirrored` +
       `${photosFailed ? `, ${photosFailed} photo failures` : ''}, ${stageCount} stage coefficients`,
   );

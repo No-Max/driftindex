@@ -46,6 +46,14 @@ const DM_ARCHIVE_STANDINGS_EVENT_TRACKS: Partial<
     { roundNumber: 3, trackName: 'Biķernieki Trase, Riga', month: 7, day: 31 },
     { roundNumber: 4, trackName: 'Biķernieki Trase, Riga', month: 8, day: 1 },
   ],
+  2022: [
+    { roundNumber: 1, trackName: 'Mondello Park, Ireland', month: 5, day: 8 },
+    { roundNumber: 2, trackName: 'PS Racing Center Greinbach', month: 6, day: 19 },
+    { roundNumber: 3, trackName: 'Drivecenter Arena, Fallfors', month: 7, day: 2 },
+    { roundNumber: 4, trackName: 'Biķernieki Trase, Riga', month: 7, day: 30 },
+    { roundNumber: 5, trackName: 'Ferropolis, Germany', month: 8, day: 20 },
+    { roundNumber: 6, trackName: 'Moto Arena, Łódź', month: 10, day: 1 },
+  ],
   2018: [
     { roundNumber: 1, trackName: 'Stadion Wisły Płock', month: 5, day: 8 },
     { roundNumber: 2, trackName: 'Rabócsiring Máriapócs', month: 5, day: 22 },

@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import { DM_2019_EVENTS } from '../src/data/drift-masters-2019-events.js';
 import { DM_2021_EVENTS } from '../src/data/drift-masters-2021-events.js';
+import { DM_2022_EVENTS } from '../src/data/drift-masters-2022-events.js';
 import { applyArchiveResultOverrides } from '../src/data/drift-masters-archive-overrides.js';
 import {
   applyArchiveDriverNumbersFromWayback,
@@ -13,12 +14,14 @@ import {
   fetchDriftMastersArchiveSeason,
 } from '../src/importers/drift-masters-archive.js';
 import { fetchDriftMastersQualByRound } from '../src/importers/drift-masters.js';
+import { fetchDriftMastersTandemByRound } from '../src/importers/drift-masters-rawmotion-tandem.js';
 import {
   fetchDriftMastersArchiveQualByRound,
   fetchDriftMastersLocalQualByRound,
 } from '../src/importers/drift-masters-wp-qual.js';
 import type { DmPilot, DmQualResult } from '../src/importers/drift-masters.js';
 import { applyDriftMastersQualBackfill } from '../src/lib/driftMastersQualImport.js';
+import { applyDriftMastersTandemBackfill } from '../src/lib/driftMastersTandemImport.js';
 import { findMatchingPilot } from '../src/lib/pilotMatch.js';
 import { canonicalEnglishNames } from '../src/lib/pilotNames.js';
 import { upsertPilotSeriesAlias } from '../src/lib/pilotSeriesAlias.js';
@@ -98,6 +101,11 @@ async function importSeason(year: number, seriesId: string) {
     console.log(`Loaded ${rows.length} qual results for round ${roundNumber}`);
   }
 
+  const tandemByRound = await fetchDriftMastersTandemByRound(year, data.events.length);
+  for (const [roundNumber, rows] of tandemByRound) {
+    console.log(`Loaded ${rows.length} tandem placements for round ${roundNumber}`);
+  }
+
   let season = await prisma.season.findUnique({
     where: { seriesId_year: { seriesId, year: data.seasonYear } },
   });
@@ -114,7 +122,12 @@ async function importSeason(year: number, seriesId: string) {
       nameRu: `Drift Masters ${data.seasonYear}`,
       sourceLabelEn: 'Drift Masters — archived standings',
       sourceLabelRu: 'Drift Masters — архив таблицы',
-      sourceUrl: year === 2021 ? 'https://drift.news/dmec-2021/' : data.sourceUrl,
+      sourceUrl:
+        year === 2021
+          ? 'https://drift.news/dmec-2021/'
+          : year === 2022
+            ? 'https://drift.news/dmec-2022/'
+            : data.sourceUrl,
     },
     create: {
       seriesId,
@@ -123,7 +136,12 @@ async function importSeason(year: number, seriesId: string) {
       nameRu: `Drift Masters ${data.seasonYear}`,
       sourceLabelEn: 'Drift Masters — archived standings',
       sourceLabelRu: 'Drift Masters — архив таблицы',
-      sourceUrl: year === 2021 ? 'https://drift.news/dmec-2021/' : data.sourceUrl,
+      sourceUrl:
+        year === 2021
+          ? 'https://drift.news/dmec-2021/'
+          : year === 2022
+            ? 'https://drift.news/dmec-2022/'
+            : data.sourceUrl,
     },
   });
 
@@ -132,6 +150,7 @@ async function importSeason(year: number, seriesId: string) {
   > = {
     2019: DM_2019_EVENTS,
     2021: DM_2021_EVENTS,
+    2022: DM_2022_EVENTS,
   };
   const eventMetaList = eventMetaByYear[year];
   const eventMetaByRound = eventMetaList
@@ -239,12 +258,22 @@ async function importSeason(year: number, seriesId: string) {
   qualOnly += qualBackfill.qualOnly;
   resultCount += qualBackfill.resultCount;
 
+  const tandemBackfill = await applyDriftMastersTandemBackfill(prisma, {
+    seriesId,
+    pilots: data.pilots,
+    tandemByRound,
+    eventRecords,
+    pilotRecordsBySlug,
+    resolvePilotSlug,
+  });
+
   const overrideCount = await applyArchiveResultOverrides(prisma, data.seasonYear, season.id);
   const stageCount = await refreshStageCoefficientsForSeason(prisma, season.id);
 
   console.log(
     `Import complete: ${data.pilots.length} pilots (${merged} merged), ${resultCount} results` +
       (qualMatched > 0 ? ` (${qualMatched} with qual scores, ${qualOnly} qual-only)` : '') +
+      (tandemBackfill.tandemMatched > 0 ? `, ${tandemBackfill.tandemMatched} tandem places` : '') +
       (overrideCount > 0 ? `, ${overrideCount} verified overrides` : '') +
       `, ${stageCount} stage coefficients`,
   );

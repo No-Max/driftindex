@@ -3,7 +3,10 @@ import { buildNameKey, normalizeToken } from '../lib/transliterate.js';
 
 const BASE = 'https://dm.gp/umbraco/api/v1';
 const SITE = 'https://dm.gp';
-const RAWMOTION_BASE = 'https://live.rawmotion.com/api/v1';
+import {
+  RAWMOTION_DM_EVENT_IDS,
+  fetchRawMotionJson,
+} from './drift-masters-rawmotion.js';
 
 /** dm.gp season metadata — used when /seasons API is unavailable. */
 export const DM_GP_SEASONS: DmSeasonMeta[] = [
@@ -12,17 +15,6 @@ export const DM_GP_SEASONS: DmSeasonMeta[] = [
   { id: '2921cac0-c54c-4448-9c88-dfc42b8b967a', slug: 'drift-masters-2025', year: 2025, isCurrent: false },
   { id: 'de78e5bb-ebc3-4d79-abdf-fdcf4fd99c26', slug: 'drift-masters-2026', year: 2026, isCurrent: true },
 ];
-
-/** RawMotion event IDs for seasons where dm.gp omits qualifying data. */
-const RAWMOTION_DM_EVENT_IDS: Record<number, string> = {
-  2019: '0c7108a1-8da7-11e9-909b-f171dc59e2a3',
-  2020: 'a50a8291-dbe3-11ea-9f2a-4501e44f4496',
-  2021: 'be93e8f1-df34-11eb-9b03-a1996b56ef47',
-  2022: '9d5cb870-caba-11ec-9b6a-07912c2ae072',
-  2024: 'f8488bd1-0eb8-11ef-8e9f-db3243ea316e',
-  2025: '6fa30551-2d00-11f0-9310-b544412bc579',
-  2026: '24217941-4497-11f1-9a48-e5b2f4f9b363',
-};
 
 const rawMotionAthleteNamesByEvent = new Map<
   string,
@@ -123,16 +115,6 @@ async function fetchJson<T>(path: string): Promise<T> {
   });
   if (!response.ok) {
     throw new Error(`Failed to fetch ${BASE}${path}: ${response.status}`);
-  }
-  return response.json() as Promise<T>;
-}
-
-async function fetchRawMotionJson<T>(path: string): Promise<T> {
-  const response = await fetch(`${RAWMOTION_BASE}${path}`, {
-    headers: { accept: 'application/json', 'user-agent': 'DriftIndexImporter/1.0' },
-  });
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${RAWMOTION_BASE}${path}: ${response.status}`);
   }
   return response.json() as Promise<T>;
 }
