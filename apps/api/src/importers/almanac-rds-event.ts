@@ -277,6 +277,7 @@ export async function buildAlmanacToDbEventMapping(
   seasonYear: number,
   dbEvents: Array<{
     id: string;
+    roundNumber: number;
     results: Array<{
       tandemPosition: number | null;
       pilot: { firstName: string; lastName: string; seriesAliases: Array<{ name: string }> };
@@ -326,5 +327,18 @@ export async function buildAlmanacToDbEventMapping(
     };
   });
 
-  return matchAlmanacEventsToDbEventsByOverlap(almanacPairs, dbPairs);
+  const mapping = matchAlmanacEventsToDbEventsByOverlap(almanacPairs, dbPairs);
+  const usedDb = new Set(mapping.values());
+
+  for (const meta of almanacEvents) {
+    if (mapping.has(meta.almanacEventId)) continue;
+    const dbEvent = dbEvents.find(
+      (event) => event.roundNumber === meta.roundNumber && !usedDb.has(event.id),
+    );
+    if (!dbEvent) continue;
+    mapping.set(meta.almanacEventId, dbEvent.id);
+    usedDb.add(dbEvent.id);
+  }
+
+  return mapping;
 }

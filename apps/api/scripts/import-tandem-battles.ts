@@ -81,7 +81,7 @@ async function importSeasonBattles(seriesId: string, seasonYear: number): Promis
       const dbEventId = almanacMapping.get(almanacEvent.almanacEventId);
       event = dbEventId ? season.events.find((entry) => entry.id === dbEventId) : undefined;
     }
-    if (!event && !needsMapping) {
+    if (!event) {
       event = season.events.find((entry) => entry.roundNumber === almanacEvent.roundNumber);
     }
     if (!event) {

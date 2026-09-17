@@ -236,6 +236,9 @@ async function importSeasonEventDetails(db: PrismaClient, seriesId: string, seas
       event = dbEventId ? season.events.find((entry) => entry.id === dbEventId) : undefined;
     }
     if (!event) {
+      event = season.events.find((entry) => entry.roundNumber === meta.roundNumber);
+    }
+    if (!event) {
       console.warn(`  Almanac event ${meta.almanacEventId}: no matching DB event`);
       continue;
     }
