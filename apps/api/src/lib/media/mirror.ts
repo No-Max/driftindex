@@ -7,6 +7,7 @@ import {
   pilotSeriesPortraitRelativePath,
   seriesLogoRelativePath,
   toPublicMediaPath,
+  trackPhotoRelativePath,
 } from './config.js';
 
 export interface MirroredPhoto {
@@ -55,6 +56,43 @@ export async function mirrorPilotSeriesPortrait(
 export interface MirroredSeriesLogo {
   logoUrl: string | null;
   logoSourceUrl: string | null;
+}
+
+export async function mirrorTrackPhoto(
+  trackSlug: string,
+  sourceUrl: string,
+): Promise<MirroredPhoto> {
+  const relativePath = trackPhotoRelativePath(trackSlug);
+  const destPath = path.join(getMediaRoot(), relativePath);
+  await fs.mkdir(path.dirname(destPath), { recursive: true });
+
+  try {
+    const userAgent = sourceUrl.includes('wikimedia.org')
+      ? 'DriftIndex/1.0 (https://driftalmanac.ru; track photo sync)'
+      : 'DriftIndex/1.0 (track photo mirror)';
+    const response = await fetch(sourceUrl, {
+      headers: { 'User-Agent': userAgent },
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const buffer = Buffer.from(await response.arrayBuffer());
+    await sharp(buffer)
+      .rotate()
+      .resize(1280, 720, { fit: 'cover', withoutEnlargement: true })
+      .webp({ quality: 85 })
+      .toFile(destPath);
+
+    return {
+      photoUrl: toPublicMediaPath(relativePath),
+      photoSourceUrl: sourceUrl,
+      photoUpdatedAt: new Date(),
+    };
+  } catch (error) {
+    console.warn(`Failed to mirror track photo ${trackSlug}:`, error);
+    return { photoUrl: null, photoSourceUrl: sourceUrl, photoUpdatedAt: null };
+  }
 }
 
 export async function mirrorSeriesLogo(

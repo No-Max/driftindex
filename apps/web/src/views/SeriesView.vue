@@ -2,14 +2,13 @@
 import type { OverlapContribution, SeriesPrestigeEntry, SeriesPrestigeResponse } from '@drift-index/shared';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { fetchSeriesList, fetchSeriesPrestige, type SeriesListItem } from '../api/client';
+import { fetchSeriesPrestige } from '../api/client';
 import SeriesLogo from '../components/SeriesLogo.vue';
 import { formatPilotName } from '../lib/formatPilotName';
 
 const { t } = useI18n();
 
 const prestige = ref<SeriesPrestigeResponse | null>(null);
-const seriesList = ref<SeriesListItem[]>([]);
 const loading = ref(true);
 const error = ref(false);
 const expandedSlug = ref<string | null>(null);
@@ -19,14 +18,10 @@ async function load() {
   error.value = false;
   try {
     const year = new Date().getFullYear();
-    [prestige.value, seriesList.value] = await Promise.all([
-      fetchSeriesPrestige(year),
-      fetchSeriesList(),
-    ]);
+    prestige.value = await fetchSeriesPrestige(year);
   } catch {
     error.value = true;
     prestige.value = null;
-    seriesList.value = [];
   } finally {
     loading.value = false;
   }
@@ -50,21 +45,20 @@ const historyLabel = computed(() => {
   });
 });
 
-function seriesLongName(entry: SeriesPrestigeEntry | SeriesListItem) {
+function seriesLongName(entry: SeriesPrestigeEntry) {
   return entry.name;
 }
 
-function seriesShortName(entry: SeriesPrestigeEntry | SeriesListItem) {
+function seriesShortName(entry: SeriesPrestigeEntry) {
   return entry.shortName ?? entry.name;
 }
 
-function seriesLogoUrl(entry: SeriesPrestigeEntry | SeriesListItem) {
+function seriesLogoUrl(entry: SeriesPrestigeEntry) {
   return entry.logoUrl ?? null;
 }
 
-function seriesBySlug(slug: string): SeriesPrestigeEntry | SeriesListItem | undefined {
-  return prestige.value?.entries.find((item) => item.slug === slug)
-    ?? seriesList.value.find((item) => item.slug === slug);
+function seriesBySlug(slug: string): SeriesPrestigeEntry | undefined {
+  return prestige.value?.entries.find((item) => item.slug === slug);
 }
 
 function seriesShortNameBySlug(slug: string) {
@@ -172,20 +166,25 @@ const prestigeColumnKeys = ['rank', 'series', 'hardness', 'samples'] as const;
                 <tr>
                   <td class="rank">{{ entry.effectiveOrder }}</td>
                   <td>
-                    <div class="series-cell">
-                      <SeriesLogo
-                        :slug="entry.slug"
-                        :name="seriesLongName(entry)"
-                        :logo-url="seriesLogoUrl(entry)"
-                        size="md"
-                      />
-                      <div>
-                        <strong>{{ seriesLongName(entry) }}</strong>
-                        <span class="muted series-code">{{ seriesShortName(entry) }}</span>
+                    <RouterLink :to="`/series/${entry.slug}`" class="series-cell-link">
+                      <div class="series-cell">
+                        <SeriesLogo
+                          :slug="entry.slug"
+                          :name="seriesLongName(entry)"
+                          :logo-url="seriesLogoUrl(entry)"
+                          size="md"
+                        />
+                        <div>
+                          <strong>{{ seriesLongName(entry) }}</strong>
+                          <span class="muted series-code">{{ seriesShortName(entry) }}</span>
+                        </div>
                       </div>
-                    </div>
+                    </RouterLink>
                   </td>
-                  <td class="muted">{{ entry.hardnessScore != null ? entry.hardnessScore : '—' }}</td>
+                  <td class="muted">
+                    <strong v-if="entry.hardnessScore != null">{{ entry.hardnessScore }}</strong>
+                    <template v-else>—</template>
+                  </td>
                   <td class="muted">{{ entry.overlapSamples ? formatSamples(entry.overlapSamples) : '—' }}</td>
                   <td>
                     <button
@@ -259,40 +258,6 @@ const prestigeColumnKeys = ['rank', 'series', 'hardness', 'samples'] as const;
           </article>
         </div>
       </section>
-
-      <section v-if="seriesList.length > 0" class="block">
-        <h2 class="section-title">{{ t('seriesPage.catalogTitle') }}</h2>
-        <p class="section-lead muted">{{ t('seriesPage.catalogLead', { year: displayYear }) }}</p>
-
-        <div class="catalog-grid">
-          <article v-for="item in seriesList" :key="item.slug" class="card catalog-card">
-            <div class="catalog-card__head">
-              <SeriesLogo
-                :slug="item.slug"
-                :name="seriesLongName(item)"
-                :logo-url="seriesLogoUrl(item)"
-                :country="item.country"
-                size="lg"
-              />
-              <div>
-                <h3>{{ seriesLongName(item) }}</h3>
-                <p v-if="item.shortName && item.shortName !== item.name" class="muted catalog-short">
-                  {{ item.shortName }}
-                </p>
-                <p class="muted">
-                  {{ t('seriesPage.seasonCount', { count: item.seasons.length }) }}
-                </p>
-              </div>
-            </div>
-            <RouterLink
-              :to="`/series/${item.slug}`"
-              class="catalog-link"
-            >
-              {{ t('seriesPage.openSeries') }} →
-            </RouterLink>
-          </article>
-        </div>
-      </section>
     </template>
   </section>
 </template>
@@ -345,6 +310,24 @@ const prestigeColumnKeys = ['rank', 'series', 'hardness', 'samples'] as const;
   font-size: 1.05rem;
 }
 
+.series-cell-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 10px;
+  margin: -0.25rem;
+  padding: 0.25rem;
+}
+
+.series-cell-link:hover strong {
+  color: var(--accent);
+}
+
+.series-cell-link:focus-visible {
+  outline: 2px solid rgba(255, 77, 26, 0.45);
+  outline-offset: 2px;
+}
+
 .series-cell {
   display: flex;
   align-items: center;
@@ -389,10 +372,39 @@ const prestigeColumnKeys = ['rank', 'series', 'hardness', 'samples'] as const;
 .contrib-list {
   margin: 0;
   padding-left: 1.1rem;
+  padding-right: 0.15rem;
   display: grid;
   gap: 0.65rem;
   font-size: 0.9rem;
   line-height: 1.45;
+  max-height: 500px;
+  overflow-y: auto;
+  overscroll-behavior-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 77, 26, 0.45) var(--surface-2);
+}
+
+.contrib-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.contrib-list::-webkit-scrollbar-track {
+  margin-block: 2px;
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+
+.contrib-list::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(255, 77, 26, 0.35);
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+
+.contrib-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 77, 26, 0.55);
+  background-clip: padding-box;
 }
 
 .contrib-group {
@@ -467,46 +479,4 @@ const prestigeColumnKeys = ['rank', 'series', 'hardness', 'samples'] as const;
   color: var(--muted);
 }
 
-.catalog-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1rem;
-}
-
-.catalog-card {
-  padding: 1rem 1.1rem;
-  display: grid;
-  gap: 0.85rem;
-}
-
-.catalog-card__head {
-  display: flex;
-  gap: 0.75rem;
-  align-items: center;
-}
-
-.catalog-card h3 {
-  margin: 0;
-  font-size: 1rem;
-}
-
-.catalog-card p {
-  margin: 0.15rem 0 0;
-  font-size: 0.82rem;
-}
-
-.catalog-link {
-  color: var(--accent);
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
-.catalog-link:hover {
-  text-decoration: underline;
-}
-
-.catalog-empty {
-  margin: 0;
-  font-size: 0.85rem;
-}
 </style>

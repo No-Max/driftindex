@@ -381,6 +381,48 @@ function toAbsoluteUrl(pathOrUrl: string): string {
   return `${BASE}${pathOrUrl.startsWith('/') ? '' : '/'}${pathOrUrl}`;
 }
 
+function extractRdsPagePhotoUrl(html: string): string | null {
+  const $ = cheerio.load(html);
+
+  const gallerySrc = $('img[src*="/images/gallery/"]').first().attr('src');
+  if (gallerySrc) return toAbsoluteUrl(gallerySrc);
+
+  const newsSrc = $('img[src*="/images/w"]').first().attr('src');
+  if (newsSrc) return toAbsoluteUrl(newsSrc);
+
+  return null;
+}
+
+export function rdsGpEventPageUrl(seasonYear: number, eventSlug: string): string | null {
+  const id = eventSlug.match(/^rds-(\d+)$/)?.[1];
+  if (!id) return null;
+  try {
+    return `${BASE}${rdsGpSeasonPath(seasonYear)}/${id}/`;
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchRdsPagePhotoSourceUrl(pageUrl: string): Promise<string | null> {
+  const html = await fetchHtml(pageUrl);
+  if (pageUrl.includes('driftalmanac.ru')) {
+    const $ = cheerio.load(html);
+    const ogCandidates: string[] = [];
+    $('meta[property="og:image"]').each((_, element) => {
+      const content = $(element).attr('content')?.trim();
+      if (content) ogCandidates.push(content);
+    });
+    const og =
+      [...ogCandidates].reverse().find((value) => !/og-default/i.test(value)) ??
+      ogCandidates.at(-1);
+    if (og && !/og-default/i.test(og)) {
+      if (og.startsWith('http://') || og.startsWith('https://')) return og;
+      return `https://driftalmanac.ru${og.startsWith('/') ? '' : '/'}${og}`;
+    }
+  }
+  return extractRdsPagePhotoUrl(html);
+}
+
 export async function fetchRdsPilotPhotoSourceUrl(pilotId: string): Promise<string | null> {
   const html = await fetchHtml(`${BASE}/pilots/${pilotId}/`);
   const $ = cheerio.load(html);
@@ -388,10 +430,7 @@ export async function fetchRdsPilotPhotoSourceUrl(pilotId: string): Promise<stri
   const profileSrc = $('.pilot-profile__img img').first().attr('src');
   if (profileSrc) return toAbsoluteUrl(profileSrc);
 
-  const gallerySrc = $('img[src*="/images/gallery/"]').first().attr('src');
-  if (gallerySrc) return toAbsoluteUrl(gallerySrc);
-
-  return null;
+  return extractRdsPagePhotoUrl(html);
 }
 
 export function rdsPilotIdFromSlug(slug: string): string | null {

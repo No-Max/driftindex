@@ -1,4 +1,5 @@
 import type { PrismaClient, Track } from '@prisma/client';
+import { resolveTrackFields } from './trackCanonical.js';
 import { transliterate } from './transliterate.js';
 
 export function normalizeTrackName(name: string | null | undefined): string | null {
@@ -44,27 +45,54 @@ export async function findOrCreateTrack(
     sourceUrl?: string | null;
   },
 ): Promise<Track | null> {
-  const name = normalizeTrackName(input.name);
-  if (!name) return null;
+  const raw = normalizeTrackName(input.name);
+  if (!raw) return null;
 
-  const existing = await prisma.track.findFirst({ where: { name } });
+  const resolved = resolveTrackFields(raw, {
+    city: input.city,
+    country: input.country,
+  });
+
+  if (resolved.preferredSlug) {
+    const bySlug = await prisma.track.findUnique({ where: { slug: resolved.preferredSlug } });
+    if (bySlug) {
+      return prisma.track.update({
+        where: { id: bySlug.id },
+        data: {
+          name: resolved.name,
+          city: bySlug.city ?? resolved.city ?? undefined,
+          country: bySlug.country ?? resolved.country ?? undefined,
+          sourceUrl: bySlug.sourceUrl ?? input.sourceUrl ?? undefined,
+        },
+      });
+    }
+  }
+
+  const existing = await prisma.track.findFirst({
+    where: {
+      name: resolved.name,
+      city: resolved.city ?? null,
+    },
+  });
   if (existing) {
     return prisma.track.update({
       where: { id: existing.id },
       data: {
-        country: existing.country ?? input.country ?? undefined,
-        city: existing.city ?? input.city ?? undefined,
+        country: existing.country ?? resolved.country ?? undefined,
+        city: existing.city ?? resolved.city ?? undefined,
         sourceUrl: existing.sourceUrl ?? input.sourceUrl ?? undefined,
       },
     });
   }
 
+  const slug = resolved.preferredSlug ?? (await uniqueTrackSlug(prisma, resolved.name));
+
   return prisma.track.create({
     data: {
-      slug: await uniqueTrackSlug(prisma, name),
-      name,
-      country: input.country ?? undefined,
-      city: input.city ?? undefined,
+      slug,
+      name: resolved.name,
+      country: resolved.country ?? undefined,
+      city: resolved.city ?? undefined,
       sourceUrl: input.sourceUrl ?? undefined,
     },
   });

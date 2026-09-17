@@ -68,6 +68,7 @@ export function fetchPilots(options?: {
   page?: number;
   pageSize?: number;
   q?: string;
+  series?: string;
 }) {
   const params = new URLSearchParams();
   if (options?.year != null) params.set('year', String(options.year));
@@ -75,6 +76,8 @@ export function fetchPilots(options?: {
   if (options?.pageSize != null) params.set('pageSize', String(options.pageSize));
   const q = options?.q?.trim();
   if (q) params.set('q', q);
+  const series = options?.series?.trim();
+  if (series) params.set('series', series);
   const query = params.toString();
   return getJson<PilotsListResponse>(`/api/pilots${query ? `?${query}` : ''}`);
 }

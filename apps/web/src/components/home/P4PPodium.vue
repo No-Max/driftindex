@@ -80,7 +80,7 @@ function formatQual(
                 {{ seriesName(leader) }}
               </RouterLink>
               <span> · {{ bestSeriesMeta(leader) }}</span>
-              <span class="muted">· hardness {{ leader.bestSeries.weight }}</span>
+              <span class="muted">· {{ t('pilots.hardnessShort') }} {{ leader.bestSeries.weight }}</span>
             </div>
           </div>
           <div v-if="leader.otherSeries.length > 0" class="p4p-leader__other-series">
@@ -101,7 +101,7 @@ function formatQual(
                   {{ series.name }}
                 </RouterLink>
                 <span> · {{ seriesMeta(series) }}</span>
-                <span class="muted">· hardness {{ series.weight }}</span>
+                <span class="muted">· {{ t('pilots.hardnessShort') }} {{ series.weight }}</span>
               </li>
             </ul>
           </div>

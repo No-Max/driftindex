@@ -19,6 +19,8 @@
     "db:import:rds-gp:all": "tsx scripts/import-rds-gp.ts --all --skip-photos",
     "db:import:rds-almanac": "tsx scripts/import-rds-almanac.ts",
     "db:import:rds-almanac-events": "tsx scripts/import-rds-almanac-events.ts",
+    "db:merge:rds-tracks": "tsx scripts/merge-rds-tracks.ts",
+    "db:sync:rds-track-photos": "tsx scripts/sync-rds-track-photos.ts",
     "db:merge-almanac-pilots": "tsx scripts/merge-almanac-pilots.ts",
     "db:dedupe-pilots": "tsx scripts/dedupe-pilots.ts",
     "db:import:tandem-battles": "tsx scripts/import-tandem-battles.ts",

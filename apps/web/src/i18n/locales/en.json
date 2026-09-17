@@ -50,7 +50,7 @@
       "qualWinners": "Qualifying winners",
       "qualWinnersSub": "Pole position at the latest round of each series",
       "calendar": "Calendar {year}",
-      "calendarSub": "All rounds across featured championships",
+      "calendarSub": "All rounds across series",
       "p4p": "Drift Index",
       "p4pSub": "Season mean event place adjusted by Hardness",
       "fanVotes": "Fan votes"
@@ -90,7 +90,7 @@
     },
     "colHelp": {
       "rank": "Series position in the prestige ranking. Higher Hardness means a higher Rank.",
-      "series": "Featured championship included in prestige and d-index calculations.",
+      "series": "Series included in prestige and d-index calculations.",
       "hardness": "Reflects the average difference in places a driver takes compared with their results in other series; based on places at each event, not season standings. It is a scale, not a coefficient — it shows the average gap between places held.",
       "samples": "Drivers who competed in multiple series; hardness is calculated from their results."
     },
@@ -105,11 +105,11 @@
     "method": {
       "overlap": {
         "title": "1. Series difficulty (Hardness)",
-        "body": "We compare pilots who race in more than one featured series. If their average finish is worse in one championship than in the others, that series is rated tougher. Hardness ranks featured series from most to least difficult."
+        "body": "We compare pilots who race in more than one series. If their average finish is worse in one championship than in the others, that series is rated tougher. Hardness ranks series from most to least difficult."
       },
       "p4p": {
         "title": "2. Drift Index",
-        "body": "Each driver's score comes from their season in featured series: average event place, missed rounds, qualifying level, and how hard that series is. A strong result in a tougher championship weighs more. We take the best series result; racing in extra featured series adds a small bonus. Higher index points means a stronger season."
+        "body": "Each driver's score comes from their season in series: average event place, missed rounds, qualifying level, and how hard that series is. A strong result in a tougher championship weighs more. We take the best series result; racing in an extra series adds a small bonus. Higher index points means a stronger season."
       },
       "indexPoints": {
         "title": "3. Event results",
@@ -117,7 +117,7 @@
       },
       "noData": {
         "title": "4. Series without crossover",
-        "body": "If nobody from a featured series also appears in our other tracked championships, we cannot estimate its difficulty. Those series stay in the prestige table but are left out of Drift Index until crossover data exists."
+        "body": "If nobody from a series also appears in our other tracked championships, we cannot estimate its difficulty. Those series stay in the prestige table but are left out of Drift Index until crossover data exists."
       }
     },
     "catalogTitle": "Championship catalog",
@@ -153,10 +153,12 @@
     "subtitle": "Sorted by Drift Index score · {year}",
     "summary": "{pilotCount} pilots in {seriesCount} series",
     "hardnessShort": "hrd",
-    "search": "Search by name or number…",
+    "search": "Search by name…",
+    "filterSeries": "Filter by series",
+    "filterAllSeries": "All series",
     "resultsCount": "{count} matches",
     "rankedCount": "{count} pilots with d-index ranking",
-    "unranked": "Outside featured series",
+    "unranked": "Outside series",
     "noResults": "No pilots match your search",
     "pagePrev": "Previous",
     "pageNext": "Next",
@@ -192,6 +194,10 @@
     "noPhoto": "Photo pending",
     "noDescription": "Description pending.",
     "eventCount": "{count} events",
+    "filterCountry": "Filter by country",
+    "filterAllCountries": "All countries",
+    "countryUnknown": "Country not set",
+    "noResults": "No tracks match this filter.",
     "back": "All tracks",
     "eventsTitle": "Events on this track",
     "date": "Date",

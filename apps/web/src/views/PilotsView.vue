@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import type { PilotListEntry, PilotListSeriesParticipation, PilotsListResponse } from '@drift-index/shared';
+import type {
+  PilotListEntry,
+  PilotListSeriesParticipation,
+  PilotsListResponse,
+  PilotsListSeriesFilter,
+} from '@drift-index/shared';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { fetchPilots } from '../api/client';
@@ -16,6 +21,8 @@ const data = ref<PilotsListResponse | null>(null);
 const loading = ref(true);
 const error = ref(false);
 const query = ref('');
+const seriesSlug = ref('');
+const seriesFilters = ref<PilotsListSeriesFilter[]>([]);
 const page = ref(1);
 
 async function load() {
@@ -26,8 +33,10 @@ async function load() {
       page: page.value,
       pageSize: PAGE_SIZE,
       q: query.value,
+      series: seriesSlug.value,
     });
     page.value = data.value.page;
+    seriesFilters.value = data.value.seriesFilters;
   } catch {
     error.value = true;
     data.value = null;
@@ -40,7 +49,11 @@ watch(query, () => {
   page.value = 1;
 });
 
-watch([page, query], () => {
+watch(seriesSlug, () => {
+  page.value = 1;
+});
+
+watch([page, query, seriesSlug], () => {
   load();
 });
 
@@ -74,10 +87,25 @@ function seriesMeta(series: PilotListSeriesParticipation) {
         <h1 class="page-title">{{ t('pilots.title') }}</h1>
         <p class="page-subtitle">{{ t('pilots.subtitle', { year: data?.year ?? '…' }) }}</p>
       </div>
-      <label class="search">
-        <span class="sr-only">{{ t('pilots.search') }}</span>
-        <input v-model="query" type="search" :placeholder="t('pilots.search')" />
-      </label>
+      <div class="hero__filters">
+        <label class="search">
+          <span class="sr-only">{{ t('pilots.search') }}</span>
+          <input v-model="query" type="search" :placeholder="t('pilots.search')" />
+        </label>
+        <label class="series-filter">
+          <span class="sr-only">{{ t('pilots.filterSeries') }}</span>
+          <select v-model="seriesSlug" :disabled="seriesFilters.length === 0">
+            <option value="">{{ t('pilots.filterAllSeries') }}</option>
+            <option
+              v-for="series in seriesFilters"
+              :key="series.slug"
+              :value="series.slug"
+            >
+              {{ series.shortName ?? series.name }}
+            </option>
+          </select>
+        </label>
+      </div>
     </div>
 
     <p v-if="data && !loading && !error" class="pilots-summary muted">
@@ -88,7 +116,7 @@ function seriesMeta(series: PilotListSeriesParticipation) {
     <p v-else-if="error" class="muted">{{ t('states.error') }}</p>
 
     <template v-else-if="data">
-      <p v-if="query" class="results-meta muted">
+      <p v-if="query || seriesSlug" class="results-meta muted">
         {{ t('pilots.resultsCount', { count: data.total }) }}
       </p>
 
@@ -184,9 +212,41 @@ function seriesMeta(series: PilotListSeriesParticipation) {
   font-size: 0.95rem;
 }
 
+.hero__filters {
+  display: flex;
+  flex: 1 1 320px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
 .search {
-  flex: 1 1 240px;
+  flex: 1 1 200px;
   max-width: 320px;
+  min-width: 0;
+}
+
+.series-filter {
+  position: relative;
+  flex: 1 1 160px;
+  max-width: 220px;
+  min-width: 0;
+  display: block;
+}
+
+.series-filter::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
 }
 
 .search input {
@@ -196,11 +256,47 @@ function seriesMeta(series: PilotListSeriesParticipation) {
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text);
+  font: inherit;
 }
 
-.search input:focus {
+.series-filter select {
+  width: 100%;
+  padding: 0.65rem 2.15rem 0.65rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background-color: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: border-color 0.15s, background-color 0.15s, box-shadow 0.15s;
+}
+
+.series-filter select:hover:not(:disabled) {
+  border-color: rgba(255, 77, 26, 0.35);
+  background-color: var(--surface);
+}
+
+.series-filter select:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.search input:focus,
+.series-filter select:focus {
   outline: 2px solid var(--accent-soft);
+  outline-offset: 0;
   border-color: rgba(255, 77, 26, 0.45);
+}
+
+.series-filter select:focus {
+  background-color: var(--surface);
+}
+
+.series-filter select option {
+  background: var(--surface-2);
+  color: var(--text);
 }
 
 .results-meta {

@@ -2,6 +2,7 @@ import {
   compareEventResultsChronologically,
   type DataSource,
   type PilotListEntry,
+  type PilotListSeriesFilter,
   type PilotListSeriesParticipation,
   type PilotProfileResponse,
   type PilotsListResponse,
@@ -473,9 +474,17 @@ publicRouter.get('/pilots', async (req, res) => {
   const year = parseOptionalYear(req.query.year) ?? new Date().getFullYear();
   const pageSize = parsePageSize(req.query.pageSize, PILOTS_PAGE_SIZE_DEFAULT);
   const searchQuery = parseSearchQuery(req.query.q);
+  const seriesSlug = parseSeriesSlug(req.query.series);
   const prestige = await computePrestigeRanking(prisma, year);
   const p4pInputs = await loadP4PInputs(prisma, year, prestige.hardnessBySlug);
   const p4pRows = computeP4P(p4pInputs);
+
+  const seriesFilters: PilotsListSeriesFilter[] = p4pInputs.map((series) => ({
+    slug: series.slug,
+    name: series.name,
+    shortName: series.shortName,
+    logoUrl: series.logoUrl ?? null,
+  }));
 
   const rankedSlugs = new Set(p4pRows.map((row) => row.pilot.slug));
   const unrankedPilots = await prisma.pilot.findMany({
@@ -509,6 +518,12 @@ publicRouter.get('/pilots', async (req, res) => {
   let listed = [...ranked, ...unranked];
   if (searchQuery) {
     listed = listed.filter((entry) => pilotMatchesSearch(entry, searchQuery));
+  }
+
+  if (seriesSlug && seriesFilters.some((series) => series.slug === seriesSlug)) {
+    listed = listed.filter((entry) =>
+      entry.seriesParticipations.some((participation) => participation.slug === seriesSlug),
+    );
   }
 
   const total = listed.length;
@@ -561,6 +576,7 @@ publicRouter.get('/pilots', async (req, res) => {
     pilotCount,
     seriesCount: p4pInputs.length,
     rankedCount: ranked.length,
+    seriesFilters,
     page,
     pageSize,
     total,
@@ -692,6 +708,11 @@ function parsePageSize(value: unknown, defaultSize: number): number {
 }
 
 function parseSearchQuery(value: unknown): string {
+  if (typeof value !== 'string') return '';
+  return value.trim();
+}
+
+function parseSeriesSlug(value: unknown): string {
   if (typeof value !== 'string') return '';
   return value.trim();
 }

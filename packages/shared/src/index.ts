@@ -317,11 +317,19 @@ export interface PilotListEntry {
   seriesParticipations: PilotListSeriesParticipation[];
 }
 
+export interface PilotsListSeriesFilter {
+  slug: string;
+  name: string;
+  shortName: string | null;
+  logoUrl?: string | null;
+}
+
 export interface PilotsListResponse {
   year: number;
   pilotCount: number;
   seriesCount: number;
   rankedCount: number;
+  seriesFilters: PilotsListSeriesFilter[];
   page: number;
   pageSize: number;
   total: number;

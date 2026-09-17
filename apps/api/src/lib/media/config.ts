@@ -30,3 +30,8 @@ export function pilotSeriesPortraitRelativePath(pilotSlug: string, seriesSlug: s
 export function seriesLogoRelativePath(seriesSlug: string): string {
   return `series/${seriesSlug}.webp`;
 }
+
+/** One cover photo per track: tracks/{trackSlug}.webp */
+export function trackPhotoRelativePath(trackSlug: string): string {
+  return `tracks/${trackSlug}.webp`;
+}
