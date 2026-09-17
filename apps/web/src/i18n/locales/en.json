@@ -157,7 +157,10 @@
     "resultsCount": "{count} matches",
     "rankedCount": "{count} pilots with d-index ranking",
     "unranked": "Outside featured series",
-    "noResults": "No pilots match your search"
+    "noResults": "No pilots match your search",
+    "pagePrev": "Previous",
+    "pageNext": "Next",
+    "pageStatus": "Page {page} of {pages}"
   },
   "pilot": {
     "title": "Pilot profile",

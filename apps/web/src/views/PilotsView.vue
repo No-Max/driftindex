@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { PilotListEntry, PilotListSeriesParticipation, PilotsListResponse } from '@drift-index/shared';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { fetchPilots } from '../api/client';
 import PilotAvatar from '../components/PilotAvatar.vue';
@@ -10,16 +10,24 @@ import { formatPilotName } from '../lib/formatPilotName';
 
 const { t } = useI18n();
 
+const PAGE_SIZE = 50;
+
 const data = ref<PilotsListResponse | null>(null);
 const loading = ref(true);
 const error = ref(false);
 const query = ref('');
+const page = ref(1);
 
 async function load() {
   loading.value = true;
   error.value = false;
   try {
-    data.value = await fetchPilots();
+    data.value = await fetchPilots({
+      page: page.value,
+      pageSize: PAGE_SIZE,
+      q: query.value,
+    });
+    page.value = data.value.page;
   } catch {
     error.value = true;
     data.value = null;
@@ -28,31 +36,21 @@ async function load() {
   }
 }
 
-onMounted(load);
-
-const filtered = computed(() => {
-  if (!data.value) return [];
-  const q = query.value.trim().toLowerCase();
-  if (!q) return data.value.pilots;
-
-  return data.value.pilots.filter((entry) => {
-    const pilot = entry.pilot;
-    const haystack = [
-      pilot.firstName,
-      pilot.lastName,
-      pilot.number?.toString(),
-      pilot.country,
-    ]
-      .filter(Boolean)
-      .join(' ')
-      .toLowerCase();
-    return haystack.includes(q);
-  });
+watch(query, () => {
+  page.value = 1;
 });
 
-const rankedCount = computed(
-  () => filtered.value.filter((entry) => entry.rank != null).length,
-);
+watch([page, query], () => {
+  load();
+});
+
+onMounted(load);
+
+const pageCount = computed(() => data.value?.pageCount ?? 1);
+
+function goToPage(next: number) {
+  page.value = Math.max(1, Math.min(next, pageCount.value));
+}
 
 function pilotName(entry: PilotListEntry) {
   return formatPilotName(entry.pilot);
@@ -91,12 +89,12 @@ function seriesMeta(series: PilotListSeriesParticipation) {
 
     <template v-else-if="data">
       <p v-if="query" class="results-meta muted">
-        {{ t('pilots.resultsCount', { count: filtered.length }) }}
+        {{ t('pilots.resultsCount', { count: data.total }) }}
       </p>
 
-      <ol class="pilots-list card">
+      <ol v-if="data.pilots.length > 0" class="pilots-list card">
         <li
-          v-for="entry in filtered"
+          v-for="entry in data.pilots"
           :key="entry.pilot.slug"
           class="pilots-list__item"
           :class="{ 'pilots-list__item--unranked': entry.rank == null }"
@@ -141,10 +139,29 @@ function seriesMeta(series: PilotListSeriesParticipation) {
         </li>
       </ol>
 
-      <p v-if="filtered.length === 0" class="muted">{{ t('pilots.noResults') }}</p>
-      <p v-else-if="!query && rankedCount > 0" class="footer-meta muted">
-        {{ t('pilots.rankedCount', { count: rankedCount }) }}
-      </p>
+      <nav v-if="data.total > 0 && data.pageCount > 1" class="pilots-pagination" aria-label="Pagination">
+        <button
+          type="button"
+          class="pilots-pagination__btn"
+          :disabled="data.page <= 1 || loading"
+          @click="goToPage(data.page - 1)"
+        >
+          {{ t('pilots.pagePrev') }}
+        </button>
+        <span class="pilots-pagination__status muted">
+          {{ t('pilots.pageStatus', { page: data.page, pages: data.pageCount }) }}
+        </span>
+        <button
+          type="button"
+          class="pilots-pagination__btn"
+          :disabled="data.page >= data.pageCount || loading"
+          @click="goToPage(data.page + 1)"
+        >
+          {{ t('pilots.pageNext') }}
+        </button>
+      </nav>
+
+      <p v-if="data.total === 0" class="muted">{{ t('pilots.noResults') }}</p>
     </template>
   </section>
 </template>
@@ -186,10 +203,45 @@ function seriesMeta(series: PilotListSeriesParticipation) {
   border-color: rgba(255, 77, 26, 0.45);
 }
 
-.results-meta,
-.footer-meta {
+.results-meta {
   margin: 0 0 0.75rem;
   font-size: 0.9rem;
+}
+
+.pilots-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  margin-top: 1rem;
+}
+
+.pilots-pagination__btn {
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.pilots-pagination__btn:hover:not(:disabled) {
+  border-color: rgba(255, 77, 26, 0.45);
+  color: var(--accent);
+  background: var(--surface);
+}
+
+.pilots-pagination__btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.pilots-pagination__status {
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .pilots-list {
@@ -242,7 +294,7 @@ function seriesMeta(series: PilotListSeriesParticipation) {
 
 .pilots-list__rank {
   font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 700;
   font-style: normal;
   font-variant-numeric: tabular-nums;

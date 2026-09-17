@@ -471,28 +471,11 @@ function listPilotSeasonSeries(
 
 publicRouter.get('/pilots', async (req, res) => {
   const year = parseOptionalYear(req.query.year) ?? new Date().getFullYear();
+  const pageSize = parsePageSize(req.query.pageSize, PILOTS_PAGE_SIZE_DEFAULT);
+  const searchQuery = parseSearchQuery(req.query.q);
   const prestige = await computePrestigeRanking(prisma, year);
   const p4pInputs = await loadP4PInputs(prisma, year, prestige.hardnessBySlug);
   const p4pRows = computeP4P(p4pInputs);
-
-  const rankedPilotIds = p4pRows.map((row) => row.pilot.id);
-  const rankedPilotResults = await prisma.pilot.findMany({
-    where: { id: { in: rankedPilotIds } },
-    include: {
-      results: {
-        include: {
-          event: {
-            include: {
-              season: { include: { series: true } },
-            },
-          },
-        },
-      },
-    },
-  });
-  const statsByPilotId = new Map(
-    rankedPilotResults.map((pilot) => [pilot.id, computePilotStats(toStatsInput(pilot.results))]),
-  );
 
   const rankedSlugs = new Set(p4pRows.map((row) => row.pilot.slug));
   const unrankedPilots = await prisma.pilot.findMany({
@@ -505,10 +488,7 @@ publicRouter.get('/pilots', async (req, res) => {
     return {
       rank: row.rank,
       score: row.score,
-      pilot: {
-        ...toPilotCard(row.pilot),
-        stats: statsByPilotId.get(row.pilot.id),
-      },
+      pilot: toPilotCard(row.pilot),
       bestSeries: seriesParticipations[0] ?? null,
       seriesParticipations,
     };
@@ -525,11 +505,67 @@ publicRouter.get('/pilots', async (req, res) => {
     };
   });
 
+  const pilotCount = ranked.length + unranked.length;
+  let listed = [...ranked, ...unranked];
+  if (searchQuery) {
+    listed = listed.filter((entry) => pilotMatchesSearch(entry, searchQuery));
+  }
+
+  const total = listed.length;
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
+  const page = Math.min(parsePage(req.query.page, 1), pageCount);
+  const pagePilots = listed.slice((page - 1) * pageSize, page * pageSize);
+
+  const pilotIdBySlug = new Map(p4pRows.map((row) => [row.pilot.slug, row.pilot.id]));
+  const rankedIdsOnPage = pagePilots
+    .filter((entry) => entry.rank != null)
+    .map((entry) => pilotIdBySlug.get(entry.pilot.slug))
+    .filter((id): id is string => id != null);
+
+  const statsByPilotSlug = new Map<string, ReturnType<typeof computePilotStats>>();
+  if (rankedIdsOnPage.length > 0) {
+    const rankedPilotResults = await prisma.pilot.findMany({
+      where: { id: { in: rankedIdsOnPage } },
+      include: {
+        results: {
+          include: {
+            event: {
+              include: {
+                season: { include: { series: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+    for (const pilot of rankedPilotResults) {
+      statsByPilotSlug.set(pilot.slug, computePilotStats(toStatsInput(pilot.results)));
+    }
+  }
+
+  const pilots: PilotListEntry[] = pagePilots.map((entry) => {
+    if (entry.rank == null) return entry;
+    const stats = statsByPilotSlug.get(entry.pilot.slug);
+    if (!stats) return entry;
+    return {
+      ...entry,
+      pilot: {
+        ...entry.pilot,
+        stats,
+      },
+    };
+  });
+
   const payload: PilotsListResponse = {
     year,
-    pilotCount: ranked.length + unranked.length,
+    pilotCount,
     seriesCount: p4pInputs.length,
-    pilots: [...ranked, ...unranked],
+    rankedCount: ranked.length,
+    page,
+    pageSize,
+    total,
+    pageCount,
+    pilots,
   };
 
   res.json(payload);
@@ -633,9 +669,45 @@ publicRouter.get('/pilots/:slug', async (req, res) => {
   res.json(payload);
 });
 
+const PILOTS_PAGE_SIZE_DEFAULT = 50;
+const PILOTS_PAGE_SIZE_MAX = 100;
+
 function parseOptionalYear(value: unknown): number | null {
   if (typeof value !== 'string') return null;
   const year = Number(value);
   return Number.isFinite(year) ? year : null;
+}
+
+function parsePage(value: unknown, defaultPage = 1): number {
+  if (typeof value !== 'string') return defaultPage;
+  const page = Number.parseInt(value, 10);
+  return Number.isFinite(page) && page >= 1 ? page : defaultPage;
+}
+
+function parsePageSize(value: unknown, defaultSize: number): number {
+  if (typeof value !== 'string') return defaultSize;
+  const size = Number.parseInt(value, 10);
+  if (!Number.isFinite(size) || size < 1) return defaultSize;
+  return Math.min(size, PILOTS_PAGE_SIZE_MAX);
+}
+
+function parseSearchQuery(value: unknown): string {
+  if (typeof value !== 'string') return '';
+  return value.trim();
+}
+
+function pilotMatchesSearch(entry: PilotListEntry, query: string): boolean {
+  const q = query.toLowerCase();
+  const pilot = entry.pilot;
+  const haystack = [
+    pilot.firstName,
+    pilot.lastName,
+    pilot.number?.toString(),
+    pilot.country,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+  return haystack.includes(q);
 }
 

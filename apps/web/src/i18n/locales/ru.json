@@ -157,7 +157,10 @@
     "resultsCount": "Найдено: {count}",
     "rankedCount": "В рейтинге d-index: {count} пилотов",
     "unranked": "Вне featured-серий",
-    "noResults": "Ничего не найдено"
+    "noResults": "Ничего не найдено",
+    "pagePrev": "Назад",
+    "pageNext": "Далее",
+    "pageStatus": "Страница {page} из {pages}"
   },
   "pilot": {
     "title": "Профиль пилота",

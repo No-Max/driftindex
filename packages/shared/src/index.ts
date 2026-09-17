@@ -321,6 +321,11 @@ export interface PilotsListResponse {
   year: number;
   pilotCount: number;
   seriesCount: number;
+  rankedCount: number;
+  page: number;
+  pageSize: number;
+  total: number;
+  pageCount: number;
   pilots: PilotListEntry[];
 }
 

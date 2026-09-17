@@ -63,9 +63,20 @@ export function fetchSeasonEvent(slug: string, year: number, eventSlug: string) 
   );
 }
 
-export function fetchPilots(year?: number) {
-  const query = year ? `?year=${year}` : '';
-  return getJson<PilotsListResponse>(`/api/pilots${query}`);
+export function fetchPilots(options?: {
+  year?: number;
+  page?: number;
+  pageSize?: number;
+  q?: string;
+}) {
+  const params = new URLSearchParams();
+  if (options?.year != null) params.set('year', String(options.year));
+  if (options?.page != null) params.set('page', String(options.page));
+  if (options?.pageSize != null) params.set('pageSize', String(options.pageSize));
+  const q = options?.q?.trim();
+  if (q) params.set('q', q);
+  const query = params.toString();
+  return getJson<PilotsListResponse>(`/api/pilots${query ? `?${query}` : ''}`);
 }
 
 export function fetchPilot(slug: string) {
