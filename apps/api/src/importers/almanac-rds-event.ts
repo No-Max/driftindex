@@ -140,6 +140,18 @@ export function pilotNamesFromAlmanacRow(nameAlias: string): {
   return { ...englishNamesFromNameRu(trimmed), nameAlias: trimmed };
 }
 
+function dbPilotNameKey(
+  firstName: string,
+  lastName: string,
+  alias: string | null | undefined,
+): string {
+  if (alias && /[а-яё]/i.test(alias)) {
+    const names = pilotNamesFromAlmanacRow(alias);
+    return buildNameKey(names.firstName, names.lastName, names.nameAlias);
+  }
+  return buildNameKey(firstName, lastName, alias);
+}
+
 export type AlmanacDbEventMapping = Map<string, string>;
 
 function overlapSize(a: Set<string>, b: Set<string>): number {
@@ -254,7 +266,7 @@ export async function buildAlmanacToDbEventMapping(
     const winnerResult = event.results.find((result) => result.tandemPosition === 1);
     const winnerAlias = winnerResult?.pilot.seriesAliases[0]?.name ?? null;
     const winnerKey = winnerResult
-      ? buildNameKey(winnerResult.pilot.firstName, winnerResult.pilot.lastName, winnerAlias)
+      ? dbPilotNameKey(winnerResult.pilot.firstName, winnerResult.pilot.lastName, winnerAlias)
       : null;
 
     return {
@@ -262,7 +274,7 @@ export async function buildAlmanacToDbEventMapping(
       nameKeys: new Set(
         event.results.map((result) => {
           const alias = result.pilot.seriesAliases[0]?.name ?? null;
-          return buildNameKey(result.pilot.firstName, result.pilot.lastName, alias);
+          return dbPilotNameKey(result.pilot.firstName, result.pilot.lastName, alias);
         }),
       ),
       winnerKey,
