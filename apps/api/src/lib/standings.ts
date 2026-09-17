@@ -186,3 +186,42 @@ export function computeStandings(events: SeasonEventWithResults[]): ComputedStan
       eventQual: events.map((event) => row.qualByEvent.get(event.id) ?? null),
     }));
 }
+
+export interface SeasonEventWithTeamResults {
+  id: string;
+  status: string;
+  teamResults: Array<{
+    points: number;
+    team: { name: string };
+  }>;
+}
+
+export interface ComputedTeamStandingRow {
+  rank: number;
+  teamName: string;
+  totalPoints: number;
+  eventPoints: Array<number | null>;
+}
+
+export function computeTeamStandings(events: SeasonEventWithTeamResults[]): ComputedTeamStandingRow[] {
+  const finishedEvents = events.filter((event) => event.status === 'FINISHED');
+  const byTeam = new Map<string, { byEvent: Map<string, number>; total: number }>();
+
+  for (const event of finishedEvents) {
+    for (const row of event.teamResults) {
+      const entry = byTeam.get(row.team.name) ?? { byEvent: new Map<string, number>(), total: 0 };
+      entry.byEvent.set(event.id, row.points);
+      entry.total += row.points;
+      byTeam.set(row.team.name, entry);
+    }
+  }
+
+  return [...byTeam.entries()]
+    .sort((a, b) => b[1].total - a[1].total || a[0].localeCompare(b[0]))
+    .map(([teamName, row], index) => ({
+      rank: index + 1,
+      teamName,
+      totalPoints: row.total,
+      eventPoints: events.map((event) => row.byEvent.get(event.id) ?? null),
+    }));
+}

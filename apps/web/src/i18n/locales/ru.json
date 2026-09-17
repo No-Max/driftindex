@@ -73,7 +73,9 @@
     "total": "Итого",
     "round": "Э{n}",
     "eventsProgress": "Сыграно {finished} из {total} этапов",
-    "source": "Источник"
+    "source": "Источник",
+    "team": "Команда",
+    "teamsTitle": "Командный зачёт"
   },
   "seriesPage": {
     "title": "Серии",
@@ -135,7 +137,8 @@
     "tandemPlace": "Место (парные)",
     "tandemBattles": "Заезды",
     "tandemWins": "Победы",
-    "tandemWinPct": "% побед"
+    "tandemWinPct": "% побед",
+    "team": "Команда"
   },
   "seriesDetail": {
     "back": "Все серии",

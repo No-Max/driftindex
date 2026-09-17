@@ -29,6 +29,7 @@ const sourceLabel = computed(() => {
 });
 
 const showQual = computed(() => (data.value ? hasAnyQualData(data.value.standings) : false));
+const teamStandings = computed(() => data.value?.teamStandings ?? []);
 
 async function load() {
   loading.value = true;
@@ -164,6 +165,41 @@ function isEventClickable(event: SeasonStandingsResponse['events'][0]) {
           </tbody>
         </table>
       </div>
+
+      <template v-if="teamStandings.length > 0">
+        <h2 class="section-title">{{ t('standings.teamsTitle') }}</h2>
+        <div class="card table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>{{ t('standings.rank') }}</th>
+                <th>{{ t('standings.team') }}</th>
+                <th v-for="(event, index) in data.events" :key="`team-${event.slug}`" class="round-col">
+                  <RouterLink
+                    v-if="isEventClickable(event)"
+                    :to="event.eventPath"
+                    class="round-link"
+                  >
+                    {{ eventLabel(index) }}
+                  </RouterLink>
+                  <span v-else>{{ eventLabel(index) }}</span>
+                </th>
+                <th>{{ t('standings.total') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in teamStandings" :key="row.teamName">
+                <td class="rank">{{ row.rank }}</td>
+                <td>{{ row.teamName }}</td>
+                <td v-for="(points, index) in row.eventPoints" :key="index" class="event-cell">
+                  <span class="event-cell__points">{{ points ?? '—' }}</span>
+                </td>
+                <td><strong>{{ row.totalPoints }}</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </template>
     </template>
   </section>
 </template>
@@ -236,5 +272,9 @@ function isEventClickable(event: SeasonStandingsResponse['events'][0]) {
 .round-link:hover .event-cell__points,
 .event-cell-link:hover .event-cell__points {
   text-decoration: underline;
+}
+
+.section-title {
+  margin: 1.5rem 0 0.75rem;
 }
 </style>

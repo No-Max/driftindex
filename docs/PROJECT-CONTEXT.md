@@ -227,9 +227,10 @@ Source: SvelteKit `__data.json` from `https://royalds.cn/en/results`.
 
 **Import rules:**
 
-- Pilots with **0 season points** are skipped
-- Per-event results with **0 points** are skipped
-- Only `official` scored stages are imported
+- Official DNQ / DNS / zero-point event rows are imported
+- Scheduled calendar placeholders (no participation) are skipped
+- Track names come from the event page (`trackEn`), not the standings payload
+- Personal and team championship points come from official results
 
 Importer: `apps/api/src/importers/royal-ds.ts` · script: `apps/api/scripts/import-royal-ds.ts`
 

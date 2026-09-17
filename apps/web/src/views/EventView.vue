@@ -38,6 +38,8 @@ const showDuels = computed(() =>
   (data.value?.results ?? []).some((row) => row.tandemBattles != null && row.tandemBattles > 0),
 );
 
+const showTeam = computed(() => (data.value?.results ?? []).some((row) => Boolean(row.team)));
+
 async function load() {
   loading.value = true;
   error.value = false;
@@ -158,6 +160,7 @@ function formatTandemWins(row: SeasonEventResponse['results'][0]) {
           <thead>
             <tr>
               <th>{{ t('standings.pilot') }}</th>
+              <th v-if="showTeam">{{ t('eventDetail.team') }}</th>
               <th v-if="showQual">{{ t('pilot.qual') }}</th>
               <th v-if="showTandem">{{ t('eventDetail.tandemPlace') }}</th>
               <th v-if="showDuels">{{ t('eventDetail.tandemBattles') }}</th>
@@ -173,6 +176,7 @@ function formatTandemWins(row: SeasonEventResponse['results'][0]) {
                   {{ pilotName(row) }}
                 </RouterLink>
               </td>
+              <td v-if="showTeam" class="muted">{{ row.team ?? '—' }}</td>
               <td v-if="showQual" class="muted">{{ formatQual(row) }}</td>
               <td v-if="showTandem" class="muted num-col">{{ row.tandemPosition ?? '—' }}</td>
               <td v-if="showDuels" class="muted num-col">{{ formatTandemBattles(row) }}</td>

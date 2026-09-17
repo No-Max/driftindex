@@ -9,6 +9,7 @@ export interface ResolvedTrackFields {
 }
 
 const RUSSIA = 'Russia';
+const CHINA = 'China';
 
 const CITY_EN: Record<string, string> = {
   москва: 'Moscow',
@@ -193,6 +194,41 @@ const CANONICAL: Array<{
       /\bsochi\b/i.test(raw) ||
       norm === 'сочи' ||
       raw.trim() === 'Сочи',
+  },
+  {
+    preferredSlug: 'tianma-circuit',
+    name: 'Tianma Circuit',
+    city: 'Shanghai',
+    country: CHINA,
+    matches: (raw, norm) => /tianma|тяньма|天马/i.test(raw) || /tianma/i.test(norm),
+  },
+  {
+    preferredSlug: 'v1-auto-world',
+    name: 'V1 Auto World International Speedway',
+    city: 'Tianjin',
+    country: CHINA,
+    matches: (raw, norm) => /v1 auto world|v1汽车|автодром v1/i.test(raw) || /v1 auto world/i.test(norm),
+  },
+  {
+    preferredSlug: 'ningbo-international',
+    name: 'Ningbo International Speedway',
+    city: 'Ningbo',
+    country: CHINA,
+    matches: (raw, norm) => /ningbo international|нинбо/i.test(raw) || /ningbo/i.test(norm),
+  },
+  {
+    preferredSlug: 'zhengzhou-autodrome',
+    name: 'Zhengzhou International Autodrome',
+    city: 'Zhengzhou',
+    country: CHINA,
+    matches: (raw, norm) => /zhengzhou|чжэнчжоу|郑州/i.test(raw),
+  },
+  {
+    preferredSlug: 'zhejiang-circuit',
+    name: 'Zhejiang International Circuit',
+    city: 'Shaoxing',
+    country: CHINA,
+    matches: (raw, norm) => /zhejiang international|чжэцзян|绍兴|shaoxing/i.test(raw) || /zhejiang/i.test(norm),
   },
 ];
 

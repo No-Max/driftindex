@@ -73,7 +73,9 @@
     "total": "Total",
     "round": "R{n}",
     "eventsProgress": "{finished} / {total} rounds completed",
-    "source": "Source"
+    "source": "Source",
+    "team": "Team",
+    "teamsTitle": "Team standings"
   },
   "seriesPage": {
     "title": "Series",
@@ -135,7 +137,8 @@
     "tandemPlace": "Tandem place",
     "tandemBattles": "Battles",
     "tandemWins": "Wins",
-    "tandemWinPct": "Win %"
+    "tandemWinPct": "Win %",
+    "team": "Team"
   },
   "seriesDetail": {
     "back": "All series",

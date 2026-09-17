@@ -54,6 +54,13 @@ export interface StandingRow {
   eventQual: Array<StandingQualCell | null>;
 }
 
+export interface TeamStandingRow {
+  rank: number;
+  teamName: string;
+  totalPoints: number;
+  eventPoints: Array<number | null>;
+}
+
 export function seriesEventPath(seriesSlug: string, seasonYear: number, eventSlug: string): string {
   return `/series/${seriesSlug}/${seasonYear}/${eventSlug}`;
 }
@@ -76,6 +83,7 @@ export interface SeasonStandingsResponse {
   season: SeasonSummary;
   events: SeasonEventSummary[];
   standings: StandingRow[];
+  teamStandings: TeamStandingRow[];
   source: DataSource | null;
 }
 
@@ -96,6 +104,7 @@ export interface SeasonEventResultRow {
   lastName: string;
   country: string | null;
   number: number | null;
+  team: string | null;
   qualPosition: number | null;
   qualScore100: number | null;
   qualPoints: number | null;
