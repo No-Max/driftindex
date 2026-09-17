@@ -2,7 +2,7 @@ import * as cheerio from 'cheerio';
 import { canonicalSurnameToken, tokensSimilar } from '../lib/battleMatch.js';
 import { buildNameKey, englishNamesFromNameRu, isLatinName, normalizeToken } from '../lib/transliterate.js';
 import { listAlmanacRdsEvents } from './rds-almanac.js';
-import { parseQualRunScore } from './rds-gp.js';
+import { isPlausibleRdsQualRunScore, parseQualRunScore } from './rds-gp.js';
 
 const BASE = 'https://driftalmanac.ru';
 
@@ -30,8 +30,28 @@ function pilotSlugFromHref(href: string | undefined): string | null {
   return href?.match(/\/pilot\/([^/?#]+)/)?.[1] ?? null;
 }
 
-function bestQualScore(run1: string, run2: string): number | null {
-  const scores = [parseQualRunScore(run1), parseQualRunScore(run2)].filter(
+function parseAlmanacRunCell(raw: string): number | null {
+  const parsed = parseQualRunScore(raw);
+  if (parsed == null || !isPlausibleRdsQualRunScore(parsed, raw)) return null;
+  return parsed;
+}
+
+function qualRunColumns($: cheerio.CheerioAPI): { run1Index: number; run2Index: number | null } {
+  const headers = $('table')
+    .first()
+    .find('th')
+    .map((_, th) => $(th).text().trim().toUpperCase())
+    .get();
+  const run1Index = headers.findIndex((header) => header === 'RUN1' || header.startsWith('RUN 1'));
+  const run2Index = headers.findIndex((header) => header === 'RUN2' || header.startsWith('RUN 2'));
+  return {
+    run1Index: run1Index >= 0 ? run1Index : 2,
+    run2Index: run2Index >= 0 ? run2Index : null,
+  };
+}
+
+function bestQualScore(run1: string, run2: string | null): number | null {
+  const scores = [parseAlmanacRunCell(run1), run2 ? parseAlmanacRunCell(run2) : null].filter(
     (value): value is number => value != null,
   );
   if (scores.length === 0) return null;
@@ -42,6 +62,7 @@ function bestQualScore(run1: string, run2: string): number | null {
 export function parseAlmanacRdsQualificationHtml(html: string): AlmanacRdsQualRow[] {
   const $ = cheerio.load(html);
   const rows: AlmanacRdsQualRow[] = [];
+  const { run1Index, run2Index } = qualRunColumns($);
 
   $('table tbody tr').each((_, tr) => {
     const cells = $(tr).find('td');
@@ -55,8 +76,8 @@ export function parseAlmanacRdsQualificationHtml(html: string): AlmanacRdsQualRo
     const qualPosition = Number.parseInt($(cells.eq(0)).text().trim(), 10);
     if (!Number.isFinite(qualPosition) || qualPosition <= 0) return;
 
-    const run1 = $(cells.eq(2)).text().trim();
-    const run2 = $(cells.eq(3)).text().trim();
+    const run1 = $(cells.eq(run1Index)).text().trim();
+    const run2 = run2Index != null ? $(cells.eq(run2Index)).text().trim() : null;
 
     rows.push({
       almanacPilotSlug,

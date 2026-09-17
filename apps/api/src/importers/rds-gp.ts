@@ -99,6 +99,19 @@ export function parseQualRunScore(value: string): number | null {
   return Math.round(Math.min(100, parsed) * 10) / 10;
 }
 
+/** Reject legacy Almanac cells that store qual points (41, 40…) in RUN columns. */
+export function isPlausibleRdsQualRunScore(parsed: number, raw: string): boolean {
+  if (parsed > 101 || parsed <= 0) return false;
+  if (parsed >= 70) return true;
+
+  const normalized = raw.trim().replace(/\s/g, '').replace(',', '.');
+  // Qual points appear as 41 or 41.00; judge scores use non-zero fractional parts (e.g. 96.3).
+  const rounded = Math.round(parsed * 100) / 100;
+  if (Math.abs(parsed - rounded) < 0.001) return false;
+
+  return /^\d+\.\d*[1-9]\d*$/.test(normalized);
+}
+
 function parseQualCell(text: string): { qualPoints: number | null; qualPosition: number | null } {
   const match = text.trim().match(/^(\d+)\s*\((\d+)\)$/);
   if (!match) return { qualPoints: null, qualPosition: null };

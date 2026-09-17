@@ -138,13 +138,18 @@ async function applyAlmanacEventDetails(
       where: { eventId_pilotId: { eventId: event.id, pilotId: pilotRecord.id } },
     });
 
-    const qualScore100 = toQualScore100(stats.qualScore100, SERIES_SLUG);
+    const almanacQualScore100 = toQualScore100(stats.qualScore100, SERIES_SLUG);
+    const qualScore100 =
+      almanacQualScore100 != null &&
+      (existing?.qualScore100 == null || almanacQualScore100 >= 70 || existing.qualScore100 < 70)
+        ? almanacQualScore100
+        : (existing?.qualScore100 ?? almanacQualScore100);
 
     await db.eventResult.upsert({
       where: { eventId_pilotId: { eventId: event.id, pilotId: pilotRecord.id } },
       update: {
         qualPosition: stats.qualPosition ?? existing?.qualPosition ?? null,
-        qualScore100: qualScore100 ?? existing?.qualScore100 ?? null,
+        qualScore100,
         tandemPosition: stats.tandemPosition ?? existing?.tandemPosition ?? null,
         points: stats.points ?? existing?.points ?? 0,
         dataStatus: 'VERIFIED',
