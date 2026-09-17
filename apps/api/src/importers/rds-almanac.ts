@@ -213,6 +213,19 @@ function parseStandingsTable(
   return [...pilotMap.values()];
 }
 
+export async function listAlmanacRdsEvents(
+  seasonYear: number,
+): Promise<Array<{ almanacEventId: string; roundNumber: number }>> {
+  const seasonSlug = almanacRdsSeasonSlug(seasonYear);
+  const sourceUrl = `${BASE}/championship/rds/${seasonSlug}`;
+  const html = await fetchHtml(sourceUrl);
+  const $ = cheerio.load(html);
+  return parseEventCards($).map((meta) => ({
+    almanacEventId: meta.id,
+    roundNumber: meta.roundNumber,
+  }));
+}
+
 export async function fetchRdsAlmanacSeason(seasonYear: number): Promise<RdsGpSeasonData> {
   const seasonSlug = almanacRdsSeasonSlug(seasonYear);
   const sourceUrl = `${BASE}/championship/rds/${seasonSlug}`;

@@ -161,12 +161,20 @@ function parseEventDate(text: string): string {
 function parseSeasonEvents(html: string, seasonPath: string): ParsedEventMeta[] {
   const $ = cheerio.load(html);
   const events: ParsedEventMeta[] = [];
+  const seenIds = new Set<string>();
   let round = 0;
+  const seasonYear = Number.parseInt(seasonPath.match(/(\d{4})$/)?.[1] ?? '', 10);
 
   $(`a[href^="${seasonPath}/"]`).each((_, element) => {
     const href = $(element).attr('href') ?? '';
     const id = href.match(/\/(\d+)\/?$/)?.[1];
     if (!id) return;
+
+    const eventId = Number.parseInt(id, 10);
+    if (!Number.isFinite(eventId) || eventId <= 0) return;
+    if (Number.isFinite(seasonYear) && eventId === seasonYear) return;
+    if (seenIds.has(id)) return;
+    seenIds.add(id);
 
     round += 1;
     const label = $(element)

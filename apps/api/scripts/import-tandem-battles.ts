@@ -4,6 +4,7 @@ import {
   aggregatePilotBattles,
   fetchAlmanacSeasonBattles,
 } from '../src/importers/almanac-battles.js';
+import { buildAlmanacToDbEventMapping } from '../src/importers/almanac-rds-event.js';
 import { matchBattlePilot } from '../src/lib/battleMatch.js';
 
 const prisma = new PrismaClient();
@@ -67,11 +68,24 @@ async function importSeasonBattles(seriesId: string, seasonYear: number): Promis
     return 0;
   }
 
+  const needsMapping = season.events.some((entry) => !/^da-e\d+$/.test(entry.slug));
+  const almanacMapping = needsMapping
+    ? await buildAlmanacToDbEventMapping(seasonYear, season.events)
+    : new Map<string, string>();
+
   let updated = 0;
   for (const almanacEvent of almanacEvents) {
-    const event = season.events.find((entry) => entry.roundNumber === almanacEvent.roundNumber);
+    const daSlug = `da-e${almanacEvent.almanacEventId}`;
+    let event = season.events.find((entry) => entry.slug === daSlug);
     if (!event) {
-      console.warn(`  Round ${almanacEvent.roundNumber}: no matching event in DB`);
+      const dbEventId = almanacMapping.get(almanacEvent.almanacEventId);
+      event = dbEventId ? season.events.find((entry) => entry.id === dbEventId) : undefined;
+    }
+    if (!event && !needsMapping) {
+      event = season.events.find((entry) => entry.roundNumber === almanacEvent.roundNumber);
+    }
+    if (!event) {
+      console.warn(`  Almanac event ${almanacEvent.almanacEventId}: no matching event in DB`);
       continue;
     }
 

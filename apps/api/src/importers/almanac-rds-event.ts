@@ -1,5 +1,6 @@
 import * as cheerio from 'cheerio';
-import { englishNamesFromNameRu } from '../lib/transliterate.js';
+import { buildNameKey, englishNamesFromNameRu } from '../lib/transliterate.js';
+import { listAlmanacRdsEvents } from './rds-almanac.js';
 import { parseQualRunScore } from './rds-gp.js';
 
 const BASE = 'https://driftalmanac.ru';
@@ -137,4 +138,136 @@ export function pilotNamesFromAlmanacRow(nameAlias: string): {
 } {
   const trimmed = nameAlias.trim();
   return { ...englishNamesFromNameRu(trimmed), nameAlias: trimmed };
+}
+
+export type AlmanacDbEventMapping = Map<string, string>;
+
+function overlapSize(a: Set<string>, b: Set<string>): number {
+  let count = 0;
+  for (const key of a) {
+    if (b.has(key)) count += 1;
+  }
+  return count;
+}
+
+function winnerKeyFromResults(
+  rows: Array<{ nameAlias: string; tandemPosition: number }>,
+): string | null {
+  const winner = rows.find((row) => row.tandemPosition === 1);
+  if (!winner) return null;
+  const names = pilotNamesFromAlmanacRow(winner.nameAlias);
+  return buildNameKey(names.firstName, names.lastName, names.nameAlias);
+}
+
+export function matchAlmanacEventsToDbEventsByOverlap(
+  almanacEvents: Array<{ almanacEventId: string; nameKeys: Set<string>; winnerKey: string | null }>,
+  dbEvents: Array<{ eventId: string; nameKeys: Set<string>; winnerKey: string | null }>,
+  minOverlap = 6,
+): AlmanacDbEventMapping {
+  const mapping: AlmanacDbEventMapping = new Map();
+  const usedAlmanac = new Set<string>();
+  const usedDb = new Set<string>();
+
+  const winnerPairs: Array<{ almanacEventId: string; eventId: string; score: number }> = [];
+  for (const almanac of almanacEvents) {
+    if (!almanac.winnerKey) continue;
+    for (const db of dbEvents) {
+      if (db.winnerKey !== almanac.winnerKey) continue;
+      const score = overlapSize(almanac.nameKeys, db.nameKeys);
+      winnerPairs.push({ almanacEventId: almanac.almanacEventId, eventId: db.eventId, score });
+    }
+  }
+  winnerPairs.sort((a, b) => b.score - a.score);
+  for (const { almanacEventId, eventId } of winnerPairs) {
+    if (usedAlmanac.has(almanacEventId) || usedDb.has(eventId)) continue;
+    mapping.set(almanacEventId, eventId);
+    usedAlmanac.add(almanacEventId);
+    usedDb.add(eventId);
+  }
+
+  const scores: Array<{ almanacEventId: string; eventId: string; score: number }> = [];
+  for (const almanac of almanacEvents) {
+    if (usedAlmanac.has(almanac.almanacEventId)) continue;
+    for (const db of dbEvents) {
+      if (usedDb.has(db.eventId)) continue;
+      if (
+        almanac.winnerKey &&
+        db.winnerKey &&
+        almanac.winnerKey !== db.winnerKey
+      ) {
+        continue;
+      }
+      const score = overlapSize(almanac.nameKeys, db.nameKeys);
+      if (score >= minOverlap) {
+        scores.push({ almanacEventId: almanac.almanacEventId, eventId: db.eventId, score });
+      }
+    }
+  }
+  scores.sort((a, b) => b.score - a.score);
+
+  for (const { almanacEventId, eventId } of scores) {
+    if (mapping.has(almanacEventId) || usedDb.has(eventId)) continue;
+    mapping.set(almanacEventId, eventId);
+    usedDb.add(eventId);
+  }
+
+  return mapping;
+}
+
+export async function buildAlmanacToDbEventMapping(
+  seasonYear: number,
+  dbEvents: Array<{
+    id: string;
+    results: Array<{
+      tandemPosition: number | null;
+      pilot: { firstName: string; lastName: string; seriesAliases: Array<{ name: string }> };
+    }>;
+  }>,
+): Promise<AlmanacDbEventMapping> {
+  const almanacEvents = await listAlmanacRdsEvents(seasonYear);
+  if (almanacEvents.length === 0) return new Map();
+
+  const almanacPairs: Array<{
+    almanacEventId: string;
+    nameKeys: Set<string>;
+    winnerKey: string | null;
+  }> = [];
+  for (const meta of almanacEvents) {
+    const details = await fetchAlmanacRdsEventDetails(meta.almanacEventId);
+    const nameKeys = new Set<string>();
+    for (const row of details?.results ?? []) {
+      const names = pilotNamesFromAlmanacRow(row.nameAlias);
+      nameKeys.add(buildNameKey(names.firstName, names.lastName, names.nameAlias));
+    }
+    for (const row of details?.qualification ?? []) {
+      const names = pilotNamesFromAlmanacRow(row.nameAlias);
+      nameKeys.add(buildNameKey(names.firstName, names.lastName, names.nameAlias));
+    }
+    almanacPairs.push({
+      almanacEventId: meta.almanacEventId,
+      nameKeys,
+      winnerKey: winnerKeyFromResults(details?.results ?? []),
+    });
+  }
+
+  const dbPairs = dbEvents.map((event) => {
+    const winnerResult = event.results.find((result) => result.tandemPosition === 1);
+    const winnerAlias = winnerResult?.pilot.seriesAliases[0]?.name ?? null;
+    const winnerKey = winnerResult
+      ? buildNameKey(winnerResult.pilot.firstName, winnerResult.pilot.lastName, winnerAlias)
+      : null;
+
+    return {
+      eventId: event.id,
+      nameKeys: new Set(
+        event.results.map((result) => {
+          const alias = result.pilot.seriesAliases[0]?.name ?? null;
+          return buildNameKey(result.pilot.firstName, result.pilot.lastName, alias);
+        }),
+      ),
+      winnerKey,
+    };
+  });
+
+  return matchAlmanacEventsToDbEventsByOverlap(almanacPairs, dbPairs);
 }
