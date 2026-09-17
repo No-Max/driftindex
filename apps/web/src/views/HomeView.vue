@@ -47,7 +47,11 @@ onMounted(async () => {
           :title="t('home.sections.topSeries')"
           :subtitle="t('home.sections.topSeriesSub')"
         />
-        <Top3Series :prestige="data.seriesPrestige" :year="data.year" />
+        <Top3Series
+          :prestige="data.seriesPrestige"
+          :championships="data.championships"
+          :year="data.year"
+        />
       </section>
 
       <section class="home-section">

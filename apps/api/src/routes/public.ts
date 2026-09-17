@@ -16,6 +16,7 @@ import {
 import { Router } from 'express';
 import { computeP4P } from '../lib/p4p.js';
 import { loadP4PInputs } from '../lib/p4pData.js';
+import { preferredSeriesPhotoUrl, resolveSeriesPhotoUrl } from '../lib/media/pilotPhoto.js';
 import { toPilotCard } from '../lib/pilot.js';
 import { resultDisplayNumber } from '../lib/resultNumber.js';
 import { resolvePilotDisplayNames } from '../lib/pilotNames.js';
@@ -563,21 +564,27 @@ publicRouter.get('/pilots/:slug', async (req, res) => {
   );
 
   const { firstName, lastName } = resolvePilotDisplayNames(pilot);
+  const seriesPhotoRows = pilot.seriesPhotos
+    .filter((entry) => entry.photoUrl)
+    .map((entry) => ({
+      seriesSlug: entry.series.slug,
+      seriesName: entry.series.name,
+      seriesShortName: entry.series.shortName,
+      photoUrl: entry.photoUrl!,
+    }));
+  const preferUrl = preferredSeriesPhotoUrl(pilot.slug, seriesPhotoRows);
+
   const payload: PilotProfileResponse = {
     slug: pilot.slug,
     firstName,
     lastName,
     country: pilot.country,
     number: null,
-    photoUrl: pilot.photoUrl,
-    photos: pilot.seriesPhotos
-      .filter((entry) => entry.photoUrl)
-      .map((entry) => ({
-        seriesSlug: entry.series.slug,
-        seriesName: entry.series.name,
-        seriesShortName: entry.series.shortName,
-        photoUrl: entry.photoUrl!,
-      })),
+    photoUrl: preferUrl ?? pilot.photoUrl,
+    photos: seriesPhotoRows.map((entry) => ({
+      ...entry,
+      photoUrl: resolveSeriesPhotoUrl(pilot.slug, entry.seriesSlug, entry.photoUrl, preferUrl)!,
+    })),
     stats,
     results: resultsByEventDate.map((result) => ({
       seriesSlug: result.event.season.series.slug,

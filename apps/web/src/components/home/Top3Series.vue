@@ -1,20 +1,37 @@
 <script setup lang="ts">
-import type { SeriesPrestigeEntry, SeriesPrestigeResponse } from '@drift-index/shared';
+import type {
+  HomeChampionshipCard,
+  PilotSummary,
+  SeriesPrestigeEntry,
+  SeriesPrestigeResponse,
+} from '@drift-index/shared';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { formatPilotName } from '../../lib/formatPilotName';
 import SeriesLogo from '../SeriesLogo.vue';
 
 const props = defineProps<{
   prestige: SeriesPrestigeResponse;
+  championships: HomeChampionshipCard[];
   year: number;
 }>();
 
 const { t } = useI18n();
 
-const topThree = computed(() => props.prestige.entries.slice(0, 3));
+const topThreeCards = computed(() => {
+  const bySlug = new Map(props.championships.map((item) => [item.series.slug, item]));
+  return props.prestige.entries.slice(0, 3).map((entry) => ({
+    entry,
+    standingsTop: bySlug.get(entry.slug)?.topThree ?? [],
+  }));
+});
 
 function seriesPath(entry: SeriesPrestigeEntry) {
   return `/series/${entry.slug}/${props.year}`;
+}
+
+function pilotPath(pilot: PilotSummary) {
+  return `/pilots/${pilot.slug}`;
 }
 
 function isLeader(entry: SeriesPrestigeEntry) {
@@ -23,6 +40,10 @@ function isLeader(entry: SeriesPrestigeEntry) {
 
 function formatHardness(value: number | null) {
   return value != null ? String(value) : '—';
+}
+
+function pilotInitials(pilot: PilotSummary) {
+  return `${pilot.firstName[0] ?? ''}${pilot.lastName[0] ?? ''}`.toUpperCase();
 }
 
 const hardnessHelpSlug = ref<string | null>(null);
@@ -58,27 +79,56 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div v-if="topThree.length > 0" class="top-series">
+  <div v-if="topThreeCards.length > 0" class="top-series">
     <ol class="top-series__podium">
       <li
-        v-for="entry in topThree"
+        v-for="{ entry, standingsTop } in topThreeCards"
         :key="entry.slug"
         class="top-series__slot"
         :class="{ 'top-series__slot--leader': isLeader(entry) }"
         :data-rank="entry.effectiveOrder"
       >
-        <RouterLink :to="seriesPath(entry)" class="card top-series__card">
+        <article class="card top-series__card">
           <span class="top-series__rank">#{{ entry.effectiveOrder }}</span>
-          <SeriesLogo
-            :slug="entry.slug"
-            :name="entry.name"
-            :logo-url="entry.logoUrl"
-            size="xl"
-          />
-          <h3 class="top-series__name">{{ entry.name }}</h3>
-          <p v-if="entry.shortName && entry.shortName !== entry.name" class="top-series__code muted">
-            {{ entry.shortName }}
-          </p>
+          <div class="top-series__logo-row">
+            <RouterLink :to="seriesPath(entry)" class="top-series__series-link">
+              <SeriesLogo
+                :slug="entry.slug"
+                :name="entry.name"
+                :logo-url="entry.logoUrl"
+                size="xl"
+              />
+            </RouterLink>
+            <div v-if="standingsTop.length > 0" class="top-series__pilot-badges">
+              <RouterLink
+                v-for="(row, placeIndex) in standingsTop"
+                :key="row.pilot.slug"
+                :to="pilotPath(row.pilot)"
+                class="top-series__pilot-link"
+                :title="`${placeIndex + 1}. ${formatPilotName(row.pilot)}`"
+              >
+                <span
+                  class="top-series__pilot-badge"
+                  :class="`top-series__pilot-badge--place-${placeIndex + 1}`"
+                >
+                  <img
+                    v-if="row.pilot.photoUrl"
+                    :src="row.pilot.photoUrl"
+                    :alt="formatPilotName(row.pilot)"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <span v-else class="top-series__pilot-badge-fallback">{{ pilotInitials(row.pilot) }}</span>
+                </span>
+              </RouterLink>
+            </div>
+          </div>
+          <h3 class="top-series__name">
+            <RouterLink :to="seriesPath(entry)" class="top-series__series-name-link">
+              {{ entry.name }}
+            </RouterLink>
+          </h3>
+          <p v-if="standingsTop.length === 0" class="top-series__no-leader muted">{{ t('home.noLeader') }}</p>
           <dl class="top-series__meta">
             <div>
               <dt class="muted top-series__hardness-label">
@@ -89,7 +139,7 @@ onUnmounted(() => {
                     class="top-series__help-btn"
                     :aria-label="t('home.hardnessHelpAria')"
                     :aria-expanded="hardnessHelpSlug === entry.slug"
-                    @click.stop.prevent="toggleHardnessHelp(entry.slug)"
+                    @click.prevent="toggleHardnessHelp(entry.slug)"
                   >
                     ?
                   </button>
@@ -97,7 +147,6 @@ onUnmounted(() => {
                     v-if="hardnessHelpSlug === entry.slug"
                     class="top-series__help-popover"
                     role="tooltip"
-                    @click.stop
                   >
                     {{ t('seriesPage.colHelp.hardness') }}
                   </div>
@@ -106,7 +155,7 @@ onUnmounted(() => {
               <dd>{{ formatHardness(entry.hardnessScore) }}</dd>
             </div>
           </dl>
-        </RouterLink>
+        </article>
       </li>
     </ol>
     <p class="top-series__footer muted">
@@ -166,12 +215,29 @@ onUnmounted(() => {
   padding: 1.25rem 1rem 1.35rem;
   overflow: visible;
   color: inherit;
-  text-decoration: none;
-  transition: border-color 0.15s;
 }
 
-.top-series__card:hover {
-  border-color: rgba(255, 77, 26, 0.4);
+.top-series__series-link,
+.top-series__series-name-link,
+.top-series__pilot-link {
+  position: relative;
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.top-series__series-link:hover,
+.top-series__series-name-link:hover,
+.top-series__pilot-link:hover {
+  color: var(--accent);
+}
+
+.top-series__series-link:hover :deep(.series-logo) {
+  border-color: rgba(255, 77, 26, 0.45);
+}
+
+.top-series__pilot-link:hover .top-series__pilot-badge {
+  border-color: var(--accent);
 }
 
 .top-series__slot--leader .top-series__card {
@@ -212,6 +278,86 @@ onUnmounted(() => {
   font-size: 1.55rem;
 }
 
+.top-series__logo-row {
+  display: inline-flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.top-series__pilot-badges {
+  display: inline-flex;
+  align-items: flex-end;
+}
+
+.top-series__pilot-link:not(:first-child) {
+  margin-left: -14px;
+}
+
+.top-series__pilot-link:nth-child(1) {
+  z-index: 3;
+}
+
+.top-series__pilot-link:nth-child(2) {
+  z-index: 2;
+}
+
+.top-series__pilot-link:nth-child(3) {
+  z-index: 1;
+}
+
+.top-series__pilot-badge {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--surface-2);
+  border: 2px solid var(--border);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22);
+  color: var(--accent);
+  font-family: Oswald, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.top-series__pilot-badge--place-1 {
+  width: 3.1rem;
+  height: 3.1rem;
+  font-size: 0.92rem;
+  border-color: #d4af37;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(212, 175, 55, 0.35);
+}
+
+.top-series__pilot-badge--place-2 {
+  width: 2.8rem;
+  height: 2.8rem;
+  font-size: 0.85rem;
+  border-color: #b8bcc6;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(184, 188, 198, 0.35);
+}
+
+.top-series__pilot-badge--place-3 {
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: 0.78rem;
+  border-color: #b87333;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(184, 115, 51, 0.35);
+}
+
+.top-series__pilot-badge img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.top-series__pilot-badge-fallback {
+  line-height: 1;
+}
+
 .top-series__rank {
   position: absolute;
   top: 0.85rem;
@@ -234,12 +380,16 @@ onUnmounted(() => {
   line-height: 1.15;
 }
 
+.top-series__series-name-link {
+  display: inline-block;
+}
+
 .top-series__slot--leader .top-series__name {
   font-size: clamp(1.05rem, 2vw, 1.25rem);
 }
 
-.top-series__code {
-  margin: 0;
+.top-series__no-leader {
+  margin: 0.15rem 0 0;
   font-size: 0.78rem;
 }
 
@@ -251,11 +401,15 @@ onUnmounted(() => {
 
 .top-series__meta div {
   display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
 }
 
 .top-series__meta dt {
+  margin: 0;
   font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -328,9 +482,11 @@ onUnmounted(() => {
 }
 
 .top-series__meta dd {
+  order: -1;
   margin: 0;
   font-weight: 700;
-  font-size: 1.05rem;
+  font-size: 0.95rem;
+  line-height: 1;
   color: var(--accent);
 }
 

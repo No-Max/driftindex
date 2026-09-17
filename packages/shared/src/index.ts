@@ -160,6 +160,11 @@ export interface SeriesCard extends SeriesSummary {
   logoUrl: string | null;
 }
 
+export interface HomeChampionshipStandingEntry {
+  pilot: PilotSummary;
+  points: number;
+}
+
 export interface HomeChampionshipCard {
   series: SeriesCard;
   seasonYear: number;
@@ -167,6 +172,8 @@ export interface HomeChampionshipCard {
   seriesStartYear: number;
   leader: PilotSummary | null;
   leaderPoints: number | null;
+  /** Current season standings, places 1–3 when available. */
+  topThree: HomeChampionshipStandingEntry[];
   standingsPath: string;
 }
 

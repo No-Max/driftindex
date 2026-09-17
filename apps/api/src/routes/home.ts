@@ -70,6 +70,10 @@ homeRouter.get('/home', async (req, res) => {
       seriesStartYear: startYearBySeriesId.get(series.id) ?? season.year,
       leader: leader ? toPilotCard(leader.pilot, leader.number) : null,
       leaderPoints: leader?.totalPoints ?? null,
+      topThree: standings.slice(0, 3).map((row) => ({
+        pilot: toPilotCard(row.pilot, row.number),
+        points: row.totalPoints,
+      })),
       standingsPath: `/series/${series.slug}/${season.year}`,
     });
 

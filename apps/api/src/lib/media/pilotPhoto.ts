@@ -1,5 +1,35 @@
 import type { PrismaClient } from '@prisma/client';
+import {
+  PILOT_PHOTO_PREFER_URL,
+  PILOT_PHOTO_SERIES_ALIAS,
+  PILOT_PHOTO_SERIES_PREFER,
+} from '../../data/pilot-photo-overrides.js';
 import { mirrorPilotSeriesPortrait } from './mirror.js';
+
+export function preferredSeriesPhotoUrl(
+  pilotSlug: string,
+  seriesPhotos: Array<{ seriesSlug: string; photoUrl: string | null }>,
+): string | null {
+  const preferSlug = PILOT_PHOTO_SERIES_PREFER[pilotSlug];
+  if (!preferSlug) return null;
+  return (
+    seriesPhotos.find((photo) => photo.seriesSlug === preferSlug)?.photoUrl
+    ?? PILOT_PHOTO_PREFER_URL[pilotSlug]
+    ?? null
+  );
+}
+
+export function resolveSeriesPhotoUrl(
+  pilotSlug: string,
+  seriesSlug: string,
+  photoUrl: string | null,
+  preferUrl: string | null,
+): string | null {
+  if (!preferUrl) return photoUrl;
+  const aliasSeries = PILOT_PHOTO_SERIES_ALIAS[pilotSlug];
+  if (aliasSeries?.includes(seriesSlug)) return preferUrl;
+  return photoUrl;
+}
 
 export async function upsertPilotSeriesPhoto(
   prisma: PrismaClient,
@@ -42,10 +72,32 @@ export async function upsertPilotSeriesPhoto(
 
 /** Pick the highest-prestige series photo as the pilot's card avatar. */
 export async function syncPilotPrimaryPhoto(prisma: PrismaClient, pilotId: string): Promise<void> {
+  const pilot = await prisma.pilot.findUnique({
+    where: { id: pilotId },
+    select: { slug: true },
+  });
+
   const photos = await prisma.pilotSeriesPhoto.findMany({
     where: { pilotId, photoUrl: { not: null } },
-    include: { series: { select: { featuredOrder: true } } },
+    include: { series: { select: { slug: true, featuredOrder: true } } },
   });
+
+  const preferSeriesSlug = pilot ? PILOT_PHOTO_SERIES_PREFER[pilot.slug] : undefined;
+  const preferred = preferSeriesSlug
+    ? photos.find((photo) => photo.series.slug === preferSeriesSlug)
+    : undefined;
+
+  if (preferred?.photoUrl) {
+    await prisma.pilot.update({
+      where: { id: pilotId },
+      data: {
+        photoUrl: preferred.photoUrl,
+        photoSourceUrl: preferred.photoSourceUrl,
+        photoUpdatedAt: preferred.photoUpdatedAt,
+      },
+    });
+    return;
+  }
 
   photos.sort((a, b) => {
     const orderA = a.series.featuredOrder ?? Number.MAX_SAFE_INTEGER;
