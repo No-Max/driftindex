@@ -104,6 +104,7 @@ model Event {
   stageCoefficient Float?
   gridSource       GridSource?
   results          EventResult[]
+  teamResults      EventTeamResult[]
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 
@@ -176,11 +177,27 @@ model PilotSeriesPhoto {
 }
 
 model Team {
-  id        String        @id @default(cuid())
-  name      String
-  results   EventResult[]
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  id              String            @id @default(cuid())
+  name            String
+  results         EventResult[]
+  eventResults    EventTeamResult[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+model EventTeamResult {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  points    Int      @default(0)
+  position  Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([eventId, teamId])
+  @@index([teamId])
 }
 
 model EventResult {

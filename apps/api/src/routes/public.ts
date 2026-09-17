@@ -2,7 +2,7 @@ import {
   compareEventResultsChronologically,
   type DataSource,
   type PilotListEntry,
-  type PilotListSeriesFilter,
+  type PilotsListSeriesFilter,
   type PilotListSeriesParticipation,
   type PilotProfileResponse,
   type PilotsListResponse,
@@ -26,7 +26,7 @@ import { computePilotStats, toStatsInput } from '../lib/pilotStats.js';
 import { prisma } from '../lib/prisma.js';
 import { loadSeriesLogoMap, seriesLogoFromMap } from '../lib/seriesLogos.js';
 import { computePrestigeRanking, persistPrestigeRanking } from '../lib/seriesOverlap.js';
-import { computeStandings } from '../lib/standings.js';
+import { computeStandings, computeTeamStandings } from '../lib/standings.js';
 import { toTrackSummary } from '../lib/trackDto.js';
 
 export const publicRouter = Router();
@@ -282,7 +282,7 @@ publicRouter.get('/series/:slug/seasons/:year/events/:eventSlug', async (req, re
             include: {
               track: true,
               results: {
-                include: { pilot: true },
+                include: { pilot: true, team: true },
               },
             },
           },
@@ -354,6 +354,7 @@ publicRouter.get('/series/:slug/seasons/:year/events/:eventSlug', async (req, re
         tandemBattles: result.tandemBattles,
         tandemWins: result.tandemWins,
         points: result.points,
+        team: result.team?.name ?? null,
       };
     }),
   };
@@ -381,6 +382,9 @@ publicRouter.get('/series/:slug/seasons/:year/standings', async (req, res) => {
               results: {
                 include: { pilot: true },
               },
+              teamResults: {
+                include: { team: true },
+              },
             },
           },
         },
@@ -396,17 +400,21 @@ publicRouter.get('/series/:slug/seasons/:year/standings', async (req, res) => {
 
   const events = season.events;
   const computed = computeStandings(events);
-  const standings = computed.map((row) => ({
-    rank: row.rank,
-    pilotSlug: row.pilot.slug,
-    firstName: row.pilot.firstName,
-    lastName: row.pilot.lastName,
-    country: row.pilot.country,
-    number: row.number,
-    totalPoints: row.totalPoints,
-    eventPoints: row.eventPoints,
-    eventQual: row.eventQual,
-  }));
+  const standings = computed.map((row) => {
+    const { firstName, lastName } = resolvePilotDisplayNames(row.pilot);
+    return {
+      rank: row.rank,
+      pilotSlug: row.pilot.slug,
+      firstName,
+      lastName,
+      country: row.pilot.country,
+      number: row.number,
+      totalPoints: row.totalPoints,
+      eventPoints: row.eventPoints,
+      eventQual: row.eventQual,
+    };
+  });
+  const teamStandings = computeTeamStandings(events);
 
   const payload: SeasonStandingsResponse = {
     series: {
@@ -432,6 +440,7 @@ publicRouter.get('/series/:slug/seasons/:year/standings', async (req, res) => {
       eventPath: seriesEventPath(series.slug, season.year, event.slug),
     })),
     standings,
+    teamStandings,
     source: seasonSource(season),
   };
 

@@ -121,8 +121,16 @@ export function toEnglishPilotNames(input: {
 
   if (firstLatin && lastLatin) {
     return {
-      firstName: titleCaseWord(input.firstName.trim()),
-      lastName: titleCaseWord(input.lastName.trim()),
+      firstName: input.firstName
+        .trim()
+        .split(/\s+/)
+        .map(titleCaseWord)
+        .join(' '),
+      lastName: input.lastName
+        .trim()
+        .split(/\s+/)
+        .map(titleCaseWord)
+        .join(' '),
     };
   }
 
