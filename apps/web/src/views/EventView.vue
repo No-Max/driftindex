@@ -88,12 +88,6 @@ function formatTandemWins(row: SeasonEventResponse['results'][0]) {
   if (row.tandemBattles == null || row.tandemBattles <= 0) return '—';
   return row.tandemWins ?? 0;
 }
-
-function formatTandemWinPct(row: SeasonEventResponse['results'][0]) {
-  if (row.tandemBattles == null || row.tandemBattles <= 0) return '—';
-  const wins = row.tandemWins ?? 0;
-  return `${Math.round((wins / row.tandemBattles) * 100)}%`;
-}
 </script>
 
 <template>
@@ -168,7 +162,6 @@ function formatTandemWinPct(row: SeasonEventResponse['results'][0]) {
               <th v-if="showTandem">{{ t('eventDetail.tandemPlace') }}</th>
               <th v-if="showDuels">{{ t('eventDetail.tandemBattles') }}</th>
               <th v-if="showDuels">{{ t('eventDetail.tandemWins') }}</th>
-              <th v-if="showDuels">{{ t('eventDetail.tandemWinPct') }}</th>
               <th>{{ t('pilot.points') }}</th>
             </tr>
           </thead>
@@ -184,7 +177,6 @@ function formatTandemWinPct(row: SeasonEventResponse['results'][0]) {
               <td v-if="showTandem" class="muted num-col">{{ row.tandemPosition ?? '—' }}</td>
               <td v-if="showDuels" class="muted num-col">{{ formatTandemBattles(row) }}</td>
               <td v-if="showDuels" class="muted num-col">{{ formatTandemWins(row) }}</td>
-              <td v-if="showDuels" class="muted num-col">{{ formatTandemWinPct(row) }}</td>
               <td class="num-col"><strong>{{ row.points }}</strong></td>
             </tr>
           </tbody>
