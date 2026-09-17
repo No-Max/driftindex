@@ -38,6 +38,36 @@ export function p4pDisplayScore(rawP4P: number): number {
   return Math.round((100 - rawP4P) * 100) / 100;
 }
 
+/** Featured-series participations for one pilot in a season (best P4P series first). */
+export function pilotSeriesParticipations(
+  seriesList: P4PInputSeries[],
+  pilotId: string,
+): P4PSeriesParticipation[] {
+  type Scored = P4PSeriesParticipation & { adjusted: number };
+  const rows: Scored[] = [];
+
+  for (const series of seriesList) {
+    const row = series.standings.find((standing) => standing.pilot.id === pilotId);
+    if (!row || row.avgPlace <= 0) continue;
+
+    const adjusted =
+      row.avgPlace - series.seriesHardness - qualScoreP4PAdjustment(row.avgQualScore);
+    rows.push({
+      slug: series.slug,
+      name: series.name,
+      shortName: series.shortName,
+      logoUrl: series.logoUrl ?? null,
+      weight: Math.round(series.seriesHardness * 100) / 100,
+      place: row.avgPlace,
+      avgQualScore: row.avgQualScore,
+      adjusted,
+    });
+  }
+
+  rows.sort((a, b) => a.adjusted - b.adjusted);
+  return rows.map(({ adjusted: _adjusted, ...participation }) => participation);
+}
+
 export interface P4PSeriesParticipation {
   slug: string;
   name: string;

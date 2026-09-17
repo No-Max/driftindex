@@ -298,23 +298,29 @@ export interface PilotSeriesPhoto {
   photoUrl: string;
 }
 
+export interface PilotListSeriesParticipation {
+  slug: string;
+  name: string;
+  shortName: string | null;
+  logoUrl?: string | null;
+  weight: number;
+  place: number;
+  avgQualScore: number | null;
+}
+
 export interface PilotListEntry {
   rank: number | null;
   score: number | null;
   pilot: PilotSummary;
-  bestSeries: {
-    slug: string;
-    name: string;
-    shortName: string | null;
-    logoUrl?: string | null;
-    weight: number;
-    place: number;
-    avgQualScore: number | null;
-  } | null;
+  bestSeries: PilotListSeriesParticipation | null;
+  /** Featured series the pilot entered in this season (best P4P series first). */
+  seriesParticipations: PilotListSeriesParticipation[];
 }
 
 export interface PilotsListResponse {
   year: number;
+  pilotCount: number;
+  seriesCount: number;
   pilots: PilotListEntry[];
 }
 

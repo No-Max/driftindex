@@ -205,20 +205,11 @@ onUnmounted(() => {
   margin-top: calc(var(--podium-step) * 0.4);
 }
 
-.top-series__slot[data-rank='2'] .top-series__card {
-  max-width: 440px;
-}
-
-.top-series__slot[data-rank='3'] .top-series__card {
-  max-width: 420px;
-}
-
 .top-series__card {
   position: relative;
   display: flex;
   flex: 1;
   width: 100%;
-  max-width: 460px;
   flex-direction: column;
   align-items: center;
   text-align: center;
@@ -535,6 +526,18 @@ onUnmounted(() => {
   }
 
   .top-series__slot[data-rank='3'] {
+    max-width: 420px;
+  }
+
+  .top-series__card {
+    max-width: 460px;
+  }
+
+  .top-series__slot[data-rank='2'] .top-series__card {
+    max-width: 440px;
+  }
+
+  .top-series__slot[data-rank='3'] .top-series__card {
     max-width: 420px;
   }
 

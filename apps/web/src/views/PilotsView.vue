@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { PilotListEntry, PilotsListResponse } from '@drift-index/shared';
+import type { PilotListEntry, PilotListSeriesParticipation, PilotsListResponse } from '@drift-index/shared';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { fetchPilots } from '../api/client';
@@ -58,18 +58,12 @@ function pilotName(entry: PilotListEntry) {
   return formatPilotName(entry.pilot);
 }
 
-function seriesName(entry: PilotListEntry) {
-  if (!entry.bestSeries) return '';
-  return entry.bestSeries.name;
-}
-
-function bestSeriesMeta(entry: PilotListEntry) {
-  if (!entry.bestSeries) return '';
+function seriesMeta(series: PilotListSeriesParticipation) {
   const parts = [
-    t('home.p4pAvgPlace', { place: formatAvgPlaceRange(entry.bestSeries.place) }),
+    t('home.p4pAvgPlace', { place: formatAvgPlaceRange(series.place) }),
   ];
-  if (entry.bestSeries.avgQualScore != null) {
-    parts.push(t('home.p4pAvgQual', { score: entry.bestSeries.avgQualScore.toFixed(1) }));
+  if (series.avgQualScore != null) {
+    parts.push(t('home.p4pAvgQual', { score: series.avgQualScore.toFixed(1) }));
   }
   return parts.join(' · ');
 }
@@ -88,6 +82,10 @@ function bestSeriesMeta(entry: PilotListEntry) {
       </label>
     </div>
 
+    <p v-if="data && !loading && !error" class="pilots-summary muted">
+      {{ t('pilots.summary', { pilotCount: data.pilotCount, seriesCount: data.seriesCount }) }}
+    </p>
+
     <p v-if="loading" class="muted">{{ t('states.loading') }}</p>
     <p v-else-if="error" class="muted">{{ t('states.error') }}</p>
 
@@ -104,30 +102,41 @@ function bestSeriesMeta(entry: PilotListEntry) {
           :class="{ 'pilots-list__item--unranked': entry.rank == null }"
         >
           <RouterLink :to="`/pilots/${entry.pilot.slug}`" class="pilots-list__link">
-            <span class="pilots-list__rank">
-              {{ entry.rank ?? '—' }}
-            </span>
             <PilotAvatar :pilot="entry.pilot" size="md" />
             <div class="pilots-list__body">
               <p class="pilots-list__name">
                 <span v-if="entry.pilot.number" class="muted">#{{ entry.pilot.number }} · </span>
                 {{ pilotName(entry) }}
               </p>
-              <p v-if="entry.bestSeries" class="pilots-list__series">
-                <SeriesLogo
-                  :slug="entry.bestSeries.slug"
-                  :name="entry.bestSeries.name"
-                  :logo-url="entry.bestSeries.logoUrl"
-                  size="sm"
-                />
-                <span>{{ seriesName(entry) }} · {{ bestSeriesMeta(entry) }}</span>
-                <span class="muted">· hardness {{ entry.bestSeries.weight }}</span>
+              <p
+                v-if="entry.seriesParticipations.length > 0"
+                class="pilots-list__series"
+              >
+                <span
+                  v-for="series in entry.seriesParticipations"
+                  :key="series.slug"
+                  class="pilots-list__series-item"
+                >
+                  <SeriesLogo
+                    :slug="series.slug"
+                    :name="series.name"
+                    :logo-url="series.logoUrl"
+                    size="sm"
+                  />
+                  <span>{{ seriesMeta(series) }}</span>
+                  <span class="muted">· {{ t('pilots.hardnessShort') }} {{ series.weight }}</span>
+                </span>
               </p>
               <p v-else class="pilots-list__series muted">{{ t('pilots.unranked') }}</p>
             </div>
-            <span class="pilots-list__score">
-              {{ entry.score ?? '—' }}
-            </span>
+            <div class="pilots-list__tail">
+              <span class="pilots-list__rank">
+                {{ entry.rank ?? '—' }}
+              </span>
+              <span class="pilots-list__score">
+                {{ entry.score ?? '—' }}
+              </span>
+            </div>
           </RouterLink>
         </li>
       </ol>
@@ -151,6 +160,11 @@ function bestSeriesMeta(entry: PilotListEntry) {
 
 .hero .page-subtitle {
   margin-bottom: 0;
+}
+
+.pilots-summary {
+  margin: 0.85rem 0 0;
+  font-size: 0.95rem;
 }
 
 .search {
@@ -202,17 +216,39 @@ function bestSeriesMeta(entry: PilotListEntry) {
 
 .pilots-list__link {
   display: grid;
-  grid-template-columns: 3rem auto 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.85rem;
   padding: 0.75rem 1rem;
 }
 
+.pilots-list__link :deep(.avatar--md) {
+  width: 64px;
+  height: 64px;
+  font-size: 1.02rem;
+}
+
+.pilots-list__tail {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  align-self: stretch;
+  justify-content: space-between;
+  gap: 0.35rem;
+  height: 100%;
+  min-width: 3rem;
+  flex-shrink: 0;
+}
+
 .pilots-list__rank {
-  font-family: Oswald, sans-serif;
-  font-size: 1.05rem;
+  font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
   color: var(--accent);
-  text-align: center;
+  opacity: 0.9;
 }
 
 .pilots-list__item--unranked .pilots-list__rank {
@@ -229,17 +265,41 @@ function bestSeriesMeta(entry: PilotListEntry) {
 }
 
 .pilots-list__series {
-  display: inline-flex;
+  display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.35rem 0;
   margin: 0.15rem 0 0;
   font-size: 0.82rem;
 }
 
+.pilots-list__series-item {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.pilots-list__series-item :deep(.series-logo) {
+  width: 28px;
+  height: 28px;
+}
+
+.pilots-list__series-item:not(:last-child)::after {
+  content: '';
+  display: inline-block;
+  width: 1px;
+  height: 1.05rem;
+  margin: 0 0.55rem;
+  background: var(--border);
+  vertical-align: middle;
+}
+
 .pilots-list__score {
+  font-size: 0.85rem;
   font-weight: 700;
-  color: var(--accent);
+  color: var(--text);
   min-width: 3rem;
   text-align: right;
 }
@@ -262,9 +322,13 @@ function bestSeriesMeta(entry: PilotListEntry) {
 
 @media (max-width: 640px) {
   .pilots-list__link {
-    grid-template-columns: 2.5rem auto 1fr auto;
+    align-items: center;
     gap: 0.65rem;
     padding: 0.65rem 0.75rem;
+  }
+
+  .pilots-list__rank {
+    font-size: 1.05rem;
   }
 }
 </style>

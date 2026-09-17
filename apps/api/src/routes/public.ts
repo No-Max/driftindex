@@ -2,6 +2,7 @@ import {
   compareEventResultsChronologically,
   type DataSource,
   type PilotListEntry,
+  type PilotListSeriesParticipation,
   type PilotProfileResponse,
   type PilotsListResponse,
   type SeasonEventResponse,
@@ -14,7 +15,7 @@ import {
   type TracksListResponse,
 } from '@drift-index/shared';
 import { Router } from 'express';
-import { computeP4P } from '../lib/p4p.js';
+import { computeP4P, pilotSeriesParticipations, type P4PSeriesParticipation } from '../lib/p4p.js';
 import { loadP4PInputs } from '../lib/p4pData.js';
 import { preferredSeriesPhotoUrl, resolveSeriesPhotoUrl } from '../lib/media/pilotPhoto.js';
 import { toPilotCard } from '../lib/pilot.js';
@@ -449,6 +450,25 @@ function seasonSource(season: {
   };
 }
 
+function toPilotListSeries(participation: P4PSeriesParticipation): PilotListSeriesParticipation {
+  return {
+    slug: participation.slug,
+    name: participation.name,
+    shortName: participation.shortName,
+    logoUrl: participation.logoUrl,
+    weight: participation.weight,
+    place: participation.place,
+    avgQualScore: participation.avgQualScore,
+  };
+}
+
+function listPilotSeasonSeries(
+  p4pInputs: Awaited<ReturnType<typeof loadP4PInputs>>,
+  pilotId: string,
+): PilotListSeriesParticipation[] {
+  return pilotSeriesParticipations(p4pInputs, pilotId).map(toPilotListSeries);
+}
+
 publicRouter.get('/pilots', async (req, res) => {
   const year = parseOptionalYear(req.query.year) ?? new Date().getFullYear();
   const prestige = await computePrestigeRanking(prisma, year);
@@ -480,33 +500,35 @@ publicRouter.get('/pilots', async (req, res) => {
     orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
   });
 
-  const ranked: PilotListEntry[] = p4pRows.map((row) => ({
-    rank: row.rank,
-    score: row.score,
-    pilot: {
-      ...toPilotCard(row.pilot),
-      stats: statsByPilotId.get(row.pilot.id),
-    },
-    bestSeries: {
-      slug: row.bestSeriesSlug,
-      name: row.bestSeriesName,
-      shortName: row.bestSeriesShortName,
-      logoUrl: row.bestSeriesLogoUrl,
-      weight: row.bestSeriesWeight,
-      place: row.bestSeriesPlace,
-      avgQualScore: row.bestSeriesAvgQual,
-    },
-  }));
+  const ranked: PilotListEntry[] = p4pRows.map((row) => {
+    const seriesParticipations = listPilotSeasonSeries(p4pInputs, row.pilot.id);
+    return {
+      rank: row.rank,
+      score: row.score,
+      pilot: {
+        ...toPilotCard(row.pilot),
+        stats: statsByPilotId.get(row.pilot.id),
+      },
+      bestSeries: seriesParticipations[0] ?? null,
+      seriesParticipations,
+    };
+  });
 
-  const unranked: PilotListEntry[] = unrankedPilots.map((pilot) => ({
-    rank: null,
-    score: null,
-    pilot: toPilotCard(pilot),
-    bestSeries: null,
-  }));
+  const unranked: PilotListEntry[] = unrankedPilots.map((pilot) => {
+    const seriesParticipations = listPilotSeasonSeries(p4pInputs, pilot.id);
+    return {
+      rank: null,
+      score: null,
+      pilot: toPilotCard(pilot),
+      bestSeries: seriesParticipations[0] ?? null,
+      seriesParticipations,
+    };
+  });
 
   const payload: PilotsListResponse = {
     year,
+    pilotCount: ranked.length + unranked.length,
+    seriesCount: p4pInputs.length,
     pilots: [...ranked, ...unranked],
   };
 
