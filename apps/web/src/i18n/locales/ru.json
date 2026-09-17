@@ -38,7 +38,11 @@
     "calendarPage": "Месяц календаря {n}",
     "calendarPrev": "Предыдущие месяцы",
     "calendarNext": "Следующие месяцы",
+    "topSeriesAll": "Полный prestige-рейтинг серий →",
+    "hardnessHelpAria": "Что такое Hardness",
     "sections": {
+      "topSeries": "Топ‑3 серии",
+      "topSeriesSub": "Наивысший престиж по overlap hardness",
       "championships": "Super Podium",
       "championshipsSub": "Актуальные лидеры топ-серий",
       "qualWinners": "Победители квалификаций",

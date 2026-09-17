@@ -38,7 +38,11 @@
     "calendarPage": "Calendar month {n}",
     "calendarPrev": "Previous months",
     "calendarNext": "Next months",
+    "topSeriesAll": "Full series prestige ranking →",
+    "hardnessHelpAria": "Explain Hardness",
     "sections": {
+      "topSeries": "Top 3 series",
+      "topSeriesSub": "Highest prestige by overlap hardness",
       "championships": "Super Podium",
       "championshipsSub": "Current season leaders across top series",
       "qualWinners": "Qualifying winners",

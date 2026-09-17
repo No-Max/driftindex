@@ -8,6 +8,7 @@ import FanVoteStubs from '../components/home/FanVoteStubs.vue';
 import P4PPodium from '../components/home/P4PPodium.vue';
 import QualWinners from '../components/home/QualWinners.vue';
 import SectionHeading from '../components/home/SectionHeading.vue';
+import Top3Series from '../components/home/Top3Series.vue';
 import YearCalendar from '../components/home/YearCalendar.vue';
 
 const { t } = useI18n();
@@ -39,6 +40,14 @@ onMounted(async () => {
     <template v-else-if="data">
       <section class="home-section">
         <P4PPodium :items="data.poundForPound" :year="data.year" />
+      </section>
+
+      <section v-if="data.seriesPrestige.entries.length > 0" class="home-section">
+        <SectionHeading
+          :title="t('home.sections.topSeries')"
+          :subtitle="t('home.sections.topSeriesSub')"
+        />
+        <Top3Series :prestige="data.seriesPrestige" :year="data.year" />
       </section>
 
       <section class="home-section">
