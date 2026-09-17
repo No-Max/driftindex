@@ -1,5 +1,6 @@
 import * as cheerio from 'cheerio';
-import { buildNameKey, englishNamesFromNameRu } from '../lib/transliterate.js';
+import { canonicalSurnameToken, tokensSimilar } from '../lib/battleMatch.js';
+import { buildNameKey, englishNamesFromNameRu, isLatinName, normalizeToken } from '../lib/transliterate.js';
 import { listAlmanacRdsEvents } from './rds-almanac.js';
 import { parseQualRunScore } from './rds-gp.js';
 
@@ -152,12 +153,38 @@ function dbPilotNameKey(
   return buildNameKey(firstName, lastName, alias);
 }
 
+function almanacPilotNameKey(nameAlias: string): string {
+  const trimmed = nameAlias.trim();
+  const lettersOnly = trimmed.replace(/[^a-zA-Z\u00C0-\u024F\u0400-\u04FF]/g, '');
+  if (lettersOnly && isLatinName(lettersOnly) && !/[а-яё]/i.test(trimmed)) {
+    const parts = trimmed.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      const firstName = parts[0]!;
+      const lastName = parts.slice(1).join(' ');
+      return buildNameKey(firstName, lastName, trimmed);
+    }
+  }
+  const names = pilotNamesFromAlmanacRow(trimmed);
+  return buildNameKey(names.firstName, names.lastName, names.nameAlias);
+}
+
+function nameKeysCompatible(a: string, b: string): boolean {
+  if (a === b) return true;
+  const ta = a.split('|').filter(Boolean).map((token) => canonicalSurnameToken(normalizeToken(token)));
+  const tb = b.split('|').filter(Boolean).map((token) => canonicalSurnameToken(normalizeToken(token)));
+  let shared = 0;
+  for (const xa of ta) {
+    if (tb.some((xb) => tokensSimilar(xa, xb))) shared += 1;
+  }
+  return shared >= 2;
+}
+
 export type AlmanacDbEventMapping = Map<string, string>;
 
 function overlapSize(a: Set<string>, b: Set<string>): number {
   let count = 0;
-  for (const key of a) {
-    if (b.has(key)) count += 1;
+  for (const keyA of a) {
+    if ([...b].some((keyB) => nameKeysCompatible(keyA, keyB))) count += 1;
   }
   return count;
 }
@@ -167,8 +194,7 @@ function winnerKeyFromResults(
 ): string | null {
   const winner = rows.find((row) => row.tandemPosition === 1);
   if (!winner) return null;
-  const names = pilotNamesFromAlmanacRow(winner.nameAlias);
-  return buildNameKey(names.firstName, names.lastName, names.nameAlias);
+  return almanacPilotNameKey(winner.nameAlias);
 }
 
 export function matchAlmanacEventsToDbEventsByOverlap(
@@ -184,7 +210,7 @@ export function matchAlmanacEventsToDbEventsByOverlap(
   for (const almanac of almanacEvents) {
     if (!almanac.winnerKey) continue;
     for (const db of dbEvents) {
-      if (db.winnerKey !== almanac.winnerKey) continue;
+      if (!nameKeysCompatible(almanac.winnerKey, db.winnerKey)) continue;
       const score = overlapSize(almanac.nameKeys, db.nameKeys);
       winnerPairs.push({ almanacEventId: almanac.almanacEventId, eventId: db.eventId, score });
     }
@@ -205,7 +231,7 @@ export function matchAlmanacEventsToDbEventsByOverlap(
       if (
         almanac.winnerKey &&
         db.winnerKey &&
-        almanac.winnerKey !== db.winnerKey
+        !nameKeysCompatible(almanac.winnerKey, db.winnerKey)
       ) {
         continue;
       }
@@ -248,12 +274,10 @@ export async function buildAlmanacToDbEventMapping(
     const details = await fetchAlmanacRdsEventDetails(meta.almanacEventId);
     const nameKeys = new Set<string>();
     for (const row of details?.results ?? []) {
-      const names = pilotNamesFromAlmanacRow(row.nameAlias);
-      nameKeys.add(buildNameKey(names.firstName, names.lastName, names.nameAlias));
+      nameKeys.add(almanacPilotNameKey(row.nameAlias));
     }
     for (const row of details?.qualification ?? []) {
-      const names = pilotNamesFromAlmanacRow(row.nameAlias);
-      nameKeys.add(buildNameKey(names.firstName, names.lastName, names.nameAlias));
+      nameKeys.add(almanacPilotNameKey(row.nameAlias));
     }
     almanacPairs.push({
       almanacEventId: meta.almanacEventId,
