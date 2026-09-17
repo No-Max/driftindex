@@ -5,7 +5,9 @@
     "home": "Главная",
     "pilots": "Пилоты",
     "series": "Серии",
-    "tracks": "Трассы"
+    "tracks": "Трассы",
+    "openMenu": "Открыть меню",
+    "closeMenu": "Закрыть меню"
   },
   "lang": {
     "en": "EN",
@@ -19,7 +21,7 @@
     "pole": "Победитель квалификации",
     "qualScore": "/100",
     "gap": "отрыв",
-    "p4pScore": "index points",
+    "p4pScore": "idx pt",
     "p4pAvgPlace": "~место {place}",
     "p4pAvgQual": "~квала {score}",
     "p4pLeader": "Drift Index #1",
@@ -173,7 +175,7 @@
       "tandemRecord": "Парные заезды",
       "events": "Этапы",
       "seasons": "Сезоны",
-      "avgQual": "Средний балл квалификации (/100)",
+      "avgQual": "Сред. квала",
       "duelsShort": "парные",
       "eventsShort": "этапов",
       "qualShort": "/100"

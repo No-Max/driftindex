@@ -5,7 +5,9 @@
     "home": "Home",
     "pilots": "Pilots",
     "series": "Series",
-    "tracks": "Tracks"
+    "tracks": "Tracks",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
   },
   "lang": {
     "en": "EN",
@@ -19,7 +21,7 @@
     "pole": "Qualifying winner",
     "qualScore": "/100",
     "gap": "gap",
-    "p4pScore": "index points",
+    "p4pScore": "idx pt",
     "p4pAvgPlace": "~place {place}",
     "p4pAvgQual": "~qual {score}",
     "p4pLeader": "Drift Index #1",
@@ -173,7 +175,7 @@
       "tandemRecord": "Tandem duels",
       "events": "Events",
       "seasons": "Seasons",
-      "avgQual": "Avg qual score (/100)",
+      "avgQual": "Avg qual",
       "duelsShort": "duels",
       "eventsShort": "events",
       "qualShort": "/100"

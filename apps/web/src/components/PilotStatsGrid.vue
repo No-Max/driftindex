@@ -38,17 +38,15 @@ function formatQual(value: number | null) {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.75rem;
   margin: 0;
+  min-width: 0;
 }
 
 .stats__item {
+  min-width: 0;
   padding: 0.85rem 1rem;
   border-radius: 12px;
   background: var(--surface-2);
   border: 1px solid var(--border);
-}
-
-.stats--compact .stats__item {
-  padding: 0.55rem 0.65rem;
 }
 
 .stats__item dt {
@@ -57,6 +55,9 @@ function formatQual(value: number | null) {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .stats__item dd {
@@ -70,9 +71,12 @@ function formatQual(value: number | null) {
   font-size: 1rem;
 }
 
-@media (max-width: 720px) {
-  .stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+.stats--compact .stats__item {
+  padding: 0.55rem 0.45rem;
+}
+
+.stats--compact .stats__item dt {
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
 }
 </style>

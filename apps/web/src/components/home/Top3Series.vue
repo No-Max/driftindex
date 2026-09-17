@@ -186,6 +186,7 @@ onUnmounted(() => {
 .top-series__slot {
   display: flex;
   flex: 1 1 0;
+  justify-content: center;
   min-width: 0;
 }
 
@@ -204,10 +205,20 @@ onUnmounted(() => {
   margin-top: calc(var(--podium-step) * 0.4);
 }
 
+.top-series__slot[data-rank='2'] .top-series__card {
+  max-width: 440px;
+}
+
+.top-series__slot[data-rank='3'] .top-series__card {
+  max-width: 420px;
+}
+
 .top-series__card {
   position: relative;
   display: flex;
   flex: 1;
+  width: 100%;
+  max-width: 460px;
   flex-direction: column;
   align-items: center;
   text-align: center;
@@ -505,10 +516,26 @@ onUnmounted(() => {
   text-decoration: underline;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 1024px) {
   .top-series__podium {
     flex-direction: column;
-    align-items: stretch;
+    align-items: center;
+  }
+
+  .top-series__slot {
+    width: 100%;
+  }
+
+  .top-series__slot[data-rank='1'] {
+    max-width: 460px;
+  }
+
+  .top-series__slot[data-rank='2'] {
+    max-width: 440px;
+  }
+
+  .top-series__slot[data-rank='3'] {
+    max-width: 420px;
   }
 
   .top-series__slot[data-rank='1'],

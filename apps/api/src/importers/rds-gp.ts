@@ -255,7 +255,11 @@ function parseEventRow(
   const qual = parseQualCell(texts[qualCellIndex]!);
   const runScores = texts
     .slice(pilotCellIndex + 1, qualCellIndex)
-    .map(parseQualRunScore)
+    .map((raw) => {
+      const parsed = parseQualRunScore(raw);
+      if (parsed == null || !isPlausibleRdsQualRunScore(parsed, raw)) return null;
+      return parsed;
+    })
     .filter((value): value is number => value != null);
 
   let totalPoints = 0;

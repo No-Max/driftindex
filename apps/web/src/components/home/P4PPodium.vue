@@ -57,7 +57,7 @@ function formatQual(
 <template>
   <div v-if="leader" class="p4p">
     <article class="card p4p-leader">
-      <span class="p4p-leader__rank">#1</span>
+      <span class="p4p-leader__rank">1</span>
       <div class="p4p-leader__body">
         <RouterLink :to="`/pilots/${leader.pilot.slug}`" class="p4p-leader__pilot-link">
           <PilotAvatar :pilot="leader.pilot" size="2xl" />
@@ -168,16 +168,18 @@ function formatQual(
               </RouterLink>
               <span> · {{ bestSeriesMeta(item) }}</span>
             </p>
-            <p v-if="item.pilot.stats && isFeatured(item.rank)" class="p4p-list__meta">
-              <span>{{ item.pilot.stats.eventsCount }} {{ t('pilot.stats.eventsShort') }}</span>
-              <span v-if="item.pilot.stats.avgQualScore != null">
-                {{ item.pilot.stats.avgQualScore.toFixed(1) }} {{ t('pilot.stats.qualShort') }}
-              </span>
+            <p class="p4p-list__meta">
+              <RouterLink :to="`/pilots/${item.pilot.slug}`" class="p4p-list__score">
+                {{ item.score }} {{ t('home.p4pScore') }}
+              </RouterLink>
+              <template v-if="item.pilot.stats && isFeatured(item.rank)">
+                <span>{{ item.pilot.stats.eventsCount }} {{ t('pilot.stats.eventsShort') }}</span>
+                <span v-if="item.pilot.stats.avgQualScore != null">
+                  {{ item.pilot.stats.avgQualScore.toFixed(1) }} {{ t('pilot.stats.qualShort') }}
+                </span>
+              </template>
             </p>
           </div>
-          <RouterLink :to="`/pilots/${item.pilot.slug}`" class="p4p-list__score">
-            {{ item.score }}
-          </RouterLink>
         </div>
       </li>
     </ol>
@@ -198,7 +200,7 @@ function formatQual(
   flex-direction: column;
   height: 100%;
   min-height: 0;
-  padding: 1.75rem 2rem;
+  padding: 1.25rem;
   overflow: hidden;
   border-color: rgba(255, 77, 26, 0.35);
   background: linear-gradient(160deg, rgba(255, 77, 26, 0.1), var(--surface));
@@ -206,10 +208,13 @@ function formatQual(
 
 .p4p-leader__rank {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
-  font-family: Oswald, sans-serif;
-  font-size: 2.5rem;
+  top: 1.25rem;
+  right: 1.25rem;
+  font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  font-size: 3.25rem;
+  font-style: normal;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
   line-height: 1;
   color: var(--accent);
   opacity: 0.9;
@@ -224,7 +229,7 @@ function formatQual(
   gap: 1rem;
   width: 100%;
   min-height: 0;
-  padding-top: 0.5rem;
+  padding: 0;
 }
 
 .p4p-leader__pilot-link,
@@ -394,6 +399,7 @@ function formatQual(
   background: var(--surface);
   overflow: hidden;
   transition: border-color 0.15s;
+  min-width: 0;
 }
 
 .p4p-list__item:hover {
@@ -405,16 +411,23 @@ function formatQual(
 }
 
 .p4p-list__link {
+  position: relative;
   display: grid;
-  grid-template-columns: auto auto 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 0.85rem;
   padding: 0.85rem 1rem;
+  min-width: 0;
 }
 
 .p4p-list__item--compact .p4p-list__link {
   gap: 0.75rem;
   padding: 0.65rem 0.9rem;
+}
+
+.p4p-list__item--compact .p4p-list__rank {
+  top: 0.65rem;
+  right: 0.9rem;
 }
 
 .p4p-list__rank,
@@ -426,11 +439,18 @@ function formatQual(
 }
 
 .p4p-list__rank {
-  font-family: Oswald, sans-serif;
-  font-size: 1.1rem;
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1;
+  font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
   color: var(--accent);
-  min-width: 1.5rem;
-  text-align: center;
+  opacity: 0.9;
 }
 
 .p4p-list__avatar-link,
@@ -440,11 +460,30 @@ function formatQual(
 }
 
 .p4p-list__item--featured .p4p-list__rank {
-  font-size: 1.35rem;
+  font-size: 1.85rem;
+}
+
+.p4p-list__item--featured :deep(.avatar--xl) {
+  width: 90px;
+  height: 90px;
+  font-size: 1.17rem;
 }
 
 .p4p-list__body {
   min-width: 0;
+  max-width: 100%;
+  padding-right: 2rem;
+  overflow: hidden;
+}
+
+.p4p-list__item--featured .p4p-list__body {
+  padding-right: 2.5rem;
+}
+
+.p4p-list__name-link {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .p4p-list__name {
@@ -452,6 +491,9 @@ function formatQual(
   font-family: Oswald, sans-serif;
   text-transform: uppercase;
   font-size: 1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .p4p-list__item--featured .p4p-list__name {
@@ -463,47 +505,164 @@ function formatQual(
 }
 
 .p4p-list__series {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 0.4rem;
   margin: 0.15rem 0 0;
   font-size: 0.78rem;
   color: var(--muted);
-  white-space: nowrap;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.p4p-list__series .p4p-series-link,
+.p4p-list__series > span {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.p4p-list__series .p4p-series-link {
+  flex-shrink: 1;
 }
 
 .p4p-list__meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.35rem 0.5rem;
   margin: 0.35rem 0 0;
   font-size: 0.72rem;
   color: var(--muted);
+  max-width: 100%;
+  min-width: 0;
+}
+
+.p4p-list__meta > span,
+.p4p-list__meta .p4p-list__score {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .p4p-list__item--compact .p4p-list__series {
   font-size: 0.72rem;
 }
 
-.p4p-list__score {
+.p4p-list__meta .p4p-list__score {
   font-weight: 700;
   color: var(--accent);
-  font-size: 0.95rem;
+  font-size: 0.72rem;
 }
 
-.p4p-list__item--featured .p4p-list__score {
-  font-size: 1.05rem;
+.p4p-list__item--featured .p4p-list__meta .p4p-list__score {
+  font-size: 0.78rem;
 }
 
-@media (max-width: 860px) {
+@media (max-width: 1200px) {
   .p4p {
     grid-template-columns: 1fr;
   }
 
   .p4p-leader__body {
-    padding: 0.5rem 0;
+    flex-direction: row;
+    align-items: flex-start;
+    text-align: left;
+    gap: 1rem;
+    padding: 0;
+  }
+
+  .p4p-leader__pilot-link {
+    flex-shrink: 0;
+  }
+
+  .p4p-leader__info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .p4p-leader__events {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .p4p-leader {
+    padding: 1.25rem;
+  }
+
+  .p4p-leader__body {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.85rem;
+    padding: 0;
+  }
+
+  .p4p-leader__info {
+    width: 100%;
+  }
+
+  .p4p-list__link {
+    align-items: flex-start;
+    gap: 0.65rem;
+    padding: 0.65rem 0.75rem;
+  }
+
+  .p4p-list__item--compact .p4p-list__link {
+    padding: 0.55rem 0.75rem;
+  }
+
+  .p4p-list__rank {
+    top: 0.65rem;
+    right: 0.75rem;
+  }
+
+  .p4p-list__item--compact .p4p-list__rank {
+    top: 0.55rem;
+    right: 0.75rem;
+  }
+
+  .p4p-list__body {
+    padding-right: 2.25rem;
+    overflow: visible;
+  }
+
+  .p4p-list__item--featured .p4p-list__body {
+    padding-right: 2.75rem;
+  }
+
+  .p4p-list__name {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    overflow-wrap: anywhere;
+  }
+
+  .p4p-list__series {
+    flex-wrap: wrap;
+    row-gap: 0.2rem;
+    overflow: visible;
+  }
+
+  .p4p-list__series .p4p-series-link,
+  .p4p-list__series > span {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    overflow-wrap: anywhere;
+  }
+
+  .p4p-list__meta > span,
+  .p4p-list__meta .p4p-list__score {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .p4p-list__item--featured :deep(.avatar--xl) {
+    width: 72px;
+    height: 72px;
+    font-size: 1rem;
   }
 }
 </style>
