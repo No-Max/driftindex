@@ -39,7 +39,22 @@ export function useCardSlider(
 
   let timer: ReturnType<typeof setInterval> | null = null;
   let dragStartX = 0;
+  let dragStartY = 0;
+  let pointerActive = false;
+  let dragAxis: 'none' | 'x' | 'y' = 'none';
+  let startedInScrollArea = false;
   let didDrag = false;
+
+  const AXIS_LOCK_PX = 10;
+  const HORIZONTAL_BIAS = 1.25;
+
+  function scrollContainerFromTarget(target: EventTarget | null) {
+    if (!(target instanceof HTMLElement)) return null;
+    const el = target.closest('[data-card-slider-scroll]');
+    if (!(el instanceof HTMLElement)) return null;
+    if (el.scrollHeight <= el.clientHeight + 1) return null;
+    return el;
+  }
 
   function clampIndex() {
     slideIndex.value = Math.min(slideIndex.value, maxIndex.value);
@@ -85,35 +100,74 @@ export function useCardSlider(
 
   function onPointerDown(event: PointerEvent) {
     if (!canNavigate.value || event.button !== 0) return;
-    dragging.value = true;
+
+    pointerActive = true;
+    dragging.value = false;
+    dragAxis = 'none';
+    startedInScrollArea = scrollContainerFromTarget(event.target) != null;
     didDrag = false;
     dragStartX = event.clientX;
+    dragStartY = event.clientY;
     dragOffsetPx.value = 0;
-    viewportRef.value?.setPointerCapture(event.pointerId);
   }
 
   function onPointerMove(event: PointerEvent) {
-    if (!dragging.value) return;
-    dragOffsetPx.value = event.clientX - dragStartX;
-    if (Math.abs(dragOffsetPx.value) > 6) didDrag = true;
+    if (!pointerActive) return;
+
+    const dx = event.clientX - dragStartX;
+    const dy = event.clientY - dragStartY;
+
+    if (dragAxis === 'none') {
+      if (Math.abs(dx) < AXIS_LOCK_PX && Math.abs(dy) < AXIS_LOCK_PX) return;
+
+      const verticalBias = startedInScrollArea ? 0.75 : 0.85;
+      const horizontalBias = startedInScrollArea ? 1.15 : HORIZONTAL_BIAS;
+
+      if (Math.abs(dy) > 4 && Math.abs(dy) >= Math.abs(dx) * verticalBias) {
+        dragAxis = 'y';
+        pointerActive = false;
+        startedInScrollArea = false;
+        return;
+      }
+
+      if (Math.abs(dx) < AXIS_LOCK_PX || Math.abs(dx) <= Math.abs(dy) * horizontalBias) {
+        return;
+      }
+
+      dragAxis = 'x';
+      dragging.value = true;
+      viewportRef.value?.setPointerCapture(event.pointerId);
+    }
+
+    if (dragAxis !== 'x' || !dragging.value) return;
+
+    event.preventDefault();
+    dragOffsetPx.value = dx;
+    if (Math.abs(dx) > 6) didDrag = true;
   }
 
   function finishDrag(event: PointerEvent) {
-    if (!dragging.value) return;
+    if (!pointerActive && !dragging.value) return;
 
-    const width = viewportRef.value?.clientWidth ?? 1;
-    const threshold = width * 0.12;
+    pointerActive = false;
 
-    if (dragOffsetPx.value < -threshold) {
-      if (invertStep) prev();
-      else next();
-    } else if (dragOffsetPx.value > threshold) {
-      if (invertStep) next();
-      else prev();
+    if (dragging.value) {
+      const width = viewportRef.value?.clientWidth ?? 1;
+      const threshold = width * 0.12;
+
+      if (dragOffsetPx.value < -threshold) {
+        if (invertStep) prev();
+        else next();
+      } else if (dragOffsetPx.value > threshold) {
+        if (invertStep) next();
+        else prev();
+      }
     }
 
     dragging.value = false;
     dragOffsetPx.value = 0;
+    dragAxis = 'none';
+    startedInScrollArea = false;
 
     if (viewportRef.value?.hasPointerCapture(event.pointerId)) {
       viewportRef.value.releasePointerCapture(event.pointerId);

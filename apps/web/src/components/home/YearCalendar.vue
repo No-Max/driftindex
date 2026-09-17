@@ -61,7 +61,9 @@ const visibleMonths = computed(() => {
 const itemCount = computed(() => visibleMonths.value.length);
 
 function resolveVisibleCount(width: number) {
-  return width > 960 ? 3 : 1;
+  if (width > 1400) return 3;
+  if (width > 960) return 2;
+  return 1;
 }
 
 function resolveInitialIndex(visibleCount: number) {
@@ -169,7 +171,7 @@ function isCurrentMonth(monthIndex: number) {
             }"
           >
             <h3>{{ month.label }}</h3>
-            <ul>
+            <ul data-card-slider-scroll class="month-card__events">
               <li v-for="event in month.events" :key="`${event.seriesSlug}-${event.eventSlug}`">
                 <component
                   :is="isEventClickable(event.status) ? RouterLink : 'div'"
@@ -242,11 +244,16 @@ function isCurrentMonth(monthIndex: number) {
 </template>
 
 <style scoped>
+.calendar-slider {
+  touch-action: pan-y;
+}
+
 .card-slider__frame {
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: stretch;
   gap: 0.75rem;
+  touch-action: pan-y;
 }
 
 .card-slider__viewport {
@@ -261,6 +268,7 @@ function isCurrentMonth(monthIndex: number) {
 
 .card-slider__viewport--dragging {
   cursor: grabbing;
+  touch-action: none;
 }
 
 .card-slider__track {
@@ -271,6 +279,7 @@ function isCurrentMonth(monthIndex: number) {
   width: max-content;
   gap: var(--slider-gap);
   transition: transform 0.5s ease;
+  touch-action: pan-y;
 }
 
 .card-slider__track--dragging {
@@ -324,9 +333,11 @@ function isCurrentMonth(monthIndex: number) {
 .month-card {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  min-height: 180px;
+  height: 500px;
+  max-height: 500px;
   padding: 1rem;
+  overflow: hidden;
+  touch-action: pan-y;
 }
 
 .month-card--current {
@@ -335,6 +346,7 @@ function isCurrentMonth(monthIndex: number) {
 }
 
 .month-card h3 {
+  flex-shrink: 0;
   margin: 0 0 0.75rem;
   font-family: Oswald, sans-serif;
   text-transform: uppercase;
@@ -342,12 +354,43 @@ function isCurrentMonth(monthIndex: number) {
   color: var(--accent);
 }
 
-.month-card ul {
+.month-card__events {
   list-style: none;
+  flex: 1;
+  min-height: 0;
   margin: 0;
   padding: 0;
+  padding-right: 0.15rem;
   display: grid;
   gap: 0.5rem;
+  overflow-y: auto;
+  overscroll-behavior-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 77, 26, 0.45) var(--surface-2);
+}
+
+.month-card__events::-webkit-scrollbar {
+  width: 6px;
+}
+
+.month-card__events::-webkit-scrollbar-track {
+  margin-block: 2px;
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+
+.month-card__events::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(255, 77, 26, 0.35);
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+
+.month-card__events::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 77, 26, 0.55);
+  background-clip: padding-box;
 }
 
 .event-row__title {
@@ -449,6 +492,18 @@ function isCurrentMonth(monthIndex: number) {
 .card-slider__dot--active {
   background: var(--accent);
   transform: scale(1.15);
+}
+
+@media (max-width: 1500px) {
+  .card-slider__viewport {
+    --slider-gap: 1rem;
+    padding-block: 1.25rem;
+  }
+
+  .month-card--center {
+    transform: none;
+    z-index: auto;
+  }
 }
 
 @media (max-width: 960px) {
