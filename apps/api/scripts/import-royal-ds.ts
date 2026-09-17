@@ -4,7 +4,7 @@ import { fetchRoyalDsEventDetails, fetchRoyalDsSeason } from '../src/importers/r
 import { PILOT_NAME_OVERRIDES } from '../src/data/pilot-name-overrides.js';
 import { upsertPilotSeriesPhoto } from '../src/lib/media/pilotPhoto.js';
 import { canonicalEnglishNames } from '../src/lib/pilotNames.js';
-import { findMatchingPilot, namesMatch } from '../src/lib/pilotMatch.js';
+import { findMatchingPilot, mergePilotInto, namesMatch } from '../src/lib/pilotMatch.js';
 import { upsertPilotSeriesAlias } from '../src/lib/pilotSeriesAlias.js';
 import { toQualScore100 } from '../src/lib/qualScore.js';
 import { refreshStageCoefficientsForSeason } from '../src/lib/stageCoefficient.js';
@@ -131,6 +131,12 @@ async function main() {
       },
       { seriesId: series.id },
     );
+    if (existing && existing.slug !== pilot.slug) {
+      const stub = await prisma.pilot.findUnique({ where: { slug: pilot.slug } });
+      if (stub && stub.id !== existing.id) {
+        await mergePilotInto(prisma, stub.id, existing.id);
+      }
+    }
     const pilotSlug = existing?.slug ?? pilot.slug;
     const parsedNames = canonicalEnglishNames({
       firstName: pilot.firstName,

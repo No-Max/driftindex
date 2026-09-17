@@ -39,6 +39,16 @@ export function containsCyrillic(value: string): boolean {
   return /[\u0400-\u04FF]/.test(value);
 }
 
+const LATIN_FOLD: Record<string, string> = {
+  ø: 'o',
+  æ: 'ae',
+  ł: 'l',
+  đ: 'd',
+  ð: 'd',
+  þ: 'th',
+  ß: 'ss',
+};
+
 export function transliterate(value: string): string {
   return value
     .normalize('NFD')
@@ -46,7 +56,7 @@ export function transliterate(value: string): string {
     .split('')
     .map((char) => {
       const lower = char.toLowerCase();
-      const mapped = CYRILLIC_MAP[lower];
+      const mapped = CYRILLIC_MAP[lower] ?? LATIN_FOLD[lower];
       if (!mapped) return char;
       return char === lower ? mapped : mapped.charAt(0).toUpperCase() + mapped.slice(1);
     })
