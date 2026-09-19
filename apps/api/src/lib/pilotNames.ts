@@ -12,8 +12,9 @@ export interface PilotNameFields {
 export function canonicalEnglishNames(
   pilot: PilotNameFields & { slug?: string },
 ): { firstName: string; lastName: string } {
-  if (pilot.slug && PILOT_NAME_OVERRIDES[pilot.slug]) {
-    return PILOT_NAME_OVERRIDES[pilot.slug]!;
+  if (pilot.slug) {
+    const override = PILOT_DISPLAY_NAME_OVERRIDES[pilot.slug] ?? PILOT_NAME_OVERRIDES[pilot.slug];
+    if (override) return override;
   }
   return toEnglishPilotNames(pilot);
 }
