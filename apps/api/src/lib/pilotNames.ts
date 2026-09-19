@@ -1,4 +1,5 @@
 import type { Pilot } from '@prisma/client';
+import { PILOT_DISPLAY_NAME_OVERRIDES } from '../data/pilot-display-name-overrides.js';
 import { PILOT_NAME_OVERRIDES } from '../data/pilot-name-overrides.js';
 import { buildNameKey, toEnglishPilotNames } from './transliterate.js';
 
@@ -20,7 +21,7 @@ export function canonicalEnglishNames(
 export function resolvePilotDisplayNames(
   pilot: Pick<Pilot, 'slug' | 'firstName' | 'lastName'>,
 ): { firstName: string; lastName: string } {
-  const override = PILOT_NAME_OVERRIDES[pilot.slug];
+  const override = PILOT_DISPLAY_NAME_OVERRIDES[pilot.slug] ?? PILOT_NAME_OVERRIDES[pilot.slug];
   if (override) return override;
   return { firstName: pilot.firstName, lastName: pilot.lastName };
 }
