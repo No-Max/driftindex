@@ -1,6 +1,7 @@
 import type { Pilot } from '@prisma/client';
 import { PILOT_DISPLAY_NAME_OVERRIDES } from '../data/pilot-display-name-overrides.js';
 import { PILOT_NAME_OVERRIDES } from '../data/pilot-name-overrides.js';
+import { lookupByPilotSlug } from './pilotSlug.js';
 import { buildNameKey, toEnglishPilotNames } from './transliterate.js';
 
 export interface PilotNameFields {
@@ -13,7 +14,9 @@ export function canonicalEnglishNames(
   pilot: PilotNameFields & { slug?: string },
 ): { firstName: string; lastName: string } {
   if (pilot.slug) {
-    const override = PILOT_DISPLAY_NAME_OVERRIDES[pilot.slug] ?? PILOT_NAME_OVERRIDES[pilot.slug];
+    const override =
+      lookupByPilotSlug(PILOT_DISPLAY_NAME_OVERRIDES, pilot.slug) ??
+      lookupByPilotSlug(PILOT_NAME_OVERRIDES, pilot.slug);
     if (override) return override;
   }
   return toEnglishPilotNames(pilot);
@@ -22,7 +25,9 @@ export function canonicalEnglishNames(
 export function resolvePilotDisplayNames(
   pilot: Pick<Pilot, 'slug' | 'firstName' | 'lastName'>,
 ): { firstName: string; lastName: string } {
-  const override = PILOT_DISPLAY_NAME_OVERRIDES[pilot.slug] ?? PILOT_NAME_OVERRIDES[pilot.slug];
+  const override =
+    lookupByPilotSlug(PILOT_DISPLAY_NAME_OVERRIDES, pilot.slug) ??
+    lookupByPilotSlug(PILOT_NAME_OVERRIDES, pilot.slug);
   if (override) return override;
   return { firstName: pilot.firstName, lastName: pilot.lastName };
 }

@@ -146,7 +146,7 @@ export async function fetchAlmanacRdsEventDetails(
 }
 
 export function almanacPilotDbSlug(almanacPilotSlug: string): string {
-  return `da-${almanacPilotSlug}`;
+  return almanacPilotSlug;
 }
 
 export function almanacEventIdFromDbSlug(eventSlug: string): string | null {

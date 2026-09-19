@@ -33,8 +33,9 @@ export function parseAlmanacPilotCountryHtml(html: string): string | null {
 }
 
 export function almanacSlugFromPilotSlug(pilotSlug: string): string | null {
-  if (!pilotSlug.startsWith('da-')) return null;
-  return pilotSlug.slice(3);
+  if (pilotSlug.startsWith('da-')) return pilotSlug.slice(3);
+  if (pilotSlug.includes('_')) return pilotSlug;
+  return null;
 }
 
 export async function fetchAlmanacPilotCountry(

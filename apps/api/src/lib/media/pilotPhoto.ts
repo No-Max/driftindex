@@ -4,17 +4,18 @@ import {
   PILOT_PHOTO_SERIES_ALIAS,
   PILOT_PHOTO_SERIES_PREFER,
 } from '../../data/pilot-photo-overrides.js';
+import { lookupByPilotSlug } from '../pilotSlug.js';
 import { mirrorPilotSeriesPortrait } from './mirror.js';
 
 export function preferredSeriesPhotoUrl(
   pilotSlug: string,
   seriesPhotos: Array<{ seriesSlug: string; photoUrl: string | null }>,
 ): string | null {
-  const preferSlug = PILOT_PHOTO_SERIES_PREFER[pilotSlug];
+  const preferSlug = lookupByPilotSlug(PILOT_PHOTO_SERIES_PREFER, pilotSlug);
   if (!preferSlug) return null;
   return (
     seriesPhotos.find((photo) => photo.seriesSlug === preferSlug)?.photoUrl
-    ?? PILOT_PHOTO_PREFER_URL[pilotSlug]
+    ?? lookupByPilotSlug(PILOT_PHOTO_PREFER_URL, pilotSlug)
     ?? null
   );
 }
@@ -26,7 +27,7 @@ export function resolveSeriesPhotoUrl(
   preferUrl: string | null,
 ): string | null {
   if (!preferUrl) return photoUrl;
-  const aliasSeries = PILOT_PHOTO_SERIES_ALIAS[pilotSlug];
+  const aliasSeries = lookupByPilotSlug(PILOT_PHOTO_SERIES_ALIAS, pilotSlug);
   if (aliasSeries?.includes(seriesSlug)) return preferUrl;
   return photoUrl;
 }
@@ -82,7 +83,7 @@ export async function syncPilotPrimaryPhoto(prisma: PrismaClient, pilotId: strin
     include: { series: { select: { slug: true, featuredOrder: true } } },
   });
 
-  const preferSeriesSlug = pilot ? PILOT_PHOTO_SERIES_PREFER[pilot.slug] : undefined;
+  const preferSeriesSlug = pilot ? lookupByPilotSlug(PILOT_PHOTO_SERIES_PREFER, pilot.slug) : undefined;
   const preferred = preferSeriesSlug
     ? photos.find((photo) => photo.series.slug === preferSeriesSlug)
     : undefined;

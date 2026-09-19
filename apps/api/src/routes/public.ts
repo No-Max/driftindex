@@ -23,6 +23,7 @@ import { toPilotCard } from '../lib/pilot.js';
 import { resultDisplayNumber } from '../lib/resultNumber.js';
 import { resolvePilotDisplayNames } from '../lib/pilotNames.js';
 import { computePilotStats, toStatsInput } from '../lib/pilotStats.js';
+import { pilotSlugLookupCandidates, stripSeriesPilotSlugPrefix } from '../lib/pilotSlug.js';
 import { prisma } from '../lib/prisma.js';
 import { loadSeriesLogoMap, seriesLogoFromMap } from '../lib/seriesLogos.js';
 import { computePrestigeRanking, persistPrestigeRanking } from '../lib/seriesOverlap.js';
@@ -597,8 +598,19 @@ publicRouter.get('/pilots', async (req, res) => {
 });
 
 publicRouter.get('/pilots/:slug', async (req, res) => {
+  const requestedSlug = String(req.params.slug);
+  const candidates = pilotSlugLookupCandidates(requestedSlug);
+  const matches = await prisma.pilot.findMany({
+    where: { slug: { in: candidates } },
+    select: { slug: true },
+  });
+  const resolvedSlug =
+    matches.find((row) => row.slug === requestedSlug)?.slug ??
+    matches.find((row) => row.slug === stripSeriesPilotSlugPrefix(requestedSlug))?.slug ??
+    matches[0]?.slug ??
+    requestedSlug;
   const pilot = await prisma.pilot.findUnique({
-    where: { slug: req.params.slug },
+    where: { slug: resolvedSlug },
     include: {
       seriesPhotos: {
         where: { photoUrl: { not: null } },

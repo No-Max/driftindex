@@ -84,11 +84,11 @@ async function upsertResult(
   const name = canonicalName(row.name);
   const parsed = splitName(name);
   const english = canonicalEnglishNames({ ...parsed, nameRu: null });
-  const slug = `dm-${driverSlugFromName(name)}`;
+  const slug = driverSlugFromName(name);
   const pilotSlug = await resolvePilotSlug(english.firstName, english.lastName, slug);
 
   const existing = await prisma.pilot.findUnique({ where: { slug: pilotSlug } });
-  const shouldUpdateNames = !existing || existing.slug.startsWith('dm-');
+  const shouldUpdateNames = !existing || existing.slug === slug;
 
   const pilotRecord = await prisma.pilot.upsert({
     where: { slug: pilotSlug },

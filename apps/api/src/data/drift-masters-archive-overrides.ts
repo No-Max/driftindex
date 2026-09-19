@@ -1,4 +1,5 @@
 import type { PrismaClient } from '@prisma/client';
+import { pilotSlugLookupCandidates } from '../lib/pilotSlug.js';
 import { refreshStageCoefficientForEvent } from '../lib/stageCoefficient.js';
 
 export interface DmArchiveResultOverride {
@@ -14,7 +15,7 @@ export interface DmArchiveResultOverride {
 export const DM_ARCHIVE_RESULT_OVERRIDES: Record<number, DmArchiveResultOverride[]> = {
   2019: [
     {
-      pilotSlug: 'dm-georgy-chivchyan',
+      pilotSlug: 'georgy-chivchyan',
       eventSlug: 'dm-r4',
       qualPosition: 5,
       qualScore100: 91,
@@ -36,7 +37,9 @@ export async function applyArchiveResultOverrides(
   const eventsToRefresh = new Set<string>();
 
   for (const override of overrides) {
-    const pilot = await prisma.pilot.findUnique({ where: { slug: override.pilotSlug } });
+    const pilot = await prisma.pilot.findFirst({
+      where: { slug: { in: pilotSlugLookupCandidates(override.pilotSlug) } },
+    });
     if (!pilot) continue;
 
     const event = await prisma.event.findUnique({

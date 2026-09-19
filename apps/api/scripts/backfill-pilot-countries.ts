@@ -9,6 +9,7 @@ import {
 import { englishNamesFromNameRu, transliterate } from '../src/lib/transliterate.js';
 import { findMatchingPilot } from '../src/lib/pilotMatch.js';
 import { PILOT_COUNTRY_OVERRIDES } from '../src/data/pilot-country-overrides.js';
+import { pilotSlugLookupCandidates } from '../src/lib/pilotSlug.js';
 
 const prisma = new PrismaClient();
 const BASE = 'https://driftalmanac.ru';
@@ -77,8 +78,10 @@ async function resolvePilotSlug(
   nameAlias: string | null,
 ): Promise<string | null> {
   const daSlug = `da-${almanacSlug}`;
-  const daPilot = await prisma.pilot.findUnique({ where: { slug: daSlug }, select: { slug: true } });
-  if (daPilot) return daPilot.slug;
+  for (const slug of [almanacSlug, daSlug]) {
+    const existing = await prisma.pilot.findUnique({ where: { slug }, select: { slug: true } });
+    if (existing) return existing.slug;
+  }
 
   if (!nameAlias) return null;
 
@@ -86,7 +89,7 @@ async function resolvePilotSlug(
   const match = await findMatchingPilot(
     prisma,
     {
-      slug: daSlug,
+      slug: almanacSlug,
       nameAlias,
       firstName: english.firstName,
       lastName: english.lastName,
@@ -98,7 +101,10 @@ async function resolvePilotSlug(
 }
 
 async function applyCountry(slug: string, country: string | null): Promise<boolean> {
-  const pilot = await prisma.pilot.findUnique({ where: { slug }, select: { id: true, country: true } });
+  const pilot = await prisma.pilot.findFirst({
+    where: { slug: { in: pilotSlugLookupCandidates(slug) } },
+    select: { id: true, country: true },
+  });
   if (!pilot) return false;
   if (pilot.country === country) return false;
 

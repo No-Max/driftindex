@@ -339,7 +339,7 @@ function eventSlug(roundNumber: number): string {
 }
 
 function pilotSlug(driverSlug: string): string {
-  return `dm-${driverSlug}`;
+  return driverSlug;
 }
 
 function absoluteMediaUrl(path: string | null | undefined): string | null {

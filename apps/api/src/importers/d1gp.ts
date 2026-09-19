@@ -103,7 +103,7 @@ function pilotSlug(number: number, firstName: string, lastName: string): string 
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
-  return `d1-${base || number}`;
+  return base || String(number);
 }
 
 function eventSlug(roundNumber: number): string {
