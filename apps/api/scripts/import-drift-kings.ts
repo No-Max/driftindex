@@ -158,7 +158,7 @@ async function importSeason(seriesId: string, seasonData: DkArchiveSeason): Prom
     }
 
     const english = splitName(row.name);
-    const slug = `dk-${driverSlugFromName(row.name)}`;
+    const slug = driverSlugFromName(row.name);
     const pilotSlug = await resolvePilotSlug(
       english.firstName,
       english.lastName,

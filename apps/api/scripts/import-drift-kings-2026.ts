@@ -141,7 +141,7 @@ async function main() {
     // Curated English names — skip canonicalEnglishNames(), which title-cases
     // the whole last-name string and mangles "Du Pasquier" / "Trela-Muchewicz".
     const english = splitName(row.name);
-    const slug = `dk-${driverSlugFromName(row.name)}`;
+    const slug = driverSlugFromName(row.name);
     const pilotSlug = await resolvePilotSlug(
       english.firstName,
       english.lastName,

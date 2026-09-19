@@ -3,7 +3,7 @@ import type { PilotProfileResponse } from '@drift-index/shared';
 import { compareEventResultsChronologically } from '@drift-index/shared';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { fetchPilot } from '../api/client';
 import PilotAvatar from '../components/PilotAvatar.vue';
 import PilotPhotoSlider from '../components/PilotPhotoSlider.vue';
@@ -12,6 +12,7 @@ import { formatPilotName } from '../lib/formatPilotName';
 import { formatQualCell } from '../lib/formatQualCell';
 
 const route = useRoute();
+const router = useRouter();
 const { t, locale } = useI18n();
 
 const pilot = ref<PilotProfileResponse | null>(null);
@@ -34,7 +35,11 @@ async function load() {
   loading.value = true;
   error.value = false;
   try {
-    pilot.value = await fetchPilot(slug.value);
+    const profile = await fetchPilot(slug.value);
+    pilot.value = profile;
+    if (profile.slug && profile.slug !== slug.value) {
+      await router.replace({ name: 'pilot', params: { slug: profile.slug } });
+    }
   } catch {
     error.value = true;
     pilot.value = null;

@@ -1,13 +1,17 @@
 import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import { PILOT_COUNTRY_OVERRIDES } from '../src/data/pilot-country-overrides.js';
+import { pilotSlugLookupCandidates } from '../src/lib/pilotSlug.js';
 
 const prisma = new PrismaClient();
 
 async function main() {
   let overrides = 0;
   for (const [slug, country] of Object.entries(PILOT_COUNTRY_OVERRIDES)) {
-    const result = await prisma.pilot.updateMany({ where: { slug }, data: { country } });
+    const result = await prisma.pilot.updateMany({
+      where: { slug: { in: pilotSlugLookupCandidates(slug) } },
+      data: { country },
+    });
     overrides += result.count;
   }
 

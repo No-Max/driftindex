@@ -324,7 +324,7 @@ function pilotsFromLegacyDriverRows(driverRows: LegacyDriverRow[], roundCount: n
 
     const { firstName, lastName } = parseDriverName(driver.name);
     return {
-      slug: `dm-${driverSlugFromName(driver.name)}`,
+      slug: driverSlugFromName(driver.name),
       firstName,
       lastName,
       nameAlias: driver.rawName,
@@ -639,7 +639,7 @@ function buildSeasonFromTable(
         }));
 
       pilots.push({
-        slug: `dm-${driverSlug}`,
+        slug: driverSlug,
         firstName,
         lastName,
         nameAlias: rawName,

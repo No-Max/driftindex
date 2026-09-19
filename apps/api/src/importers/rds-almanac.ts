@@ -81,7 +81,7 @@ function eventSlugFromAlmanacId(eventId: string): string {
 }
 
 function pilotSlugFromAlmanacId(almanacPilotSlug: string): string {
-  return `da-${almanacPilotSlug}`;
+  return almanacPilotSlug;
 }
 
 interface AlmanacEventMeta {

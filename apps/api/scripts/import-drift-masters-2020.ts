@@ -120,7 +120,7 @@ async function main() {
   for (const row of DM_2020_RESULTS) {
     const parsed = splitName(row.name);
     const english = canonicalEnglishNames({ ...parsed, nameRu: null });
-    const slug = `dm-${driverSlugFromName(row.name)}`;
+    const slug = driverSlugFromName(row.name);
     const pilotSlug = await resolvePilotSlug(english.firstName, english.lastName, slug, series.id);
     if (pilotSlug !== slug) merged++;
 

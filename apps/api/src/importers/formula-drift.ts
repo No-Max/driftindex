@@ -180,7 +180,7 @@ function eventSlug(slug: string): string {
 }
 
 function pilotSlug(driverSlug: string): string {
-  return `fd-${driverSlug}`;
+  return driverSlug;
 }
 
 function absoluteMediaUrl(path: string | null | undefined): string | null {

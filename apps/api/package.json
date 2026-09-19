@@ -45,7 +45,8 @@
     "db:import:d1gp:all": "tsx scripts/import-d1gp.ts --all",
     "db:import:drift-kings": "tsx scripts/import-drift-kings.ts",
     "db:import:drift-kings:all": "tsx scripts/import-drift-kings.ts --all",
-    "db:import:drift-kings:2026": "tsx scripts/import-drift-kings-2026.ts"
+    "db:import:drift-kings:2026": "tsx scripts/import-drift-kings-2026.ts",
+    "db:rename:pilot-slugs": "tsx scripts/rename-series-pilot-slugs.ts"
   },
   "dependencies": {
     "@drift-index/shared": "*",

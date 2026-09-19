@@ -146,7 +146,7 @@ export async function fetchAlmanacRdsEventDetails(
 }
 
 export function almanacPilotDbSlug(almanacPilotSlug: string): string {
-  return `da-${almanacPilotSlug}`;
+  return almanacPilotSlug;
 }
 
 export function almanacEventIdFromDbSlug(eventSlug: string): string | null {
@@ -231,7 +231,7 @@ export function matchAlmanacEventsToDbEventsByOverlap(
   for (const almanac of almanacEvents) {
     if (!almanac.winnerKey) continue;
     for (const db of dbEvents) {
-      if (!nameKeysCompatible(almanac.winnerKey, db.winnerKey)) continue;
+      if (!db.winnerKey || !nameKeysCompatible(almanac.winnerKey, db.winnerKey)) continue;
       const score = overlapSize(almanac.nameKeys, db.nameKeys);
       winnerPairs.push({ almanacEventId: almanac.almanacEventId, eventId: db.eventId, score });
     }

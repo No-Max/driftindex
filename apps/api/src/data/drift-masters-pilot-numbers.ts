@@ -1,62 +1,63 @@
 import type { DmPilot } from '../importers/drift-masters.js';
 import { fetchDriftMastersArchiveDriverNumbers } from '../importers/drift-masters-archive.js';
 import { DM_2020_BIB_BY_NAME } from './drift-masters-2020.js';
+import { lookupByPilotSlug } from '../lib/pilotSlug.js';
 import { buildNameKey, normalizeToken } from '../lib/transliterate.js';
 
 /** Start numbers missing from archived standings (guests, wildcards). Keyed by pilot slug. */
 export const DM_ARCHIVE_PILOT_NUMBERS: Record<number, Record<string, number>> = {
   2019: {
     /** Riga wildcard bib (not on season drivers page). */
-    'dm-georgy-chivchyan': 31,
+    'georgy-chivchyan': 31,
     /** Not listed on archived /drivers (same bibs as DMEC 2020 where applicable). */
-    'dm-piotr-wiecek': 215,
-    'dm-kristaps-bluss': 80,
-    'dm-aurimas-vaskelis': 650,
-    'dm-ivo-cirulis': 620,
-    'dm-janis-jurka': 604,
+    'piotr-wiecek': 215,
+    'kristaps-bluss': 80,
+    'aurimas-vaskelis': 650,
+    'ivo-cirulis': 620,
+    'janis-jurka': 604,
   },
   2021: {
-    'dm-mikolaj-zakrzewski': 888,
-    'dm-tor-arne-kvia': 498,
-    'dm-felix-lindvall': 36,
-    'dm-christopher-bohm': 43,
-    'dm-clemens-kauderer': 71,
-    'dm-kevin-piskolty': 105,
-    'dm-gregor-kavalir': 62,
-    'dm-max-cotton': 78,
-    'dm-lauri-heinonen': 203,
-    'dm-pawel-grosz': 201,
-    'dm-nodo-kodua': 113,
-    'dm-stavros-grillis': 901,
-    'dm-mihkel-norman-tults': 904,
-    'dm-rostyslav-rarahovskyi': 976,
-    'dm-alexandre-strano': 6,
-    'dm-daniel-brandner': 797,
-    'dm-edmunds-berzins': 903,
-    'dm-kristians-burkovs': 905,
-    'dm-clint-van-oort': 599,
-    'dm-raivis-alksars': 906,
-    'dm-ao-vaida': 907,
-    'dm-edgars-krogeris': 908,
-    'dm-milos-djordjevic': 209,
-    'dm-pawel-korpulinski': 74,
-    'dm-juha-poytalaakso': 212,
-    'dm-sebastian-fontijn': 85,
-    'dm-juha-rintanen': 202,
-    'dm-krzysztof-romanowski': 22,
-    'dm-norbert-zamecz': 99,
-    'dm-calin-ciortan': 14,
-    'dm-dmitriy-illyuk': 200,
-    'dm-stephen-biagioni': 13,
-    'dm-max-miller': 210,
-    'dm-niko-maattala': 88,
-    'dm-mevlud-meladze': 113,
-    'dm-andrius-vasiliauskas': 999,
-    'dm-pawel-borkowski': 214,
-    'dm-piotr-kozlowski': 1,
-    'dm-sebastian-szymanski': 208,
-    'dm-adam-nagy': 288,
-    'dm-maciej-jarkiewicz': 204,
+    'mikolaj-zakrzewski': 888,
+    'tor-arne-kvia': 498,
+    'felix-lindvall': 36,
+    'christopher-bohm': 43,
+    'clemens-kauderer': 71,
+    'kevin-piskolty': 105,
+    'gregor-kavalir': 62,
+    'max-cotton': 78,
+    'lauri-heinonen': 203,
+    'pawel-grosz': 201,
+    'nodo-kodua': 113,
+    'stavros-grillis': 901,
+    'mihkel-norman-tults': 904,
+    'rostyslav-rarahovskyi': 976,
+    'alexandre-strano': 6,
+    'daniel-brandner': 797,
+    'edmunds-berzins': 903,
+    'kristians-burkovs': 905,
+    'clint-van-oort': 599,
+    'raivis-alksars': 906,
+    'ao-vaida': 907,
+    'edgars-krogeris': 908,
+    'milos-djordjevic': 209,
+    'pawel-korpulinski': 74,
+    'juha-poytalaakso': 212,
+    'sebastian-fontijn': 85,
+    'juha-rintanen': 202,
+    'krzysztof-romanowski': 22,
+    'norbert-zamecz': 99,
+    'calin-ciortan': 14,
+    'dmitriy-illyuk': 200,
+    'stephen-biagioni': 13,
+    'max-miller': 210,
+    'niko-maattala': 88,
+    'mevlud-meladze': 113,
+    'andrius-vasiliauskas': 999,
+    'pawel-borkowski': 214,
+    'piotr-kozlowski': 1,
+    'sebastian-szymanski': 208,
+    'adam-nagy': 288,
+    'maciej-jarkiewicz': 204,
   },
 };
 
@@ -138,7 +139,7 @@ export function applyArchivePilotNumbers(seasonYear: number, pilots: DmPilot[]):
   if (!overrides) return;
 
   for (const pilot of pilots) {
-    const number = overrides[pilot.slug];
+    const number = lookupByPilotSlug(overrides, pilot.slug);
     if (number != null && pilot.number == null) {
       pilot.number = number;
     }
