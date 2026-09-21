@@ -68,6 +68,8 @@ const TRACK_LABELS: Record<string, string> = {
   FUJI: 'Fuji Speedway',
   ODAIBA: 'Odaiba, Tokyo Bay',
   AICHI: 'Aichi Sky Expo',
+  TBN: 'Odaiba, Tokyo Bay',
+  TBA: 'Odaiba, Tokyo Bay',
 };
 
 export function listD1gpSeasons(): number[] {
@@ -123,20 +125,92 @@ function titleCaseTrack(value: string): string {
     .join(' ');
 }
 
+function decodeHtmlEntities(value: string): string {
+  return value
+    .replace(/&#0?38;/g, '&')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'");
+}
+
+function applyRoundVenueRange(
+  schedule: Map<number, string>,
+  start: number,
+  end: number,
+  rawVenue: string,
+): void {
+  const track = normalizeTrackLabel(rawVenue.trim());
+  for (let round = start; round <= end; round += 1) {
+    schedule.set(round, track);
+  }
+}
+
 function parseVenueSchedule(html: string): Map<number, string> {
-  const text = cheerio.load(html).root().text().replace(/\s+/g, ' ');
+  const decoded = decodeHtmlEntities(html);
   const schedule = new Map<number, string>();
 
-  for (const match of text.matchAll(/RD\.(\d+)(?:&(\d+))?\s+([A-Z][A-Z\s]{1,20}?)(?:\s*\/|\s+ドライバ|\s+単走|$)/g)) {
-    const start = Number.parseInt(match[1]!, 10);
-    const end = match[2] ? Number.parseInt(match[2], 10) : start;
-    const track = normalizeTrackLabel(match[3]!);
-    for (let round = start; round <= end; round += 1) {
-      schedule.set(round, track);
+  const venueChain = decoded.match(
+    /RD\.\d+(?:&\d+)?\s+[A-Z][A-Z\s]{0,20}(?:\s*\/\s*RD\.\d+(?:&\d+)?\s+[A-Z][A-Z\s]{0,20})+/,
+  );
+  if (venueChain) {
+    for (const match of venueChain[0].matchAll(/RD\.(\d+)(?:&(\d+))?\s+([A-Z][A-Z\s]{0,20}?)(?=\s*\/|$)/g)) {
+      applyRoundVenueRange(
+        schedule,
+        Number.parseInt(match[1]!, 10),
+        match[2] ? Number.parseInt(match[2], 10) : Number.parseInt(match[1]!, 10),
+        match[3]!,
+      );
     }
   }
 
+  const text = cheerio.load(html).root().text().replace(/\s+/g, ' ');
+  for (const match of text.matchAll(/RD\.(\d+)(?:&(\d+))?\s+([A-Z][A-Z\s]{1,20}?)(?:\s*\/|\s+ドライバ|\s+単走|$)/g)) {
+    applyRoundVenueRange(
+      schedule,
+      Number.parseInt(match[1]!, 10),
+      match[2] ? Number.parseInt(match[2], 10) : Number.parseInt(match[1]!, 10),
+      match[3]!,
+    );
+  }
+
   return schedule;
+}
+
+/** Calendar dates from GP category nav links (avoids D1 Lights dates on the same page). */
+function parseRoundEventDates(html: string, seasonYear: number, gpCategoryPath: string): Map<number, string> {
+  const decoded = decodeHtmlEntities(html);
+  const dates = new Map<number, string>();
+  const gpNeedle = gpCategoryPath.replace(/\/$/, '');
+
+  const toIso = (month: number, day: number) =>
+    new Date(Date.UTC(seasonYear, month - 1, day, 9)).toISOString();
+
+  const linkRe = new RegExp(
+    `<a[^>]+href="[^"]*${gpNeedle.replace(/\//g, '\\/')}[^"]*"[^>]*>([^<]*)</a>`,
+    'gi',
+  );
+
+  for (const match of decoded.matchAll(linkRe)) {
+    const label = match[1]!;
+    const dateMatch = label.match(
+      /RD\.(\d+)(?:&(\d+))?\s+[^/]*\/\s*(\d+)月(\d+)日(?:-(\d+)日)?/,
+    );
+    if (!dateMatch) continue;
+
+    const start = Number.parseInt(dateMatch[1]!, 10);
+    const end = dateMatch[2] ? Number.parseInt(dateMatch[2], 10) : start;
+    const month = Number.parseInt(dateMatch[3]!, 10);
+    const dayStart = Number.parseInt(dateMatch[4]!, 10);
+    const dayEnd = dateMatch[5] ? Number.parseInt(dateMatch[5], 10) : dayStart;
+    for (let round = start; round <= end; round += 1) {
+      const day = round === start ? dayStart : dayEnd;
+      dates.set(round, toIso(month, day));
+    }
+  }
+
+  return dates;
 }
 
 function approximateEventDate(year: number, roundNumber: number): string {
@@ -350,6 +424,7 @@ function buildEvents(
   seasonYear: number,
   roundNumbers: number[],
   venueSchedule: Map<number, string>,
+  roundDates: Map<number, string>,
   reportRounds: Set<number>,
   rankingRows: RankingRow[],
 ): D1Event[] {
@@ -364,7 +439,7 @@ function buildEvents(
       roundNumber,
       name: `Round ${roundNumber} — ${trackName}`,
       trackName,
-      startsAt: approximateEventDate(seasonYear, roundNumber),
+      startsAt: roundDates.get(roundNumber) ?? approximateEventDate(seasonYear, roundNumber),
       status,
     };
   });
@@ -381,6 +456,12 @@ export async function fetchD1gpSeason(seasonYear: number): Promise<D1SeasonData>
   const rankingHtml = await fetchHtml(config.rankingUrl);
   const { rows: rankingRows, roundNumbers } = parseTsuisoRanking(rankingHtml);
   const venueSchedule = parseVenueSchedule(rankingHtml);
+  const roundDates = parseRoundEventDates(rankingHtml, seasonYear, config.categoryBase);
+  if (config.roundStartsAt) {
+    for (const [round, iso] of Object.entries(config.roundStartsAt)) {
+      roundDates.set(Number(round), iso);
+    }
+  }
 
   const reportUrlsByRound = await discoverRoundReports(categoryUrls);
   const reportRounds = new Set(reportUrlsByRound.keys());
@@ -398,7 +479,14 @@ export async function fetchD1gpSeason(seasonYear: number): Promise<D1SeasonData>
     photosByNumber = parseDriverPhotos(driversIntroHtml, seasonYear);
   }
 
-  const events = buildEvents(seasonYear, roundNumbers, venueSchedule, reportRounds, rankingRows);
+  const events = buildEvents(
+    seasonYear,
+    roundNumbers,
+    venueSchedule,
+    roundDates,
+    reportRounds,
+    rankingRows,
+  );
   const finishedRounds = events.filter((event) => event.status === 'FINISHED').map((event) => event.roundNumber);
 
   const pilots: D1Pilot[] = rankingRows

@@ -1,3 +1,4 @@
+import { D1GP_DRIVER_BY_RANKING_NAME } from './d1gp-driver-overrides.js';
 import { D1GP_2026_DRIVERS } from './d1gp-2026-drivers.js';
 
 export type D1gpDriverInfo = {
@@ -9,6 +10,14 @@ export type D1gpDriverInfo = {
 
 /** Car number → English name; stable across D1GP seasons. */
 export const D1GP_KNOWN_DRIVERS: Record<number, D1gpDriverInfo> = { ...D1GP_2026_DRIVERS };
+
+function normalizeJaName(value: string): string {
+  return value.trim().replace(/\s+/g, ' ');
+}
+
+function jaNamesMatch(a: string, b: string): boolean {
+  return normalizeJaName(a).replace(/\s/g, '') === normalizeJaName(b).replace(/\s/g, '');
+}
 
 function titleCase(value: string): string {
   return value
@@ -36,9 +45,15 @@ export function registerLatinDriverFromRanking(number: number, nameJa: string): 
 }
 
 export function resolveD1Driver(number: number, nameJa: string): D1gpDriverInfo {
+  const rankingJa = normalizeJaName(nameJa);
+  const byRankingName = D1GP_DRIVER_BY_RANKING_NAME[rankingJa];
+  if (byRankingName) {
+    return { ...byRankingName, nameJa: rankingJa };
+  }
+
   const known = D1GP_KNOWN_DRIVERS[number];
-  if (known) {
-    return { ...known, nameJa: known.nameJa || nameJa };
+  if (known && (!known.nameJa || jaNamesMatch(known.nameJa, rankingJa))) {
+    return { ...known, nameJa: rankingJa };
   }
 
   const latin = parseLatinDriverName(nameJa);
@@ -47,13 +62,13 @@ export function resolveD1Driver(number: number, nameJa: string): D1gpDriverInfo 
     return latin;
   }
 
-  const parts = nameJa.trim().split(/\s+/);
-  const lastName = parts[0] ?? nameJa;
+  const parts = rankingJa.split(/\s+/);
+  const lastName = parts[0] ?? rankingJa;
   const firstName = parts.slice(1).join(' ') || lastName;
   return {
     firstName,
     lastName,
-    nameJa,
+    nameJa: rankingJa,
     country: 'JP',
   };
 }

@@ -5,6 +5,12 @@ export interface D1gpSeasonConfig {
   categorySlugs: string[];
   /** Optional driver portrait page (2026+). */
   driversIntroUrl?: string;
+  /** Round → ISO start when ranking page has no GP nav dates. */
+  roundStartsAt?: Record<number, string>;
+}
+
+function utcEventDate(year: number, month: number, day: number): string {
+  return new Date(Date.UTC(year, month - 1, day, 9)).toISOString();
 }
 
 export const D1GP_SEASONS: D1gpSeasonConfig[] = [
@@ -22,12 +28,36 @@ export const D1GP_SEASONS: D1gpSeasonConfig[] = [
     rankingUrl: 'https://d1gp.co.jp/d1gp2025ranking/',
     categoryBase: 'https://d1gp.co.jp/category/gp/2025-d1gp/',
     categorySlugs: ['gp25-0102', 'gp25-0304', 'gp25-0506', 'gp25-0708', 'gp25-0910'],
+    roundStartsAt: {
+      1: utcEventDate(2025, 5, 10),
+      2: utcEventDate(2025, 5, 11),
+      3: utcEventDate(2025, 6, 28),
+      4: utcEventDate(2025, 6, 29),
+      5: utcEventDate(2025, 9, 27),
+      6: utcEventDate(2025, 9, 28),
+      7: utcEventDate(2025, 10, 25),
+      8: utcEventDate(2025, 10, 26),
+      9: utcEventDate(2025, 11, 15),
+      10: utcEventDate(2025, 11, 16),
+    },
   },
   {
     year: 2024,
     rankingUrl: 'https://d1gp.co.jp/d1gp2024ranking/',
     categoryBase: 'https://d1gp.co.jp/category/gp/2024-d1gp/',
     categorySlugs: ['gp24-0102', 'gp24-0304', 'gp24-0506', 'gp24-0708', 'gp24-0910'],
+    roundStartsAt: {
+      1: utcEventDate(2024, 5, 11),
+      2: utcEventDate(2024, 5, 12),
+      3: utcEventDate(2024, 6, 29),
+      4: utcEventDate(2024, 6, 30),
+      5: utcEventDate(2024, 9, 28),
+      6: utcEventDate(2024, 9, 29),
+      7: utcEventDate(2024, 10, 26),
+      8: utcEventDate(2024, 10, 27),
+      9: utcEventDate(2024, 11, 9),
+      10: utcEventDate(2024, 11, 10),
+    },
   },
   {
     year: 2023,

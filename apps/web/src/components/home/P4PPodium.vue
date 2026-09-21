@@ -588,6 +588,12 @@ function eventPath(event: HomeP4PEntry['seasonEvents'][number]) {
   font-size: 0.78rem;
 }
 
+@media (max-width: 1023px) {
+  .p4p-leader__events {
+    display: none;
+  }
+}
+
 @media (max-width: 1200px) {
   .p4p {
     grid-template-columns: 1fr;
