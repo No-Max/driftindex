@@ -194,6 +194,7 @@ export interface HomeQualWinner {
     roundNumber: number;
     name: string;
     track: TrackSummary | null;
+    startsAt: string | null;
   };
   qualScore: number | null;
   gapToSecond: number | null;
@@ -215,8 +216,13 @@ export interface HomeCalendarEvent {
 }
 
 export interface HomeP4PSeasonEvent {
+  seriesSlug: string;
+  seriesName: string;
+  seriesShortName: string | null;
+  eventSlug: string;
   roundNumber: number;
   eventName: string;
+  startsAt: string | null;
   qualPosition: number | null;
   qualScore100: number | null;
   eventPlace: number | null;
@@ -244,8 +250,8 @@ export interface HomeP4PEntry {
   bestSeries: HomeP4PSeriesParticipation;
   /** Other featured series the pilot entered in the same season (excluding best). */
   otherSeries: HomeP4PSeriesParticipation[];
-  /** Finished events in the P4P best series for the current season. */
-  bestSeriesEvents: HomeP4PSeasonEvent[];
+  /** Finished events in featured series for the current season. */
+  seasonEvents: HomeP4PSeasonEvent[];
 }
 
 export interface OverlapContribution {

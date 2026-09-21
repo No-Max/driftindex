@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { HomeP4PEntry, HomeP4PSeriesParticipation } from '@drift-index/shared';
+import { seriesEventPath } from '@drift-index/shared';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { formatAvgPlaceRange } from '../../lib/formatAvgPlace';
@@ -50,6 +51,14 @@ function formatQual(
   place: number | null,
 ) {
   return formatQualCell(score, place, locale.value);
+}
+
+function seriesLabel(event: HomeP4PEntry['seasonEvents'][number]) {
+  return event.seriesShortName ?? event.seriesName;
+}
+
+function eventPath(event: HomeP4PEntry['seasonEvents'][number]) {
+  return seriesEventPath(event.seriesSlug, props.year, event.eventSlug);
 }
 
 </script>
@@ -111,12 +120,13 @@ function formatQual(
             compact
             class="p4p-leader__stats"
           />
-          <div v-if="leader.bestSeriesEvents.length > 0" class="p4p-leader__events">
+          <div v-if="leader.seasonEvents.length > 0" class="p4p-leader__events">
             <p class="p4p-leader__events-title">{{ t('home.p4pSeasonEvents') }}</p>
             <div class="p4p-leader__events-table">
               <table>
                 <thead>
                   <tr>
+                    <th>{{ t('home.p4pColSeries') }}</th>
                     <th>{{ t('home.p4pColRound') }}</th>
                     <th>{{ t('pilot.place') }}</th>
                     <th>{{ t('pilot.qual') }}</th>
@@ -124,8 +134,20 @@ function formatQual(
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="event in leader.bestSeriesEvents" :key="event.roundNumber">
-                    <td class="muted">{{ t('standings.round', { n: event.roundNumber }) }}</td>
+                  <tr
+                    v-for="event in leader.seasonEvents"
+                    :key="`${event.seriesSlug}-${event.eventSlug}`"
+                  >
+                    <td class="p4p-leader__events-series">
+                      <RouterLink :to="seriesPath(event.seriesSlug)" class="p4p-series-link">
+                        {{ seriesLabel(event) }}
+                      </RouterLink>
+                    </td>
+                    <td class="muted">
+                      <RouterLink :to="eventPath(event)" class="p4p-series-link">
+                        {{ t('standings.round', { n: event.roundNumber }) }}
+                      </RouterLink>
+                    </td>
                     <td><strong>{{ event.eventPlace ?? '—' }}</strong></td>
                     <td class="muted">{{ formatQual(event.qualScore100, event.qualPosition) }}</td>
                     <td><strong>{{ event.points }}</strong></td>
@@ -372,6 +394,13 @@ function formatQual(
   font-size: 0.82rem;
 }
 
+.p4p-leader__events-series {
+  max-width: 5.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .p4p-leader__events-table thead th {
   position: sticky;
   top: 0;
@@ -581,9 +610,6 @@ function formatQual(
     min-width: 0;
   }
 
-  .p4p-leader__events {
-    display: none;
-  }
 }
 
 @media (max-width: 768px) {
@@ -601,6 +627,10 @@ function formatQual(
 
   .p4p-leader__info {
     width: 100%;
+  }
+
+  .p4p-leader__events-table {
+    max-height: 220px;
   }
 
   .p4p-list__link {

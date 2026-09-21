@@ -62,11 +62,40 @@ export interface SeasonP4PMetricsRow {
   eventCount: number;
 }
 
+/** Rank pilots within one finished event by championship points (1 = most points). */
+export function computeEventPointsPlaces(
+  results: Array<{ pilotId: string; points: number; pilot: Pilot }>,
+): Map<string, number> {
+  const ranked = [...results].sort(
+    (a, b) =>
+      b.points - a.points ||
+      a.pilot.lastName.localeCompare(b.pilot.lastName) ||
+      a.pilot.firstName.localeCompare(b.pilot.firstName),
+  );
+  const places = new Map<string, number>();
+  ranked.forEach((row, index) => {
+    places.set(row.pilotId, index + 1);
+  });
+  return places;
+}
+
+export function buildPointsPlaceByEventId(
+  events: SeasonEventWithResults[],
+): Map<string, Map<string, number>> {
+  const byEvent = new Map<string, Map<string, number>>();
+  for (const event of events) {
+    if (event.status !== 'FINISHED') continue;
+    byEvent.set(event.id, computeEventPointsPlaces(event.results));
+  }
+  return byEvent;
+}
+
 export function eventResultPlace(result: {
+  pointsPlace?: number | null;
   tandemPosition: number | null;
   qualPosition: number | null;
 }): number | null {
-  const place = result.tandemPosition ?? result.qualPosition;
+  const place = result.pointsPlace ?? result.tandemPosition ?? result.qualPosition;
   if (place == null || place < 1) return null;
   return place;
 }
@@ -83,8 +112,13 @@ export function computeSeasonP4PMetrics(events: SeasonEventWithResults[]): Seaso
   >();
 
   for (const event of finishedEvents) {
+    const pointsPlaces = computeEventPointsPlaces(event.results);
     for (const result of event.results) {
-      const place = eventResultPlace(result);
+      const place = eventResultPlace({
+        pointsPlace: pointsPlaces.get(result.pilotId),
+        tandemPosition: result.tandemPosition,
+        qualPosition: result.qualPosition,
+      });
       if (place == null) continue;
 
       const bucket = buckets.get(result.pilotId) ?? {

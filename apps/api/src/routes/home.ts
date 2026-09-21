@@ -2,7 +2,7 @@ import type { HomeResponse } from '@drift-index/shared';
 import { Router } from 'express';
 import { computeP4P } from '../lib/p4p.js';
 import { loadP4PInputs } from '../lib/p4pData.js';
-import { buildP4PBestSeriesEvents } from '../lib/p4pSeasonEvents.js';
+import { buildP4PSeasonEvents } from '../lib/p4pSeasonEvents.js';
 import { toPilotCard } from '../lib/pilot.js';
 import { resultDisplayNumber } from '../lib/resultNumber.js';
 import { computePilotStats, toStatsInput } from '../lib/pilotStats.js';
@@ -102,6 +102,7 @@ homeRouter.get('/home', async (req, res) => {
             roundNumber: lastFinished.roundNumber,
             name: lastFinished.name,
             track: toTrackSummary(lastFinished.track),
+            startsAt: lastFinished.startsAt?.toISOString() ?? null,
           },
           qualScore: qualWinner.qualScore100,
           gapToSecond: runnerUp?.qualScore100 != null && qualWinner.qualScore100 != null
@@ -111,6 +112,13 @@ homeRouter.get('/home', async (req, res) => {
       }
     }
   }
+
+  qualWinners.sort((a, b) => {
+    const aTime = a.event.startsAt ? Date.parse(a.event.startsAt) : Number.POSITIVE_INFINITY;
+    const bTime = b.event.startsAt ? Date.parse(b.event.startsAt) : Number.POSITIVE_INFINITY;
+    if (aTime !== bTime) return aTime - bTime;
+    return a.series.slug.localeCompare(b.series.slug);
+  });
 
   const calendarEvents = await prisma.event.findMany({
     where: {
@@ -124,8 +132,13 @@ homeRouter.get('/home', async (req, res) => {
     },
   });
 
-  const p4pInputs = await loadP4PInputs(prisma, year, prestige.hardnessBySlug);
+  const { inputs: p4pInputs, pointsPlaceByEventId } = await loadP4PInputs(
+    prisma,
+    year,
+    prestige.hardnessBySlug,
+  );
   const p4pRows = computeP4P(p4pInputs, 10);
+  const featuredSeriesSlugs = new Set(p4pInputs.map((series) => series.slug));
   const p4pPilotIds = p4pRows.map((row) => row.pilot.id);
   const p4pPilotResults = await prisma.pilot.findMany({
     where: { id: { in: p4pPilotIds } },
@@ -163,10 +176,11 @@ homeRouter.get('/home', async (req, res) => {
       avgQualScore: row.bestSeriesAvgQual,
     },
     otherSeries: row.otherSeries,
-    bestSeriesEvents: buildP4PBestSeriesEvents(
+    seasonEvents: buildP4PSeasonEvents(
       resultsByPilotId.get(row.pilot.id) ?? [],
-      row.bestSeriesSlug,
       year,
+      pointsPlaceByEventId,
+      featuredSeriesSlugs,
     ),
   }));
 

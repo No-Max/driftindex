@@ -16,6 +16,53 @@ export interface MirroredPhoto {
   photoUpdatedAt: Date | null;
 }
 
+async function writePilotPortraitWebp(
+  pilotSlug: string,
+  seriesSlug: string,
+  buffer: Buffer,
+  photoSourceUrl: string,
+): Promise<MirroredPhoto> {
+  const relativePath = pilotSeriesPortraitRelativePath(pilotSlug, seriesSlug);
+  const destPath = path.join(getMediaRoot(), relativePath);
+  await fs.mkdir(path.dirname(destPath), { recursive: true });
+
+  await sharp(buffer)
+    .rotate()
+    .resize(512, 512, { fit: 'cover', withoutEnlargement: true })
+    .webp({ quality: 82 })
+    .toFile(destPath);
+
+  return {
+    photoUrl: toPublicMediaPath(relativePath),
+    photoSourceUrl,
+    photoUpdatedAt: new Date(),
+  };
+}
+
+export async function mirrorPilotSeriesPortraitFromLocal(
+  pilotSlug: string,
+  seriesSlug: string,
+  localPath: string,
+  photoSourceUrl?: string,
+): Promise<MirroredPhoto> {
+  try {
+    const buffer = await fs.readFile(localPath);
+    return await writePilotPortraitWebp(
+      pilotSlug,
+      seriesSlug,
+      buffer,
+      photoSourceUrl ?? `file://${path.resolve(localPath)}`,
+    );
+  } catch (error) {
+    console.warn(`Failed to mirror pilot photo from file ${pilotSlug}/${seriesSlug}:`, error);
+    return {
+      photoUrl: null,
+      photoSourceUrl: photoSourceUrl ?? localPath,
+      photoUpdatedAt: null,
+    };
+  }
+}
+
 export async function mirrorPilotSeriesPortrait(
   pilotSlug: string,
   seriesSlug: string,
@@ -25,10 +72,6 @@ export async function mirrorPilotSeriesPortrait(
     return { photoUrl: null, photoSourceUrl: null, photoUpdatedAt: null };
   }
 
-  const relativePath = pilotSeriesPortraitRelativePath(pilotSlug, seriesSlug);
-  const destPath = path.join(getMediaRoot(), relativePath);
-  await fs.mkdir(path.dirname(destPath), { recursive: true });
-
   try {
     const response = await fetch(sourceUrl);
     if (!response.ok) {
@@ -36,17 +79,7 @@ export async function mirrorPilotSeriesPortrait(
     }
 
     const buffer = Buffer.from(await response.arrayBuffer());
-    await sharp(buffer)
-      .rotate()
-      .resize(512, 512, { fit: 'cover', withoutEnlargement: true })
-      .webp({ quality: 82 })
-      .toFile(destPath);
-
-    return {
-      photoUrl: toPublicMediaPath(relativePath),
-      photoSourceUrl: sourceUrl,
-      photoUpdatedAt: new Date(),
-    };
+    return await writePilotPortraitWebp(pilotSlug, seriesSlug, buffer, sourceUrl);
   } catch (error) {
     console.warn(`Failed to mirror pilot photo ${pilotSlug}/${seriesSlug}:`, error);
     return { photoUrl: null, photoSourceUrl: sourceUrl, photoUpdatedAt: null };

@@ -474,7 +474,7 @@ function toPilotListSeries(participation: P4PSeriesParticipation): PilotListSeri
 }
 
 function listPilotSeasonSeries(
-  p4pInputs: Awaited<ReturnType<typeof loadP4PInputs>>,
+  p4pInputs: Awaited<ReturnType<typeof loadP4PInputs>>['inputs'],
   pilotId: string,
 ): PilotListSeriesParticipation[] {
   return pilotSeriesParticipations(p4pInputs, pilotId).map(toPilotListSeries);
@@ -486,7 +486,7 @@ publicRouter.get('/pilots', async (req, res) => {
   const searchQuery = parseSearchQuery(req.query.q);
   const seriesSlug = parseSeriesSlug(req.query.series);
   const prestige = await computePrestigeRanking(prisma, year);
-  const p4pInputs = await loadP4PInputs(prisma, year, prestige.hardnessBySlug);
+  const { inputs: p4pInputs } = await loadP4PInputs(prisma, year, prestige.hardnessBySlug);
   const p4pRows = computeP4P(p4pInputs);
 
   const seriesFilters: PilotsListSeriesFilter[] = p4pInputs.map((series) => ({

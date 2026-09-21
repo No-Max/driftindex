@@ -1,12 +1,21 @@
 import type { PrismaClient } from '@prisma/client';
 import type { P4PInputSeries } from './p4p.js';
-import { computeSeasonP4PMetrics } from './standings.js';
+import {
+  buildPointsPlaceByEventId,
+  computeSeasonP4PMetrics,
+  type SeasonEventWithResults,
+} from './standings.js';
+
+export interface P4PInputsLoadResult {
+  inputs: P4PInputSeries[];
+  pointsPlaceByEventId: Map<string, Map<string, number>>;
+}
 
 export async function loadP4PInputs(
   prisma: PrismaClient,
   year: number,
   hardnessBySlug: Map<string, number>,
-): Promise<P4PInputSeries[]> {
+): Promise<P4PInputsLoadResult> {
   const featuredSeries = await prisma.series.findMany({
     where: { featuredOrder: { not: null } },
     orderBy: { featuredOrder: 'asc' },
@@ -26,6 +35,7 @@ export async function loadP4PInputs(
   });
 
   const inputs: P4PInputSeries[] = [];
+  const seasonEvents: SeasonEventWithResults[] = [];
 
   for (const series of featuredSeries) {
     const season = series.seasons[0];
@@ -34,6 +44,7 @@ export async function loadP4PInputs(
     const seriesHardness = hardnessBySlug.get(series.slug);
     if (seriesHardness == null) continue;
 
+    seasonEvents.push(...(season.events as SeasonEventWithResults[]));
     const metrics = computeSeasonP4PMetrics(season.events);
     inputs.push({
       slug: series.slug,
@@ -49,5 +60,8 @@ export async function loadP4PInputs(
     });
   }
 
-  return inputs;
+  return {
+    inputs,
+    pointsPlaceByEventId: buildPointsPlaceByEventId(seasonEvents),
+  };
 }

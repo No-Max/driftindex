@@ -13,7 +13,16 @@ const props = defineProps<{
 
 const { t } = useI18n();
 
-const itemCount = computed(() => props.items.length);
+const sortedItems = computed(() =>
+  [...props.items].sort((a, b) => {
+    const aTime = a.event.startsAt ? Date.parse(a.event.startsAt) : Number.POSITIVE_INFINITY;
+    const bTime = b.event.startsAt ? Date.parse(b.event.startsAt) : Number.POSITIVE_INFINITY;
+    if (aTime !== bTime) return aTime - bTime;
+    return a.series.slug.localeCompare(b.series.slug);
+  }),
+);
+
+const itemCount = computed(() => sortedItems.value.length);
 
 function resolveVisibleCount(width: number) {
   if (width > 1100) return 4;
@@ -81,7 +90,7 @@ function eventName(item: HomeQualWinner) {
           :style="trackStyle"
         >
           <article
-            v-for="item in items"
+            v-for="item in sortedItems"
             :key="`${item.series.slug}-${item.event.slug}`"
             class="card-slider__item card qual-card"
           >

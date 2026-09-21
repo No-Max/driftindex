@@ -5,7 +5,7 @@ import {
   PILOT_PHOTO_SERIES_PREFER,
 } from '../../data/pilot-photo-overrides.js';
 import { lookupByPilotSlug } from '../pilotSlug.js';
-import { mirrorPilotSeriesPortrait } from './mirror.js';
+import { mirrorPilotSeriesPortrait, mirrorPilotSeriesPortraitFromLocal } from './mirror.js';
 
 export function preferredSeriesPhotoUrl(
   pilotSlug: string,
@@ -40,13 +40,21 @@ export async function upsertPilotSeriesPhoto(
     pilotSlug: string;
     seriesSlug: string;
     photoSourceUrl: string | null;
+    localPhotoPath?: string | null;
   },
 ): Promise<{ mirrored: boolean }> {
-  const photo = await mirrorPilotSeriesPortrait(
-    params.pilotSlug,
-    params.seriesSlug,
-    params.photoSourceUrl,
-  );
+  const photo = params.localPhotoPath
+    ? await mirrorPilotSeriesPortraitFromLocal(
+        params.pilotSlug,
+        params.seriesSlug,
+        params.localPhotoPath,
+        params.photoSourceUrl ?? undefined,
+      )
+    : await mirrorPilotSeriesPortrait(
+        params.pilotSlug,
+        params.seriesSlug,
+        params.photoSourceUrl,
+      );
 
   await prisma.pilotSeriesPhoto.upsert({
     where: {
