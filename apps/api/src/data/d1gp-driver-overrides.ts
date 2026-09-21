@@ -22,4 +22,35 @@ export const D1GP_DRIVER_BY_RANKING_NAME: Record<
     nameJa: '齋藤 太吾',
     country: 'JP',
   },
+  /** D1 site typo for Seimi Tanaka (#2). */
+  '田中 省己': {
+    firstName: 'Seimi',
+    lastName: 'Tanaka',
+    nameJa: '田中 省己',
+    country: 'JP',
+  },
+  '末永 正雄': {
+    firstName: 'Masao',
+    lastName: 'Suenaga',
+    nameJa: '末永 正雄',
+    country: 'JP',
+  },
+  'ヴィトー 博貴': {
+    firstName: 'Hiroki',
+    lastName: 'Vito',
+    nameJa: 'ヴィトー 博貴',
+    country: 'JP',
+  },
+  '植尾 勝浩': {
+    firstName: 'Katsuhiro',
+    lastName: 'Ueo',
+    nameJa: '植尾 勝浩',
+    country: 'JP',
+  },
+  '村上 満': {
+    firstName: 'Mitsuru',
+    lastName: 'Murakami',
+    nameJa: '村上 満',
+    country: 'JP',
+  },
 };
