@@ -12,6 +12,17 @@ const RUSSIA = 'Russia';
 const CHINA = 'China';
 const JAPAN = 'Japan';
 const USA = 'United States';
+const LATVIA = 'Latvia';
+const AUSTRIA = 'Austria';
+const POLAND = 'Poland';
+const IRELAND = 'Ireland';
+const GERMANY = 'Germany';
+const SWEDEN = 'Sweden';
+const HUNGARY = 'Hungary';
+const FRANCE = 'France';
+const SPAIN = 'Spain';
+const ITALY = 'Italy';
+const FINLAND = 'Finland';
 
 const CITY_EN: Record<string, string> = {
   москва: 'Moscow',
@@ -351,6 +362,181 @@ const CANONICAL: Array<{
     country: JAPAN,
     matches: (raw) => /huis ten bosch/i.test(raw),
   },
+  {
+    preferredSlug: 'bikernieki-circuit',
+    name: 'Biķernieki Circuit',
+    city: 'Riga',
+    country: LATVIA,
+    matches: (raw) => /bi[kķ]ernie/i.test(raw) || /^\s*riga\b/i.test(raw),
+  },
+  {
+    preferredSlug: 'ps-racing-center-greinbach',
+    name: 'PS Racing Center Greinbach',
+    city: 'Greinbach',
+    country: AUSTRIA,
+    matches: (raw) => /greinbach/i.test(raw),
+  },
+  {
+    preferredSlug: 'mondello-park',
+    name: 'Mondello Park',
+    city: 'Naas',
+    country: IRELAND,
+    matches: (raw) => /mondello/i.test(raw),
+  },
+  {
+    preferredSlug: 'ferropolis',
+    name: 'Ferropolis',
+    city: 'Dessau',
+    country: GERMANY,
+    matches: (raw) => /ferropolis/i.test(raw),
+  },
+  {
+    preferredSlug: 'drivecenter-arena',
+    name: 'Drivecenter Arena',
+    city: 'Fällfors',
+    country: SWEDEN,
+    matches: (raw) => /drivecenter|fällfors|fallfors/i.test(raw),
+  },
+  {
+    preferredSlug: 'stadion-wisly-plock',
+    name: 'Stadion Wisły Płock',
+    city: 'Płock',
+    country: POLAND,
+    matches: (raw) => /p[lł]ock/i.test(raw),
+  },
+  {
+    preferredSlug: 'rabocsiring',
+    name: 'RabócsiRing',
+    city: 'Máriapócs',
+    country: HUNGARY,
+    matches: (raw) => /rab[oó]csi/i.test(raw),
+  },
+  {
+    preferredSlug: 'nurburgring',
+    name: 'Nürburgring',
+    city: 'Nürburg',
+    country: GERMANY,
+    matches: (raw) => /n[uü]rburgring/i.test(raw),
+  },
+  {
+    preferredSlug: 'hockenheimring',
+    name: 'Hockenheimring',
+    city: 'Hockenheim',
+    country: GERMANY,
+    matches: (raw) => /hockenheim/i.test(raw),
+  },
+  {
+    preferredSlug: 'tor-poznan',
+    name: 'Tor Poznań',
+    city: 'Poznań',
+    country: POLAND,
+    matches: (raw) => /tor\s*pozna/i.test(raw),
+  },
+  {
+    preferredSlug: 'inea-stadion',
+    name: 'INEA Stadion',
+    city: 'Poznań',
+    country: POLAND,
+    matches: (raw) => /inea stadion/i.test(raw),
+  },
+  {
+    preferredSlug: 'motoarena-torun',
+    name: 'Motoarena Toruń',
+    city: 'Toruń',
+    country: POLAND,
+    matches: (raw) => /motoarena|moto.?arena.?toru/i.test(raw),
+  },
+  {
+    preferredSlug: 'moto-arena-lodz',
+    name: 'Moto Arena Łódź',
+    city: 'Łódź',
+    country: POLAND,
+    matches: (raw) => /moto\s*arena/i.test(raw) || /[łl]od[zźż]/i.test(raw),
+  },
+  {
+    preferredSlug: 'autodrom-jastrzab',
+    name: 'Autodrom Jastrząb',
+    city: 'Jastrząb',
+    country: POLAND,
+    matches: (raw) => /jastrz/i.test(raw),
+  },
+  {
+    preferredSlug: 'ptak-warsaw-expo',
+    name: 'Ptak Warsaw Expo',
+    city: 'Nadarzyn',
+    country: POLAND,
+    matches: (raw) => /ptak|warsaw expo/i.test(raw),
+  },
+  {
+    preferredSlug: 'amberexpo-gdansk',
+    name: 'AmberExpo Gdańsk',
+    city: 'Gdańsk',
+    country: POLAND,
+    matches: (raw) => /amberexpo/i.test(raw),
+  },
+  {
+    preferredSlug: 'pge-arena-gdansk',
+    name: 'PGE Arena Gdańsk',
+    city: 'Gdańsk',
+    country: POLAND,
+    matches: (raw) => /pge arena/i.test(raw),
+  },
+  {
+    preferredSlug: 'pge-narodowy',
+    name: 'PGE Narodowy',
+    city: 'Warsaw',
+    country: POLAND,
+    matches: (raw) => /narodowy/i.test(raw),
+  },
+  {
+    preferredSlug: 'karpacz',
+    name: 'Karpacz',
+    city: 'Karpacz',
+    country: POLAND,
+    matches: (raw) => /karpacz|karkonoska/i.test(raw),
+  },
+  {
+    preferredSlug: 'croix-en-ternois',
+    name: 'Circuit de Croix-en-Ternois',
+    city: 'Croix-en-Ternois',
+    country: FRANCE,
+    matches: (raw) => /croix|ternois/i.test(raw),
+  },
+  {
+    preferredSlug: 'circuito-del-jarama',
+    name: 'Circuito del Jarama',
+    city: 'Madrid',
+    country: SPAIN,
+    matches: (raw) => /jarama/i.test(raw),
+  },
+  {
+    preferredSlug: 'ricardo-tormo',
+    name: 'Circuit Ricardo Tormo',
+    city: 'Cheste',
+    country: SPAIN,
+    matches: (raw) => /ricardo tormo/i.test(raw),
+  },
+  {
+    preferredSlug: 'vallelunga-circuit',
+    name: 'Vallelunga Circuit',
+    city: 'Campagnano di Roma',
+    country: ITALY,
+    matches: (raw) => /vallelunga/i.test(raw),
+  },
+  {
+    preferredSlug: 'ahvenisto-race-circuit',
+    name: 'Ahvenisto Race Circuit',
+    city: 'Hämeenlinna',
+    country: FINLAND,
+    matches: (raw) => /ahvenisto/i.test(raw),
+  },
+  {
+    preferredSlug: 'power-park',
+    name: 'Power Park',
+    city: 'Alahärmä',
+    country: FINLAND,
+    matches: (raw) => /power park/i.test(raw),
+  },
 ];
 
 /** Remove trailing event date fragments (e.g. «, 28-29 апреля»). */
@@ -397,8 +583,11 @@ function isLikelyCity(segment: string): boolean {
   if (/[–-]\d/.test(segment)) return false;
   return (
     segment.length <= 40 &&
-    !/\b(raceway|ring|drive|autodrom|speedway|arena|circuit|island|airport|hills|expo|park)\b/i.test(
+    !/\b(raceway|ring|drive|autodrom|speedway|arena|circuit|island|airport|hills|expo|park|trase|stadion|stadium)\b/i.test(
       segment,
+    ) &&
+    !/^(france|germany|ireland|austria|poland|latvia|sweden|hungary|spain|italy|finland|russia|japan|china|usa|united states)$/i.test(
+      segment.trim(),
     )
   );
 }

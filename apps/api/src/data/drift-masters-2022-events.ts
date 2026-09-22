@@ -3,7 +3,7 @@ export const DM_2022_EVENTS = [
   {
     roundNumber: 1,
     name: 'Round 1 — Mondello Park, Ireland',
-    trackName: 'Mondello Park, Ireland',
+    trackName: 'Mondello Park',
     startsAt: '2022-05-08T09:00:00.000Z',
   },
   {
@@ -15,19 +15,19 @@ export const DM_2022_EVENTS = [
   {
     roundNumber: 3,
     name: 'Round 3 — Fallfors, Sweden',
-    trackName: 'Drivecenter Arena, Fallfors',
+    trackName: 'Drivecenter Arena',
     startsAt: '2022-07-02T09:00:00.000Z',
   },
   {
     roundNumber: 4,
     name: 'Round 4 — Riga, Latvia',
-    trackName: 'Biķernieki Trase, Riga',
+    trackName: 'Biķernieki Circuit',
     startsAt: '2022-07-30T09:00:00.000Z',
   },
   {
     roundNumber: 5,
     name: 'Round 5 — Ferropolis, Germany',
-    trackName: 'Ferropolis, Germany',
+    trackName: 'Ferropolis',
     startsAt: '2022-08-20T09:00:00.000Z',
   },
   {

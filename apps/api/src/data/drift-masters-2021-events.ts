@@ -15,13 +15,13 @@ export const DM_2021_EVENTS = [
   {
     roundNumber: 3,
     name: 'Round 3 — Riga, Latvia',
-    trackName: 'Biķernieki Trase, Riga',
+    trackName: 'Biķernieki Circuit',
     startsAt: '2021-07-31T09:00:00.000Z',
   },
   {
     roundNumber: 4,
     name: 'Round 4 — Riga, Latvia',
-    trackName: 'Biķernieki Trase, Riga',
+    trackName: 'Biķernieki Circuit',
     startsAt: '2021-08-01T09:00:00.000Z',
   },
 ] as const;

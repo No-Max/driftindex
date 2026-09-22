@@ -16,7 +16,7 @@ export const DM_2020_EVENT = {
   slug: 'dm-r1',
   roundNumber: 1,
   name: 'Round 1 — King of Riga',
-  trackName: 'Bikernieki Trase, Riga',
+  trackName: 'Biķernieki Circuit',
   startsAt: '2020-08-14T09:00:00.000Z',
 } as const;
 
