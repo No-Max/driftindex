@@ -56,6 +56,8 @@ interface RankingRow {
   nameJa: string;
   team: string;
   roundPoints: Map<number, number>;
+  /** Round finish order from legacy ranking cells, e.g. rk2017 「（1）」. */
+  roundRanks: Map<number, number>;
   totalPoints: number;
 }
 
@@ -382,6 +384,11 @@ function parseLegacyRankingRoundPoints(raw: string): number | null {
   return parseInteger(trimmed);
 }
 
+function parseLegacyRankingRoundRank(raw: string): number | null {
+  const match = raw.match(/[（(](\d+)[）)]/);
+  return match ? parseInteger(match[1]!) : null;
+}
+
 function parseLegacyStaticRanking(html: string): { rows: RankingRow[]; roundNumbers: number[] } {
   const $ = cheerio.load(html);
   const table = $('table.ranking-table').first();
@@ -404,18 +411,21 @@ function parseLegacyStaticRanking(html: string): { rows: RankingRow[]; roundNumb
     const nameJa = $row.find('.rank-td-driver').first().text().trim();
     const team = $row.find('.rank-td-team').first().text().trim();
     const roundPoints = new Map<number, number>();
+    const roundRanks = new Map<number, number>();
     $row.find('.rank-td-round').each((index, cell) => {
       const roundNumber = roundNumbers[index];
       if (roundNumber == null) return;
       const raw = $(cell).text().trim();
       const points = parseLegacyRankingRoundPoints(raw);
       if (points != null) roundPoints.set(roundNumber, points);
+      const rank = parseLegacyRankingRoundRank(raw);
+      if (rank != null) roundRanks.set(roundNumber, rank);
     });
 
     const totalPoints = parseInteger($row.find('.rank-td-total').first().text()) ?? 0;
     registerLatinDriverFromRanking(number, nameJa);
 
-    rows.push({ number, nameJa, team, roundPoints, totalPoints });
+    rows.push({ number, nameJa, team, roundPoints, roundRanks, totalPoints });
   });
 
   return { rows, roundNumbers };
@@ -476,6 +486,7 @@ function parseTsuisoRanking(html: string): { rows: RankingRow[]; roundNumbers: n
       nameJa,
       team: cells[3]!,
       roundPoints,
+      roundRanks: new Map(),
       totalPoints,
     });
   });
@@ -635,7 +646,9 @@ export async function fetchD1gpSeason(seasonYear: number): Promise<D1SeasonData>
         const report = reportsByRound.get(roundNumber);
         const qual = report?.qualByNumber.get(row.number);
         const tandem = report?.tandemByNumber.get(row.number);
-        if (points <= 0 && !qual && !tandem) continue;
+        const rankingRoundRank = row.roundRanks.get(roundNumber);
+        const tandemPosition = tandem?.position ?? rankingRoundRank ?? null;
+        if (points <= 0 && !qual && tandemPosition == null) continue;
 
         stages.push({
           eventSlug: eventSlug(roundNumber),
@@ -643,7 +656,7 @@ export async function fetchD1gpSeason(seasonYear: number): Promise<D1SeasonData>
           qualifyingPosition: qual?.position ?? null,
           qualifyingPoints: null,
           qualScore100: qual?.bestScore ?? null,
-          tandemPosition: tandem?.position ?? null,
+          tandemPosition,
           points,
         });
       }
