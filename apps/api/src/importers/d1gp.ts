@@ -62,6 +62,8 @@ interface RankingRow {
 const TRACK_LABELS: Record<string, string> = {
   OKUIBUKI: 'Okui',
   TSUKUBA: 'Tsukuba Circuit',
+  TOKACHI: 'Tokachi International Speedway',
+  MAISHIMA: 'Maishima Sports Island',
   EBISU: 'Ebisu Circuit',
   AUTOPOLIS: 'Autopolis',
   AP: 'Autopolis',
@@ -167,6 +169,17 @@ function parseVenueSchedule(html: string): Map<number, string> {
 
   const text = cheerio.load(html).root().text().replace(/\s+/g, ' ');
   for (const match of text.matchAll(/RD\.(\d+)(?:&(\d+))?\s+([A-Z][A-Z\s]{1,20}?)(?:\s*\/|\s+ドライバ|\s+単走|$)/g)) {
+    applyRoundVenueRange(
+      schedule,
+      Number.parseInt(match[1]!, 10),
+      match[2] ? Number.parseInt(match[2], 10) : Number.parseInt(match[1]!, 10),
+      match[3]!,
+    );
+  }
+
+  for (const match of text.matchAll(
+    /Rd\.(\d+)(?:&(\d+))?[：:]\s*([A-Za-z][A-Za-z\s]{1,24}?)(?=\s*\/|\s+D1|\s+2019|\s*$)/g,
+  )) {
     applyRoundVenueRange(
       schedule,
       Number.parseInt(match[1]!, 10),
@@ -306,7 +319,113 @@ function parseRoundReport(html: string): RoundReportData {
   return { qualByNumber, tandemByNumber };
 }
 
+/** Pre-WP event reports under www.d1gp.co.jp/03_sche/ (2019 etc.). */
+function parseLegacyRoundReport(html: string): RoundReportData {
+  const $ = cheerio.load(html);
+  const qualByNumber = new Map<number, { position: number; bestScore: number }>();
+  const tandemByNumber = new Map<number, { position: number }>();
+
+  for (const table of $('table.table-result-l, table.table-result-r').toArray()) {
+    $(table)
+      .find('tbody tr')
+      .each((_, row) => {
+        const $row = $(row);
+        if ($row.find('td[colspan]').length > 0) return;
+
+        const position = parseInteger($row.find('.result-td-pos').first().text());
+        const numberCells = $row.find('.result-td-no');
+        const numberText =
+          numberCells.length >= 2
+            ? $(numberCells[1]!).text()
+            : numberCells.length === 1
+              ? $(numberCells[0]!).text()
+              : '';
+        const number = parseInteger(numberText);
+        const bestScore =
+          parseFloatScore($row.find('.result-td-ave1').first().text()) ??
+          parseFloatScore($row.find('.result-td-best').first().text());
+        if (position == null || number == null || bestScore == null) return;
+        qualByNumber.set(number, { position, bestScore });
+      });
+  }
+
+  for (const table of $('table.ranking-table').toArray()) {
+    $(table)
+      .find('tbody tr')
+      .each((_, row) => {
+        const $row = $(row);
+        const position = parseInteger($row.find('.rank-td-other').first().text());
+        const number = parseInteger($row.find('.rank-td-no').first().text());
+        if (position == null || number == null) return;
+        tandemByNumber.set(number, { position });
+      });
+  }
+
+  return { qualByNumber, tandemByNumber };
+}
+
+function parseRoundReportFromHtml(html: string): RoundReportData {
+  if (
+    html.includes('table-result-l') &&
+    (html.includes('result-td-ave1') || html.includes('result-td-best'))
+  ) {
+    return parseLegacyRoundReport(html);
+  }
+  return parseRoundReport(html);
+}
+
+function parseLegacyRankingRoundPoints(raw: string): number | null {
+  const trimmed = raw.trim();
+  if (!trimmed || trimmed === '-') return null;
+  const leading = trimmed.match(/^(\d+)/);
+  if (leading) return parseInteger(leading[1]!);
+  return parseInteger(trimmed);
+}
+
+function parseLegacyStaticRanking(html: string): { rows: RankingRow[]; roundNumbers: number[] } {
+  const $ = cheerio.load(html);
+  const table = $('table.ranking-table').first();
+  if (!table.length) {
+    throw new Error('D1GP legacy ranking table not found');
+  }
+
+  const roundNumbers: number[] = [];
+  table.find('thead .rank-ti-round').each((_, cell) => {
+    const match = $(cell).text().trim().match(/Rd\.(\d+)/i);
+    if (match) roundNumbers.push(Number.parseInt(match[1]!, 10));
+  });
+
+  const rows: RankingRow[] = [];
+  table.find('tbody tr').each((_, row) => {
+    const $row = $(row);
+    const number = parseInteger($row.find('.rank-td-no').first().text());
+    if (number == null) return;
+
+    const nameJa = $row.find('.rank-td-driver').first().text().trim();
+    const team = $row.find('.rank-td-team').first().text().trim();
+    const roundPoints = new Map<number, number>();
+    $row.find('.rank-td-round').each((index, cell) => {
+      const roundNumber = roundNumbers[index];
+      if (roundNumber == null) return;
+      const raw = $(cell).text().trim();
+      const points = parseLegacyRankingRoundPoints(raw);
+      if (points != null) roundPoints.set(roundNumber, points);
+    });
+
+    const totalPoints = parseInteger($row.find('.rank-td-total').first().text()) ?? 0;
+    registerLatinDriverFromRanking(number, nameJa);
+
+    rows.push({ number, nameJa, team, roundPoints, totalPoints });
+  });
+
+  return { rows, roundNumbers };
+}
+
 function parseTsuisoRanking(html: string): { rows: RankingRow[]; roundNumbers: number[] } {
+  if (html.includes('ranking-table') && html.includes('rank-td-driver')) {
+    return parseLegacyStaticRanking(html);
+  }
+
   const $ = cheerio.load(html);
   const table = findTable($, ['driver', 'rd.1']);
   if (!table) {
@@ -468,14 +587,25 @@ export async function fetchD1gpSeason(seasonYear: number): Promise<D1SeasonData>
     }
   }
 
-  const reportUrlsByRound = await discoverRoundReports(categoryUrls);
+  const reportUrlsByRound = new Map<number, string>();
+  if (config.legacyReportUrls) {
+    for (const [round, url] of Object.entries(config.legacyReportUrls)) {
+      reportUrlsByRound.set(Number(round), url);
+    }
+  }
+  const discoveredReports = await discoverRoundReports(categoryUrls);
+  for (const [roundNumber, url] of discoveredReports) {
+    if (!reportUrlsByRound.has(roundNumber)) {
+      reportUrlsByRound.set(roundNumber, url);
+    }
+  }
   const reportRounds = new Set(reportUrlsByRound.keys());
 
   const reportEntries = [...reportUrlsByRound.entries()].sort(([a], [b]) => a - b);
   const reportHtmls = await Promise.all(reportEntries.map(([, url]) => fetchHtml(url)));
   const reportsByRound = new Map<number, RoundReportData>();
   for (const [index, [roundNumber]] of reportEntries.entries()) {
-    reportsByRound.set(roundNumber, parseRoundReport(reportHtmls[index]!));
+    reportsByRound.set(roundNumber, parseRoundReportFromHtml(reportHtmls[index]!));
   }
 
   let photosByNumber = new Map<number, string>();

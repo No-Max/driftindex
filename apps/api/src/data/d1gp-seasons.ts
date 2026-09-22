@@ -9,6 +9,8 @@ export interface D1gpSeasonConfig {
   roundStartsAt?: Record<number, string>;
   /** Round → track when ranking meta does not match actual calendar (e.g. 2021). */
   roundTrackNames?: Record<number, string>;
+  /** Round → report URL (e.g. Wayback legacy 03_sche pages). */
+  legacyReportUrls?: Record<number, string>;
 }
 
 function utcEventDate(year: number, month: number, day: number): string {
@@ -16,6 +18,99 @@ function utcEventDate(year: number, month: number, day: number): string {
 }
 
 export const D1GP_SEASONS: D1gpSeasonConfig[] = [
+  {
+    year: 2018,
+    rankingUrl: 'https://www.d1gp.co.jp/04_rank/rk2018.html',
+    categoryBase: 'https://d1gp.co.jp/category/gp/2018gp/',
+    categorySlugs: [],
+    roundStartsAt: {
+      1: utcEventDate(2018, 3, 31),
+      2: utcEventDate(2018, 4, 1),
+      3: utcEventDate(2018, 4, 14),
+      4: utcEventDate(2018, 6, 9),
+      5: utcEventDate(2018, 7, 21),
+      6: utcEventDate(2018, 8, 25),
+      7: utcEventDate(2018, 8, 26),
+      8: utcEventDate(2018, 11, 3),
+    },
+    roundTrackNames: {
+      1: 'Maishima Sports Island',
+      2: 'Maishima Sports Island',
+      3: 'Autopolis',
+      4: 'Tokachi International Speedway',
+      5: 'Tsukuba Circuit',
+      6: 'Ebisu Circuit',
+      7: 'Ebisu Circuit',
+      8: 'Odaiba, Tokyo Bay',
+    },
+    legacyReportUrls: {
+      1: 'https://web.archive.org/web/20180403051549/http://d1gp.co.jp/03_sche/2018/gp1801/gp1801_repo.html',
+      2: 'https://web.archive.org/web/20180403051638/http://d1gp.co.jp/03_sche/2018/gp1801/gp1802_repo.html',
+      3: 'https://web.archive.org/web/20180419090029/http://www.d1gp.co.jp/03_sche/2018/gp1803/gp1803_repo.html',
+      4: 'https://web.archive.org/web/20180613161232/http://d1gp.co.jp/03_sche/2018/gp1804/gp1804_repo.html',
+      5: 'https://web.archive.org/web/20180722155441/http://www.d1gp.co.jp/03_sche/2018/gp1805/gp1805_repo.html',
+      6: 'https://web.archive.org/web/20180826214410/http://d1gp.co.jp/03_sche/2018/gp1806/gp1806_repo.html',
+      7: 'https://web.archive.org/web/20180829202902/http://www.d1gp.co.jp/03_sche/2018/gp1806/gp1807_repo.html',
+      8: 'https://web.archive.org/web/20181106171712/http://d1gp.co.jp/03_sche/2018/gp1808/gp1808_repo.html',
+    },
+  },
+  {
+    year: 2017,
+    rankingUrl: 'https://www.d1gp.co.jp/04_rank/rk2017.html',
+    categoryBase: 'https://d1gp.co.jp/category/gp/2017gp/',
+    categorySlugs: [],
+    roundStartsAt: {
+      1: utcEventDate(2017, 4, 1),
+      2: utcEventDate(2017, 4, 2),
+      3: utcEventDate(2017, 6, 24),
+      4: utcEventDate(2017, 7, 23),
+      5: utcEventDate(2017, 8, 19),
+      6: utcEventDate(2017, 8, 20),
+      7: utcEventDate(2017, 10, 7),
+    },
+    roundTrackNames: {
+      1: 'Odaiba, Tokyo Bay',
+      2: 'Odaiba, Tokyo Bay',
+      3: 'Tsukuba Circuit',
+      4: 'Maishima Sports Island',
+      5: 'Ebisu Circuit',
+      6: 'Ebisu Circuit',
+      7: 'Odaiba, Tokyo Bay',
+    },
+  },
+  {
+    year: 2019,
+    rankingUrl: 'https://www.d1gp.co.jp/04_rank/rk2019.html',
+    categoryBase: 'https://d1gp.co.jp/category/gp/2019gp/',
+    categorySlugs: [],
+    roundStartsAt: {
+      1: utcEventDate(2019, 6, 29),
+      2: utcEventDate(2019, 6, 30),
+      3: utcEventDate(2019, 7, 27),
+      4: utcEventDate(2019, 7, 28),
+      5: utcEventDate(2019, 8, 24),
+      6: utcEventDate(2019, 8, 25),
+      7: utcEventDate(2019, 11, 3),
+    },
+    roundTrackNames: {
+      1: 'Tsukuba Circuit',
+      2: 'Tsukuba Circuit',
+      3: 'Tokachi International Speedway',
+      4: 'Tokachi International Speedway',
+      5: 'Ebisu Circuit',
+      6: 'Ebisu Circuit',
+      7: 'Autopolis',
+    },
+    legacyReportUrls: {
+      1: 'https://web.archive.org/web/20191120030201/https://www.d1gp.co.jp/03_sche/2019/gp1901/gp1901_repo.html',
+      2: 'https://web.archive.org/web/20191120030201/https://www.d1gp.co.jp/03_sche/2019/gp1901/gp1902_repo.html',
+      3: 'https://web.archive.org/web/20191110111727/https://www.d1gp.co.jp/03_sche/2019/gp1903/gp1903_repo.html',
+      4: 'https://web.archive.org/web/20191110111727/https://www.d1gp.co.jp/03_sche/2019/gp1903/gp1904_repo.html',
+      5: 'https://web.archive.org/web/20191211104127/https://www.d1gp.co.jp/03_sche/2019/gp1905/gp1905_repo.html',
+      6: 'https://web.archive.org/web/20191211104127/https://www.d1gp.co.jp/03_sche/2019/gp1905/gp1906_repo.html',
+      7: 'https://web.archive.org/web/20191216185031/https://www.d1gp.co.jp/03_sche/2019/gp1907/gp1907_repo.html',
+    },
+  },
   {
     year: 2026,
     rankingUrl:

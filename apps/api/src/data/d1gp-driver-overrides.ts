@@ -67,6 +67,13 @@ export const D1GP_DRIVER_BY_RANKING_NAME: Record<
     nameJa: '高橋 和己',
     country: 'JP',
   },
+  /** Legacy site variant kanji for Kazumi Takahashi (#36). */
+  '髙橋 和己': {
+    firstName: 'Kazumi',
+    lastName: 'Takahashi',
+    nameJa: '髙橋 和己',
+    country: 'JP',
+  },
   '小橋 正典': {
     firstName: 'Masanori',
     lastName: 'Kohashi',
@@ -96,6 +103,20 @@ export const D1GP_DRIVER_BY_RANKING_NAME: Record<
     firstName: 'Takahiro',
     lastName: 'Ueno',
     nameJa: '上野 高広',
+    country: 'JP',
+  },
+  /** 2019 #5 — Akino Uchiumi. */
+  '内海 彰乃': {
+    firstName: 'Akino',
+    lastName: 'Uchiumi',
+    nameJa: '内海 彰乃',
+    country: 'JP',
+  },
+  /** 2019 #45 — Shogo Hatanaka (distinct from Yumeto Hatanaka). */
+  '畑中 真吾': {
+    firstName: 'Shogo',
+    lastName: 'Hatanaka',
+    nameJa: '畑中 真吾',
     country: 'JP',
   },
 };
