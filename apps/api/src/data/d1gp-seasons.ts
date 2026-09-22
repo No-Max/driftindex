@@ -7,6 +7,8 @@ export interface D1gpSeasonConfig {
   driversIntroUrl?: string;
   /** Round → ISO start when ranking page has no GP nav dates. */
   roundStartsAt?: Record<number, string>;
+  /** Round → track when ranking meta does not match actual calendar (e.g. 2021). */
+  roundTrackNames?: Record<number, string>;
 }
 
 function utcEventDate(year: number, month: number, day: number): string {
@@ -99,6 +101,30 @@ export const D1GP_SEASONS: D1gpSeasonConfig[] = [
     rankingUrl: 'https://d1gp.co.jp/gp2021ranking/',
     categoryBase: 'https://d1gp.co.jp/category/d1gp/2021gp/',
     categorySlugs: ['21gp_0102', '21gp_0304', '21gp_0506', '21gp_0708', '21gp_0910'],
+    roundStartsAt: {
+      1: utcEventDate(2021, 4, 24),
+      2: utcEventDate(2021, 4, 25),
+      3: utcEventDate(2021, 6, 26),
+      4: utcEventDate(2021, 6, 27),
+      5: utcEventDate(2021, 10, 2),
+      6: utcEventDate(2021, 10, 3),
+      7: utcEventDate(2021, 10, 30),
+      8: utcEventDate(2021, 10, 31),
+      9: utcEventDate(2021, 11, 20),
+      10: utcEventDate(2021, 11, 21),
+    },
+    roundTrackNames: {
+      1: 'Okui',
+      2: 'Okui',
+      3: 'Tsukuba Circuit',
+      4: 'Tsukuba Circuit',
+      5: 'Okui',
+      6: 'Okui',
+      7: 'Autopolis',
+      8: 'Autopolis',
+      9: 'Ebisu Circuit',
+      10: 'Ebisu Circuit',
+    },
   },
   {
     year: 2020,

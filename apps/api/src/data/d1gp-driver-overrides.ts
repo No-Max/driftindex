@@ -60,4 +60,29 @@ export const D1GP_DRIVER_BY_RANKING_NAME: Record<
     nameJa: '北岡 裕輔',
     country: 'JP',
   },
+  /** 2021 ranking table variants. */
+  '高橋 和己': {
+    firstName: 'Kazumi',
+    lastName: 'Takahashi',
+    nameJa: '高橋 和己',
+    country: 'JP',
+  },
+  '小橋 正典': {
+    firstName: 'Masanori',
+    lastName: 'Kohashi',
+    nameJa: '小橋 正典',
+    country: 'JP',
+  },
+  '末永 直登': {
+    firstName: 'Naoto',
+    lastName: 'Suenaga',
+    nameJa: '末永 直登',
+    country: 'JP',
+  },
+  '松井 有紀夫': {
+    firstName: 'Yukio',
+    lastName: 'Matsui',
+    nameJa: '松井 有紀夫',
+    country: 'JP',
+  },
 };

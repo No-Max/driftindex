@@ -456,6 +456,11 @@ export async function fetchD1gpSeason(seasonYear: number): Promise<D1SeasonData>
   const rankingHtml = await fetchHtml(config.rankingUrl);
   const { rows: rankingRows, roundNumbers } = parseTsuisoRanking(rankingHtml);
   const venueSchedule = parseVenueSchedule(rankingHtml);
+  if (config.roundTrackNames) {
+    for (const [round, trackName] of Object.entries(config.roundTrackNames)) {
+      venueSchedule.set(Number(round), trackName);
+    }
+  }
   const roundDates = parseRoundEventDates(rankingHtml, seasonYear, config.categoryBase);
   if (config.roundStartsAt) {
     for (const [round, iso] of Object.entries(config.roundStartsAt)) {
