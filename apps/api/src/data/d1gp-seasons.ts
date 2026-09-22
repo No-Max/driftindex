@@ -82,6 +82,17 @@ export const D1GP_SEASONS: D1gpSeasonConfig[] = [
     rankingUrl: 'https://d1gp.co.jp/gp2022ranking/',
     categoryBase: 'https://d1gp.co.jp/category/gp/2022gp/',
     categorySlugs: ['22gp_01', '22gp_0203', 'gp22_0405', '22gp_0607', '22gp_0809'],
+    roundStartsAt: {
+      1: utcEventDate(2022, 4, 24),
+      2: utcEventDate(2022, 6, 11),
+      3: utcEventDate(2022, 6, 12),
+      4: utcEventDate(2022, 8, 20),
+      5: utcEventDate(2022, 8, 21),
+      6: utcEventDate(2022, 10, 22),
+      7: utcEventDate(2022, 10, 23),
+      8: utcEventDate(2022, 11, 12),
+      9: utcEventDate(2022, 11, 13),
+    },
   },
   {
     year: 2021,

@@ -53,4 +53,11 @@ export const D1GP_DRIVER_BY_RANKING_NAME: Record<
     nameJa: '村上 満',
     country: 'JP',
   },
+  /** 2022 ranking table variant for Yusuke Kitaoka (#52). */
+  '北岡 裕輔': {
+    firstName: 'Yusuke',
+    lastName: 'Kitaoka',
+    nameJa: '北岡 裕輔',
+    country: 'JP',
+  },
 };
