@@ -85,4 +85,17 @@ export const D1GP_DRIVER_BY_RANKING_NAME: Record<
     nameJa: '松井 有紀夫',
     country: 'JP',
   },
+  /** 2020 #90 — not Tezuka on the current grid. */
+  '川畑 真人': {
+    firstName: 'Masato',
+    lastName: 'Kawabata',
+    nameJa: '川畑 真人',
+    country: 'JP',
+  },
+  '上野 高広': {
+    firstName: 'Takahiro',
+    lastName: 'Ueno',
+    nameJa: '上野 高広',
+    country: 'JP',
+  },
 };

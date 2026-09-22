@@ -131,6 +131,26 @@ export const D1GP_SEASONS: D1gpSeasonConfig[] = [
     rankingUrl: 'https://d1gp.co.jp/gp2020ranking/',
     categoryBase: 'https://d1gp.co.jp/category/d1gp/2020gp/',
     categorySlugs: ['20gp_01', '20gp_0203', '20gp_0405', '20gp_06', '20gp_0708'],
+    roundStartsAt: {
+      1: utcEventDate(2020, 7, 24),
+      2: utcEventDate(2020, 8, 22),
+      3: utcEventDate(2020, 8, 23),
+      4: utcEventDate(2020, 10, 31),
+      5: utcEventDate(2020, 11, 1),
+      6: utcEventDate(2020, 11, 15),
+      7: utcEventDate(2021, 1, 30),
+      8: utcEventDate(2021, 1, 31),
+    },
+    roundTrackNames: {
+      1: 'Okui',
+      2: 'Ebisu Circuit',
+      3: 'Ebisu Circuit',
+      4: 'Autopolis',
+      5: 'Autopolis',
+      6: 'Ebisu Circuit',
+      7: 'Tsukuba Circuit',
+      8: 'Tsukuba Circuit',
+    },
   },
 ];
 
