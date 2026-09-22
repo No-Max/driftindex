@@ -321,35 +321,86 @@ function parseRoundReport(html: string): RoundReportData {
   return { qualByNumber, tandemByNumber };
 }
 
+function legacyQualRowsFromTable(
+  $: cheerio.CheerioAPI,
+  table: unknown,
+  qualByNumber: Map<number, { position: number; bestScore: number }>,
+): void {
+  $(table)
+    .find('tbody tr')
+    .each((_, row) => {
+      const $row = $(row);
+      if ($row.find('td[colspan]').length > 0) return;
+
+      const position = parseInteger($row.find('.result-td-pos').first().text());
+      const numberCells = $row.find('.result-td-no');
+      const numberText =
+        numberCells.length >= 2
+          ? $(numberCells[1]!).text()
+          : numberCells.length === 1
+            ? $(numberCells[0]!).text()
+            : '';
+      const number = parseInteger(numberText);
+      const bestScore =
+        parseFloatScore($row.find('.result-td-ave1').first().text()) ??
+        parseFloatScore($row.find('.result-td-best').first().text());
+      if (position == null || number == null || bestScore == null) return;
+      qualByNumber.set(number, { position, bestScore });
+    });
+}
+
+function legacyReportTableIsQualifying($: cheerio.CheerioAPI, table: unknown): boolean {
+  const $table = $(table);
+  const heading = $table
+    .prevAll('h2, p.common-title-j, p.common-title')
+    .first()
+    .text()
+    .replace(/\s+/g, '');
+  if (heading.includes('単走予選')) return true;
+  if (heading.includes('単走決勝')) return false;
+  return $table.find('.result-ti-ave1, .result-td-ave1').length > 0;
+}
+
+function parseLegacyQualifyingSection(html: string): Map<number, { position: number; bestScore: number }> {
+  const qualByNumber = new Map<number, { position: number; bestScore: number }>();
+  const $ = cheerio.load(html);
+
+  $('h2').each((_, h2) => {
+    const title = $(h2).text().replace(/\s+/g, '');
+    if (!title.includes('単走予選')) return;
+    let $next = $(h2).next();
+    while ($next.length && ($next.is('table.table-result-l') || $next.is('table.table-result-r'))) {
+      legacyQualRowsFromTable($, $next, qualByNumber);
+      $next = $next.next();
+    }
+  });
+
+  if (qualByNumber.size === 0) {
+    const start = html.indexOf('単走予選');
+    const end = start === -1 ? -1 : html.indexOf('単走決勝', start + 4);
+    if (start !== -1 && end !== -1 && end > start) {
+      const $frag = cheerio.load(html.slice(start, end));
+      $frag('table.table-result-l, table.table-result-r').each((_, table) => {
+        legacyQualRowsFromTable($frag, table, qualByNumber);
+      });
+    }
+  }
+
+  if (qualByNumber.size === 0) {
+    for (const table of $('table.table-result-l, table.table-result-r').toArray()) {
+      if (!legacyReportTableIsQualifying($, table)) continue;
+      legacyQualRowsFromTable($, table, qualByNumber);
+    }
+  }
+
+  return qualByNumber;
+}
+
 /** Pre-WP event reports under www.d1gp.co.jp/03_sche/ (2019 etc.). */
 function parseLegacyRoundReport(html: string): RoundReportData {
   const $ = cheerio.load(html);
-  const qualByNumber = new Map<number, { position: number; bestScore: number }>();
+  const qualByNumber = parseLegacyQualifyingSection(html);
   const tandemByNumber = new Map<number, { position: number }>();
-
-  for (const table of $('table.table-result-l, table.table-result-r').toArray()) {
-    $(table)
-      .find('tbody tr')
-      .each((_, row) => {
-        const $row = $(row);
-        if ($row.find('td[colspan]').length > 0) return;
-
-        const position = parseInteger($row.find('.result-td-pos').first().text());
-        const numberCells = $row.find('.result-td-no');
-        const numberText =
-          numberCells.length >= 2
-            ? $(numberCells[1]!).text()
-            : numberCells.length === 1
-              ? $(numberCells[0]!).text()
-              : '';
-        const number = parseInteger(numberText);
-        const bestScore =
-          parseFloatScore($row.find('.result-td-ave1').first().text()) ??
-          parseFloatScore($row.find('.result-td-best').first().text());
-        if (position == null || number == null || bestScore == null) return;
-        qualByNumber.set(number, { position, bestScore });
-      });
-  }
 
   for (const table of $('table.ranking-table').toArray()) {
     $(table)

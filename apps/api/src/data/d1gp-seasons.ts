@@ -19,6 +19,37 @@ function utcEventDate(year: number, month: number, day: number): string {
 
 export const D1GP_SEASONS: D1gpSeasonConfig[] = [
   {
+    year: 2016,
+    rankingUrl: 'https://www.d1gp.co.jp/04_rank/rk2016.html',
+    categoryBase: 'https://d1gp.co.jp/category/gp/2016gp/',
+    categorySlugs: [],
+    roundStartsAt: {
+      1: utcEventDate(2016, 3, 26),
+      2: utcEventDate(2016, 4, 23),
+      3: utcEventDate(2016, 6, 25),
+      4: utcEventDate(2016, 6, 26),
+      5: utcEventDate(2016, 8, 6),
+      6: utcEventDate(2016, 8, 7),
+      7: utcEventDate(2016, 10, 22),
+    },
+    roundTrackNames: {
+      1: 'Odaiba, Tokyo Bay',
+      2: 'Fuji Speedway',
+      3: 'Tsukuba Circuit',
+      4: 'Tsukuba Circuit',
+      5: 'Ebisu Circuit',
+      6: 'Ebisu Circuit',
+      7: 'Odaiba, Tokyo Bay',
+    },
+    legacyReportUrls: {
+      1: 'https://web.archive.org/web/20161022144030/https://www.d1gp.co.jp/03_sche/gp2016/gp1601/gp1601_repo.html',
+      2: 'https://web.archive.org/web/20161022144030/https://www.d1gp.co.jp/03_sche/gp2016/gp1602/gp1602_repo.html',
+      3: 'https://web.archive.org/web/20161022144030/https://www.d1gp.co.jp/03_sche/gp2016/gp1603/gp1603_repo.html',
+      5: 'https://web.archive.org/web/20161022144030/https://www.d1gp.co.jp/03_sche/gp2016/gp1605/gp1605_repo.html',
+      7: 'https://web.archive.org/web/20161022144030/https://www.d1gp.co.jp/03_sche/gp2016/gp1607/gp1607_repo.html',
+    },
+  },
+  {
     year: 2018,
     rankingUrl: 'https://www.d1gp.co.jp/04_rank/rk2018.html',
     categoryBase: 'https://d1gp.co.jp/category/gp/2018gp/',
@@ -76,6 +107,15 @@ export const D1GP_SEASONS: D1gpSeasonConfig[] = [
       5: 'Ebisu Circuit',
       6: 'Ebisu Circuit',
       7: 'Odaiba, Tokyo Bay',
+    },
+    legacyReportUrls: {
+      1: 'https://web.archive.org/web/20170402120000/https://www.d1gp.co.jp/03_sche/gp2017/gp1701/gp1701_repo.html',
+      2: 'https://web.archive.org/web/20170402120000/https://www.d1gp.co.jp/03_sche/gp2017/gp1701/gp1702_repo.html',
+      3: 'https://web.archive.org/web/20170625120000/https://www.d1gp.co.jp/03_sche/gp2017/gp1703/gp1703_repo.html',
+      4: 'https://web.archive.org/web/20170724120000/https://www.d1gp.co.jp/03_sche/gp2017/gp1704/gp1704_repo.html',
+      5: 'https://web.archive.org/web/20170820120000/https://www.d1gp.co.jp/03_sche/gp2017/gp1705/gp1705_repo.html',
+      6: 'https://web.archive.org/web/20170821120000/https://www.d1gp.co.jp/03_sche/gp2017/gp1705/gp1706_repo.html',
+      7: 'https://web.archive.org/web/20171008120000/https://www.d1gp.co.jp/03_sche/gp2017/gp1707/gp1707_repo.html',
     },
   },
   {
