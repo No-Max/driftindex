@@ -52,7 +52,7 @@
       "qualWinnersSub": "Pole position at the latest round of each series",
       "calendar": "Calendar {year}",
       "calendarSub": "All rounds across series",
-      "p4p": "Drift Index",
+      "p4p": "Drift Index · {year}",
       "p4pSub": "Season mean event place adjusted by Hardness",
       "fanVotes": "Fan votes"
     },

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { HomeResponse } from '@drift-index/shared';
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { fetchHome } from '../api/client';
 import ChampionshipSlider from '../components/home/ChampionshipSlider.vue';
@@ -16,6 +16,16 @@ const data = ref<HomeResponse | null>(null);
 const loading = ref(true);
 const error = ref(false);
 
+const heroTitle = computed(() => {
+  if (data.value) return t('home.sections.p4p', { year: data.value.year });
+  return t('home.title');
+});
+
+const heroSubtitle = computed(() => {
+  if (data.value) return t('home.sections.p4pSub');
+  return t('home.subtitle');
+});
+
 onMounted(async () => {
   try {
     data.value = await fetchHome(2026);
@@ -30,15 +40,15 @@ onMounted(async () => {
 <template>
   <div class="home">
     <section class="hero">
-      <h1 class="page-title">{{ t('home.title') }}</h1>
-      <p class="page-subtitle">{{ t('home.subtitle') }}</p>
+      <h1 class="page-title">{{ heroTitle }}</h1>
+      <p class="page-subtitle">{{ heroSubtitle }}</p>
     </section>
 
     <p v-if="loading" class="muted">{{ t('states.loading') }}</p>
     <p v-else-if="error" class="muted">{{ t('states.error') }}</p>
 
     <template v-else-if="data">
-      <section class="home-section">
+      <section class="home-section home-section--p4p">
         <P4PPodium :items="data.poundForPound" :year="data.year" />
       </section>
 
@@ -93,10 +103,14 @@ onMounted(async () => {
 }
 
 .hero {
-  margin-bottom: -0.5rem;
+  margin-bottom: 0;
 }
 
 .home-section {
   display: grid;
+}
+
+.home-section--p4p {
+  margin-top: -1.25rem;
 }
 </style>

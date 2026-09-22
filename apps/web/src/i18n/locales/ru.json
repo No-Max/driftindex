@@ -52,7 +52,7 @@
       "qualWinnersSub": "Pole на последнем этапе каждой серии",
       "calendar": "Календарь {year}",
       "calendarSub": "Все этапы серий",
-      "p4p": "Drift Index",
+      "p4p": "Drift Index · {year}",
       "p4pSub": "Среднее место на этапах сезона с учётом сложности",
       "fanVotes": "Голосование фанатов"
     },
