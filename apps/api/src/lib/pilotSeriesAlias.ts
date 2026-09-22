@@ -32,6 +32,26 @@ export async function findPilotBySeriesAlias(
   return match?.pilot ?? null;
 }
 
+/** Newest series alias per pilot (for display when stored names are empty). */
+export async function newestSeriesAliasNameByPilotIds(
+  prisma: PrismaClient,
+  pilotIds: string[],
+): Promise<Map<string, string>> {
+  if (pilotIds.length === 0) return new Map();
+
+  const rows = await prisma.pilotSeriesAlias.findMany({
+    where: { pilotId: { in: pilotIds } },
+    select: { pilotId: true, name: true, updatedAt: true },
+    orderBy: { updatedAt: 'desc' },
+  });
+
+  const map = new Map<string, string>();
+  for (const row of rows) {
+    if (!map.has(row.pilotId)) map.set(row.pilotId, row.name);
+  }
+  return map;
+}
+
 export async function upsertPilotSeriesAlias(
   prisma: PrismaClient,
   input: {

@@ -6,8 +6,9 @@ export function toPilotCard(
   pilot: Pilot,
   number?: number | null,
   seriesPhotos?: Array<{ seriesSlug: string; photoUrl: string | null }>,
+  display?: { nameAlias?: string | null },
 ) {
-  const { firstName, lastName } = resolvePilotDisplayNames(pilot);
+  const { firstName, lastName } = resolvePilotDisplayNames(pilot, display);
   const preferUrl = preferredSeriesPhotoUrl(pilot.slug, seriesPhotos ?? []);
 
   return {

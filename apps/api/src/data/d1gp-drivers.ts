@@ -38,10 +38,78 @@ function parseLatinDriverName(nameJa: string): D1gpDriverInfo | null {
 }
 
 /** Learn Latin driver names from ranking tables (e.g. Lattapon Keawchin). */
-export function registerLatinDriverFromRanking(number: number, nameJa: string): void {
-  if (D1GP_KNOWN_DRIVERS[number]) return;
+export function registerLatinDriverFromRanking(number: number | null, nameJa: string): void {
+  if (number == null || D1GP_KNOWN_DRIVERS[number]) return;
   const parsed = parseLatinDriverName(nameJa);
   if (parsed) D1GP_KNOWN_DRIVERS[number] = parsed;
+}
+
+function slugFromLatinNames(lastName: string, firstName: string): string | null {
+  const base = `${lastName}-${firstName}`
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+  return base || null;
+}
+
+/** Match ranking-table name to a known car number (2012 tables omit No. column). */
+export function lookupD1CarNumberByNameJa(nameJa: string): number | null {
+  const ja = normalizeJaName(nameJa);
+  if (!ja) return null;
+
+  for (const [rankName, driver] of Object.entries(D1GP_DRIVER_BY_RANKING_NAME)) {
+    if (normalizeJaName(rankName) === ja) {
+      for (const [numStr, known] of Object.entries(D1GP_KNOWN_DRIVERS)) {
+        if (
+          jaNamesMatch(known.nameJa, driver.nameJa) ||
+          (known.firstName === driver.firstName && known.lastName === driver.lastName)
+        ) {
+          return Number(numStr);
+        }
+      }
+    }
+  }
+
+  for (const [numStr, known] of Object.entries(D1GP_KNOWN_DRIVERS)) {
+    if (known.nameJa && jaNamesMatch(known.nameJa, ja)) {
+      return Number(numStr);
+    }
+  }
+
+  return null;
+}
+
+/** Stable Latin slug; falls back to `d1-{number}` when the grid name is Japanese-only. */
+export function d1PilotSlug(number: number, driver: D1gpDriverInfo): string {
+  const fromDriver = slugFromLatinNames(driver.lastName, driver.firstName);
+  if (fromDriver) return fromDriver;
+
+  const byRanking = D1GP_DRIVER_BY_RANKING_NAME[normalizeJaName(driver.nameJa)];
+  if (byRanking) {
+    const fromOverride = slugFromLatinNames(byRanking.lastName, byRanking.firstName);
+    if (fromOverride) return fromOverride;
+  }
+
+  const known = D1GP_KNOWN_DRIVERS[number];
+  if (known && jaNamesMatch(known.nameJa, driver.nameJa)) {
+    const fromKnown = slugFromLatinNames(known.lastName, known.firstName);
+    if (fromKnown) return fromKnown;
+  }
+
+  return `d1-${number}`;
+}
+
+export function d1PilotSlugForDriver(driver: D1gpDriverInfo, carNumber: number | null): string {
+  const fromDriver = slugFromLatinNames(driver.lastName, driver.firstName);
+  if (fromDriver) return fromDriver;
+
+  if (carNumber != null) {
+    return d1PilotSlug(carNumber, driver);
+  }
+
+  const compact = normalizeJaName(driver.nameJa).replace(/\s+/g, '-');
+  return compact ? `d1-${compact}` : 'd1-unknown';
 }
 
 export function resolveD1Driver(number: number, nameJa: string): D1gpDriverInfo {

@@ -88,6 +88,12 @@ export function buildNameKey(
   lastName: string,
   nameAlias: string | null | undefined,
 ): string {
+  const alias = nameAlias?.trim() ?? '';
+  if (alias && containsJapaneseScript(alias)) {
+    const compact = alias.replace(/\s+/g, '');
+    if (compact.length >= 2) return `ja|${compact}`;
+  }
+
   const hasLatinNames = isLatinName(firstName) && isLatinName(lastName);
   return nameTokens(firstName, lastName, hasLatinNames ? null : nameAlias).join('|');
 }
@@ -120,7 +126,31 @@ export function isLatinName(value: string): boolean {
   return /^[\p{Script=Latin}\s.'-]+$/u.test(value.trim());
 }
 
-/** Prefer existing Latin names; otherwise transliterate Russian fields. */
+export function containsJapaneseScript(value: string): boolean {
+  return /[\u3040-\u30ff\u4e00-\u9fff]/.test(value);
+}
+
+/** Japanese D1-style «姓 名» (family given) → given/family for storage. */
+export function japanesePilotNamesFromAlias(nameJa: string): { firstName: string; lastName: string } {
+  const parts = nameJa.trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return { lastName: parts[0]!, firstName: parts.slice(1).join(' ') };
+  }
+  const single = parts[0] ?? nameJa.trim();
+  return { firstName: single, lastName: single };
+}
+
+function pilotNamesFromJapaneseFields(firstName: string, lastName: string): { firstName: string; lastName: string } {
+  const firstTrim = firstName.trim();
+  const lastTrim = lastName.trim();
+  if (firstTrim && lastTrim) {
+    return { firstName: firstTrim, lastName: lastTrim };
+  }
+  const combined = `${firstTrim} ${lastTrim}`.trim();
+  return japanesePilotNamesFromAlias(combined);
+}
+
+/** Prefer existing Latin names; otherwise transliterate Russian or keep Japanese. */
 export function toEnglishPilotNames(input: {
   firstName: string;
   lastName: string;
@@ -144,13 +174,23 @@ export function toEnglishPilotNames(input: {
     };
   }
 
+  const alias = input.nameAlias?.trim() ?? '';
+
   // Russian «Фамилия Имя» is the canonical source when Latin names are missing.
-  if (input.nameAlias?.trim() && containsCyrillic(input.nameAlias)) {
-    return englishNamesFromNameRu(input.nameAlias);
+  if (alias && containsCyrillic(alias)) {
+    return englishNamesFromNameRu(alias);
   }
 
-  if (input.nameAlias) {
-    return englishNamesFromNameRu(input.nameAlias);
+  if (alias && containsJapaneseScript(alias)) {
+    return japanesePilotNamesFromAlias(alias);
+  }
+
+  if (containsJapaneseScript(input.firstName) || containsJapaneseScript(input.lastName)) {
+    return pilotNamesFromJapaneseFields(input.firstName, input.lastName);
+  }
+
+  if (alias) {
+    return englishNamesFromNameRu(alias);
   }
 
   if (firstLatin || lastLatin) {
@@ -160,5 +200,10 @@ export function toEnglishPilotNames(input: {
     };
   }
 
-  return englishNamesFromNameRu(`${input.firstName} ${input.lastName}`.trim());
+  const combined = `${input.firstName} ${input.lastName}`.trim();
+  if (combined && containsJapaneseScript(combined)) {
+    return japanesePilotNamesFromAlias(combined);
+  }
+
+  return englishNamesFromNameRu(combined);
 }

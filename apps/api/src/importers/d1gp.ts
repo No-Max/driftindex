@@ -1,6 +1,9 @@
 import * as cheerio from 'cheerio';
+import type { Element } from 'domhandler';
 import {
   registerLatinDriverFromRanking,
+  d1PilotSlugForDriver,
+  lookupD1CarNumberByNameJa,
   resolveD1Driver,
 } from '../data/d1gp-drivers.js';
 import { getD1gpSeasonConfig, D1GP_SUPPORTED_SEASONS } from '../data/d1gp-seasons.js';
@@ -23,7 +26,7 @@ export interface D1Pilot {
   lastName: string;
   nameAlias: string;
   country: string | null;
-  number: number;
+  number: number | null;
   team: string | null;
   totalPoints: number;
   photoSourceUrl: string | null;
@@ -48,11 +51,26 @@ export interface D1SeasonData {
 
 interface RoundReportData {
   qualByNumber: Map<number, { position: number; bestScore: number }>;
+  qualByNameJa: Map<string, { position: number; bestScore: number }>;
   tandemByNumber: Map<number, { position: number }>;
+  tandemByNameJa: Map<string, { position: number }>;
+}
+
+function normalizeReportDriverName(name: string): string {
+  return name.replace(/\s+/g, ' ').trim();
+}
+
+function emptyRoundReport(): RoundReportData {
+  return {
+    qualByNumber: new Map(),
+    qualByNameJa: new Map(),
+    tandemByNumber: new Map(),
+    tandemByNameJa: new Map(),
+  };
 }
 
 interface RankingRow {
-  number: number;
+  number: number | null;
   nameJa: string;
   team: string;
   roundPoints: Map<number, number>;
@@ -62,7 +80,8 @@ interface RankingRow {
 }
 
 const TRACK_LABELS: Record<string, string> = {
-  OKUIBUKI: 'Okui',
+  OKUIBUKI: 'Okuibuki Circuit',
+  OKUI: 'Okuibuki Circuit',
   TSUKUBA: 'Tsukuba Circuit',
   TOKACHI: 'Tokachi International Speedway',
   MAISHIMA: 'Maishima Sports Island',
@@ -71,6 +90,14 @@ const TRACK_LABELS: Record<string, string> = {
   AP: 'Autopolis',
   FUJI: 'Fuji Speedway',
   ODAIBA: 'Odaiba, Tokyo Bay',
+  SUZUKA: 'Suzuka Circuit',
+  OKAYAMA: 'Okayama International Circuit',
+  SUGO: 'Sports Land SUGO',
+  NIKKO: 'Nikko Circuit',
+  BIHOKU: 'Bihoku Highland Circuit',
+  SEKIA: 'Sekia Hills',
+  IRWINDALE: 'Irwindale Speedway',
+  'TOKYO DRIFT': 'Odaiba, Tokyo Bay',
   AICHI: 'Aichi Sky Expo',
   TBN: 'Odaiba, Tokyo Bay',
   TBA: 'Odaiba, Tokyo Bay',
@@ -102,14 +129,6 @@ function parseInteger(value: string): number | null {
 function parseFloatScore(value: string): number | null {
   const parsed = Number.parseFloat(value.replace(/[^\d.-]/g, ''));
   return Number.isFinite(parsed) ? parsed : null;
-}
-
-function pilotSlug(number: number, firstName: string, lastName: string): string {
-  const base = `${lastName}-${firstName}`
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
-  return base || String(number);
 }
 
 function eventSlug(roundNumber: number): string {
@@ -318,13 +337,18 @@ function parseRoundReport(html: string): RoundReportData {
     });
   }
 
-  return { qualByNumber, tandemByNumber };
+  return {
+    ...emptyRoundReport(),
+    qualByNumber,
+    tandemByNumber,
+  };
 }
 
 function legacyQualRowsFromTable(
   $: cheerio.CheerioAPI,
-  table: unknown,
+  table: Element,
   qualByNumber: Map<number, { position: number; bestScore: number }>,
+  qualByNameJa: Map<string, { position: number; bestScore: number }>,
 ): void {
   $(table)
     .find('tbody tr')
@@ -335,21 +359,23 @@ function legacyQualRowsFromTable(
       const position = parseInteger($row.find('.result-td-pos').first().text());
       const numberCells = $row.find('.result-td-no');
       const numberText =
-        numberCells.length >= 2
+        numberCells.length >= 3
           ? $(numberCells[1]!).text()
-          : numberCells.length === 1
+          : numberCells.length >= 1
             ? $(numberCells[0]!).text()
             : '';
       const number = parseInteger(numberText);
       const bestScore =
         parseFloatScore($row.find('.result-td-ave1').first().text()) ??
         parseFloatScore($row.find('.result-td-best').first().text());
+      const nameJa = normalizeReportDriverName($row.find('.result-td-driver').first().text());
       if (position == null || number == null || bestScore == null) return;
       qualByNumber.set(number, { position, bestScore });
+      if (nameJa) qualByNameJa.set(nameJa, { position, bestScore });
     });
 }
 
-function legacyReportTableIsQualifying($: cheerio.CheerioAPI, table: unknown): boolean {
+function legacyReportTableIsQualifying($: cheerio.CheerioAPI, table: Element): boolean {
   const $table = $(table);
   const heading = $table
     .prevAll('h2, p.common-title-j, p.common-title')
@@ -361,16 +387,30 @@ function legacyReportTableIsQualifying($: cheerio.CheerioAPI, table: unknown): b
   return $table.find('.result-ti-ave1, .result-td-ave1').length > 0;
 }
 
-function parseLegacyQualifyingSection(html: string): Map<number, { position: number; bestScore: number }> {
+function legacyReportSectionMatchesRound(sectionTitle: string, eventRound?: number): boolean {
+  if (eventRound == null) return true;
+  const match = sectionTitle.match(/第(\d+)戦/);
+  if (!match) return true;
+  return Number.parseInt(match[1]!, 10) === eventRound;
+}
+
+function parseLegacyQualifyingSection(
+  html: string,
+  eventRound?: number,
+): Pick<RoundReportData, 'qualByNumber' | 'qualByNameJa'> {
   const qualByNumber = new Map<number, { position: number; bestScore: number }>();
+  const qualByNameJa = new Map<string, { position: number; bestScore: number }>();
   const $ = cheerio.load(html);
 
   $('h2').each((_, h2) => {
     const title = $(h2).text().replace(/\s+/g, '');
     if (!title.includes('単走予選')) return;
+    const sectionHeading = $(h2).prevAll('p.common-title-j').first().text();
+    if (!legacyReportSectionMatchesRound(sectionHeading, eventRound)) return;
     let $next = $(h2).next();
     while ($next.length && ($next.is('table.table-result-l') || $next.is('table.table-result-r'))) {
-      legacyQualRowsFromTable($, $next, qualByNumber);
+      const table = $next.get(0);
+      if (table) legacyQualRowsFromTable($, table, qualByNumber, qualByNameJa);
       $next = $next.next();
     }
   });
@@ -381,7 +421,7 @@ function parseLegacyQualifyingSection(html: string): Map<number, { position: num
     if (start !== -1 && end !== -1 && end > start) {
       const $frag = cheerio.load(html.slice(start, end));
       $frag('table.table-result-l, table.table-result-r').each((_, table) => {
-        legacyQualRowsFromTable($frag, table, qualByNumber);
+        legacyQualRowsFromTable($frag, table, qualByNumber, qualByNameJa);
       });
     }
   }
@@ -389,40 +429,204 @@ function parseLegacyQualifyingSection(html: string): Map<number, { position: num
   if (qualByNumber.size === 0) {
     for (const table of $('table.table-result-l, table.table-result-r').toArray()) {
       if (!legacyReportTableIsQualifying($, table)) continue;
-      legacyQualRowsFromTable($, table, qualByNumber);
+      legacyQualRowsFromTable($, table, qualByNumber, qualByNameJa);
     }
   }
 
-  return qualByNumber;
+  return { qualByNumber, qualByNameJa };
 }
 
-/** Pre-WP event reports under www.d1gp.co.jp/03_sche/ (2019 etc.). */
-function parseLegacyRoundReport(html: string): RoundReportData {
-  const $ = cheerio.load(html);
-  const qualByNumber = parseLegacyQualifyingSection(html);
-  const tandemByNumber = new Map<number, { position: number }>();
+function legacyReportTableIsOverallTandem($: cheerio.CheerioAPI, table: Element): boolean {
+  const $table = $(table);
+  const sectionTitle = $table
+    .find('thead .tanking-table-mi, thead td[class*="table-mi"]')
+    .first()
+    .text()
+    .replace(/\s+/g, '');
+  if (sectionTitle.includes('総合')) return true;
+  if (sectionTitle.includes('単走') || sectionTitle.includes('チーム')) return false;
 
-  for (const table of $('table.ranking-table').toArray()) {
+  const heading = $table.prevAll('h2').first().text().replace(/\s+/g, '');
+  if (heading.includes('総合')) return true;
+  if (heading.includes('単走') || heading.includes('チーム')) return false;
+
+  return legacyReportRankingTables($).length === 1;
+}
+
+function legacyReportRankingTables($: cheerio.CheerioAPI): Element[] {
+  return [...$('table.ranking-table').toArray(), ...$('table#ranking-table').toArray()].filter(
+    (table, index, tables) => tables.indexOf(table) === index,
+  );
+}
+
+function parseLegacyTandemFromReport(
+  $: cheerio.CheerioAPI,
+  eventRound?: number,
+): Pick<RoundReportData, 'tandemByNumber' | 'tandemByNameJa'> {
+  const tandemByNumber = new Map<number, { position: number }>();
+  const tandemByNameJa = new Map<string, { position: number }>();
+
+  const recordTandemRow = ($row: cheerio.Cheerio<Element>, position: number | null) => {
+    if (position == null) return;
+    const number = parseInteger($row.find('.rank-td-no').first().text());
+    const nameJa = normalizeReportDriverName($row.find('.rank-td-driver').first().text());
+    if (number != null) tandemByNumber.set(number, { position });
+    if (nameJa) tandemByNameJa.set(nameJa, { position });
+  };
+
+  for (const table of legacyReportRankingTables($)) {
+    if (!legacyReportTableIsOverallTandem($, table)) continue;
     $(table)
       .find('tbody tr')
       .each((_, row) => {
-        const $row = $(row);
-        const position = parseInteger($row.find('.rank-td-other').first().text());
-        const number = parseInteger($row.find('.rank-td-no').first().text());
-        if (position == null || number == null) return;
-        tandemByNumber.set(number, { position });
+        recordTandemRow($(row), parseInteger($(row).find('.rank-td-other').first().text()));
       });
   }
 
-  return { qualByNumber, tandemByNumber };
+  $('h4').each((_, h4) => {
+    const title = $(h4).text().replace(/\s+/g, '');
+    if (!title.includes('ドライバー総合順位')) return;
+    const sectionHeading = $(h4).prevAll('p.common-title-j').first().text();
+    if (!legacyReportSectionMatchesRound(sectionHeading, eventRound)) return;
+    $(h4)
+      .nextAll('table.ranking-table')
+      .first()
+      .find('tbody tr')
+      .each((_, row) => {
+        recordTandemRow($(row), parseInteger($(row).find('.rank-td-other').first().text()));
+      });
+  });
+
+  for (const table of $('table.result').toArray()) {
+    const $table = $(table);
+    const sectionMarker = $table.find('.rti-mi').first().text().replace(/\s+/g, '');
+    if (!sectionMarker.includes('総合順位') || sectionMarker.includes('シリーズ')) continue;
+    const sectionHeading = $table.prevAll('p.common-title-j').first().text();
+    if (!legacyReportSectionMatchesRound(sectionHeading, eventRound)) continue;
+
+    $table.find('tr').each((_, row) => {
+      const $row = $(row);
+      if ($row.find('.rtia-pos, .rtia-no').length > 0) return;
+      const position = parseInteger($row.find('.rta-pos').first().text());
+      const number = parseInteger($row.find('.rta-no').first().text());
+      if (position == null || number == null) return;
+      if (number != null) tandemByNumber.set(number, { position });
+    });
+  }
+
+  return { tandemByNumber, tandemByNameJa };
 }
 
-function parseRoundReportFromHtml(html: string): RoundReportData {
+/** gp2014-style reports (`table.r-tb`, `td.r-mi`). */
+function parseLegacy2014RoundReport(html: string, eventRound?: number): RoundReportData {
+  const $ = cheerio.load(html);
+  const qualByNumber = new Map<number, { position: number; bestScore: number }>();
+  const qualByNameJa = new Map<string, { position: number; bestScore: number }>();
+
+  for (const table of $('table.r-tb').toArray()) {
+    const sectionHeading = $(table).prevAll('p.common-title-j').first().text();
+    if (!legacyReportSectionMatchesRound(sectionHeading, eventRound)) continue;
+
+    let inQualSection = false;
+    $(table)
+      .find('tr')
+      .each((_, row) => {
+        const $row = $(row);
+        const sectionMarker = $row.find('td.r-mi').first().text().replace(/\s+/g, '');
+        if (
+          sectionMarker.includes('単走決勝') ||
+          sectionMarker.includes('予備予選') ||
+          sectionMarker.includes('追走')
+        ) {
+          inQualSection = false;
+        } else if (
+          sectionMarker.includes('単走予選') ||
+          (sectionMarker.includes('予選結果') && !sectionMarker.includes('追走'))
+        ) {
+          inQualSection = true;
+        }
+        if (!inQualSection || $row.find('td.r-ti').length > 0) return;
+
+        const cells = $row.find('td');
+        if (cells.length < 5) return;
+        const position = parseInteger($(cells[0]!).text());
+        const number = parseInteger($(cells[1]!).text());
+        const scoreCell = $(cells[cells.length - 1]!);
+        const bestScore = parseFloatScore(scoreCell.text());
+        if (position == null || number == null || bestScore == null) return;
+        qualByNumber.set(number, { position, bestScore });
+      });
+  }
+
+  const tandem = parseLegacyTandemFromReport($, eventRound);
+  return { qualByNumber, qualByNameJa, ...tandem };
+}
+
+/** gp2015-style reports (`event-repo-table`, no table-result-l). */
+function parseLegacy2015RoundReport(html: string, eventRound?: number): RoundReportData {
+  const $ = cheerio.load(html);
+  const qualByNumber = new Map<number, { position: number; bestScore: number }>();
+  const qualByNameJa = new Map<string, { position: number; bestScore: number }>();
+
+  for (const table of $('table#event-repo-table').toArray()) {
+    let inQualSection = false;
+    $(table)
+      .find('tr')
+      .each((_, row) => {
+        const $row = $(row);
+        const sectionMarker = $row
+          .find('.repo-table-mi-l, .repo-table-mi-r')
+          .first()
+          .text()
+          .replace(/\s+/g, '');
+        if (
+          sectionMarker.includes('予備予選') ||
+          sectionMarker.includes('追走') ||
+          sectionMarker.includes('単走決勝')
+        ) {
+          inQualSection = false;
+        } else if (
+          sectionMarker.includes('単走予選') ||
+          (sectionMarker.includes('予選結果') && !sectionMarker.includes('追走'))
+        ) {
+          inQualSection = true;
+        }
+        if (!inQualSection || $row.find('.repo-table-ti-l, .repo-table-ti-r').length > 0) {
+          return;
+        }
+
+        const position = parseInteger($row.find('.repo-table-pos').first().text());
+        const number = parseInteger($row.find('.repo-table-no').first().text());
+        const bestScore = parseFloatScore($row.find('.repo-table-score').first().text());
+        if (position == null || number == null || bestScore == null) return;
+        qualByNumber.set(number, { position, bestScore });
+      });
+  }
+
+  const tandem = parseLegacyTandemFromReport($, eventRound);
+  return { qualByNumber, qualByNameJa, ...tandem };
+}
+
+/** Pre-WP event reports under www.d1gp.co.jp/03_sche/ (2019 etc.). */
+function parseLegacyRoundReport(html: string, eventRound?: number): RoundReportData {
+  const $ = cheerio.load(html);
+  const qual = parseLegacyQualifyingSection(html, eventRound);
+  const tandem = parseLegacyTandemFromReport($, eventRound);
+  return { ...qual, ...tandem };
+}
+
+function parseRoundReportFromHtml(html: string, eventRound?: number): RoundReportData {
   if (
     html.includes('table-result-l') &&
     (html.includes('result-td-ave1') || html.includes('result-td-best'))
   ) {
-    return parseLegacyRoundReport(html);
+    return parseLegacyRoundReport(html, eventRound);
+  }
+  if (html.includes('event-repo-table') && html.includes('repo-table-score')) {
+    return parseLegacy2015RoundReport(html, eventRound);
+  }
+  if (html.includes('class="r-tb"') && html.includes('r-mi')) {
+    return parseLegacy2014RoundReport(html, eventRound);
   }
   return parseRoundReport(html);
 }
@@ -430,23 +634,43 @@ function parseRoundReportFromHtml(html: string): RoundReportData {
 function parseLegacyRankingRoundPoints(raw: string): number | null {
   const trimmed = raw.trim();
   if (!trimmed || trimmed === '-') return null;
-  const leading = trimmed.match(/^(\d+)/);
-  if (leading) return parseInteger(leading[1]!);
-  return parseInteger(trimmed);
+  const beforeParens = trimmed.split(/[（(]/)[0]?.trim() ?? '';
+  if (!beforeParens) return null;
+  const leading = beforeParens.match(/^-?\d+(?:\.\d+)?/);
+  if (!leading) return null;
+  const parsed = Number.parseFloat(leading[0]!);
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 function parseLegacyRankingRoundRank(raw: string): number | null {
   const match = raw.match(/[（(](\d+)[）)]/);
-  return match ? parseInteger(match[1]!) : null;
+  return match ? Number.parseInt(match[1]!, 10) : null;
 }
 
-function parseLegacyStaticRanking(html: string): { rows: RankingRow[]; roundNumbers: number[] } {
-  const $ = cheerio.load(html);
-  const table = $('table.ranking-table').first();
-  if (!table.length) {
-    throw new Error('D1GP legacy ranking table not found');
-  }
+/** Prize-place colors on 04_rank cells: 1 red, 2 orange, 3 gold. */
+function parseLegacyRankingPrizeColorRank(html: string): number | null {
+  if (/\bcolor-f00\b|color\s*:\s*#f00\b/i.test(html)) return 1;
+  if (/\bcolor-f60\b|color\s*:\s*#f60\b/i.test(html)) return 2;
+  if (/\bcolor-cc0\b|color\s*:\s*#cc0\b/i.test(html)) return 3;
+  return null;
+}
 
+function parseLegacyRankingRoundCell(
+  $: cheerio.CheerioAPI,
+  cell: Element,
+): { points: number | null; rank: number | null } {
+  const $cell = $(cell);
+  const raw = $cell.text();
+  const points = parseLegacyRankingRoundPoints(raw);
+  const rank =
+    parseLegacyRankingRoundRank(raw) ?? parseLegacyRankingPrizeColorRank($cell.html() ?? '');
+  return { points, rank };
+}
+
+function parseLegacyStaticRankingTable(
+  $: cheerio.CheerioAPI,
+  table: cheerio.Cheerio<Element>,
+): { rows: RankingRow[]; roundNumbers: number[] } {
   const roundNumbers: number[] = [];
   table.find('thead .rank-ti-round').each((_, cell) => {
     const match = $(cell).text().trim().match(/Rd\.(\d+)/i);
@@ -456,24 +680,206 @@ function parseLegacyStaticRanking(html: string): { rows: RankingRow[]; roundNumb
   const rows: RankingRow[] = [];
   table.find('tbody tr').each((_, row) => {
     const $row = $(row);
-    const number = parseInteger($row.find('.rank-td-no').first().text());
-    if (number == null) return;
-
     const nameJa = $row.find('.rank-td-driver').first().text().trim();
+    if (!nameJa) return;
+
+    let number =
+      parseInteger($row.find('.rank-td-no').first().text()) ?? lookupD1CarNumberByNameJa(nameJa);
     const team = $row.find('.rank-td-team').first().text().trim();
     const roundPoints = new Map<number, number>();
     const roundRanks = new Map<number, number>();
     $row.find('.rank-td-round').each((index, cell) => {
       const roundNumber = roundNumbers[index];
       if (roundNumber == null) return;
-      const raw = $(cell).text().trim();
-      const points = parseLegacyRankingRoundPoints(raw);
+      const { points, rank } = parseLegacyRankingRoundCell($, cell);
       if (points != null) roundPoints.set(roundNumber, points);
-      const rank = parseLegacyRankingRoundRank(raw);
       if (rank != null) roundRanks.set(roundNumber, rank);
     });
 
-    const totalPoints = parseInteger($row.find('.rank-td-total').first().text()) ?? 0;
+    const totalRaw = $row.find('.rank-td-total').first().text().trim();
+    const totalPoints = parseLegacyRankingRoundPoints(totalRaw) ?? parseInteger(totalRaw) ?? 0;
+    registerLatinDriverFromRanking(number, nameJa);
+
+    rows.push({ number, nameJa, team, roundPoints, roundRanks, totalPoints });
+  });
+
+  return { rows, roundNumbers };
+}
+
+function parseLegacyStaticRankingSection(
+  html: string,
+  headingNeedle: string,
+): { rows: RankingRow[]; roundNumbers: number[] } | null {
+  const $ = cheerio.load(html);
+  let found: { rows: RankingRow[]; roundNumbers: number[] } | null = null;
+
+  $('p.common-title-j, p.common-title').each((_, heading) => {
+    if (!$(heading).text().includes(headingNeedle)) return;
+    const table = $(heading).nextAll('div.event-box').first().find('table.ranking-table').first();
+    if (!table.length) return;
+    found = parseLegacyStaticRankingTable($, table);
+    return false;
+  });
+
+  return found;
+}
+
+/** 2012 rk2012.html hides the tanso (qual) points table inside an HTML comment. */
+function parseLegacyTansoRankingInComment(html: string): RankingRow[] {
+  const marker = 'Tanso Ranking';
+  const markerIndex = html.indexOf(marker);
+  if (markerIndex === -1) return [];
+
+  const commentStart = html.lastIndexOf('<!--', markerIndex);
+  const commentEnd = html.indexOf('-->', markerIndex);
+  if (commentStart === -1 || commentEnd === -1 || commentEnd <= commentStart) return [];
+
+  const fragment = html.slice(commentStart + 4, commentEnd);
+  if (!fragment.includes('ranking-table')) return [];
+
+  try {
+    const $ = cheerio.load(`<div>${fragment}</div>`);
+    const table = $('table.ranking-table').first();
+    if (!table.length) return [];
+    return parseLegacyStaticRankingTable($, table).rows;
+  } catch {
+    return [];
+  }
+}
+
+function parseLegacyTansoRankingRows(html: string): RankingRow[] {
+  const fromComment = parseLegacyTansoRankingInComment(html);
+  if (fromComment.length > 0) return fromComment;
+
+  for (const needle of ['Tanso Ranking', '単走ランキング']) {
+    const section = parseLegacyStaticRankingSection(html, needle);
+    if (section && section.rows.length > 0) return section.rows;
+  }
+
+  return [];
+}
+
+/** Per-round tanso table: prefer printed （N）, else rank by championship qual points. */
+function qualGridFromTansoRankingRows(
+  tansoRows: RankingRow[],
+  roundNumbers: number[],
+): Map<number, Map<string, { position: number; points: number }>> {
+  const byRound = new Map<number, Map<string, { position: number; points: number }>>();
+
+  for (const roundNumber of roundNumbers) {
+    const byName = new Map<string, { position: number; points: number }>();
+    const inferred: { nameJa: string; points: number }[] = [];
+
+    for (const row of tansoRows) {
+      const points = row.roundPoints.get(roundNumber);
+      if (points == null || points <= 0) continue;
+      const printed = row.roundRanks.get(roundNumber);
+      if (printed != null) {
+        byName.set(row.nameJa, { position: printed, points });
+      } else {
+        inferred.push({ nameJa: row.nameJa, points });
+      }
+    }
+
+    inferred.sort((a, b) => b.points - a.points);
+    let position = 0;
+    let prevPoints: number | null = null;
+    for (let index = 0; index < inferred.length; index++) {
+      const entry = inferred[index]!;
+      if (prevPoints !== entry.points) {
+        position = index + 1;
+        prevPoints = entry.points;
+      }
+      byName.set(entry.nameJa, { position, points: entry.points });
+    }
+    byRound.set(roundNumber, byName);
+  }
+
+  return byRound;
+}
+
+/** When 04_rank cells have points but no （N）, derive event place from that round's points. */
+function fillMissingRoundRanksFromPoints(rows: RankingRow[]): void {
+  const roundNumbers = new Set<number>();
+  for (const row of rows) {
+    for (const roundNumber of row.roundPoints.keys()) roundNumbers.add(roundNumber);
+  }
+
+  for (const roundNumber of roundNumbers) {
+    if (rows.some((row) => row.roundRanks.has(roundNumber))) continue;
+
+    const inferred = rows
+      .map((row) => ({ row, points: row.roundPoints.get(roundNumber) }))
+      .filter((entry): entry is { row: RankingRow; points: number } => (entry.points ?? 0) > 0)
+      .sort((a, b) => b.points - a.points);
+
+    let position = 0;
+    let prevPoints: number | null = null;
+    for (let index = 0; index < inferred.length; index++) {
+      const entry = inferred[index]!;
+      if (prevPoints !== entry.points) {
+        position = index + 1;
+        prevPoints = entry.points;
+      }
+      entry.row.roundRanks.set(roundNumber, position);
+    }
+  }
+}
+
+function parseLegacyStaticRanking(html: string): { rows: RankingRow[]; roundNumbers: number[] } {
+  const $ = cheerio.load(html);
+  const table = $('table.ranking-table').first();
+  if (!table.length) {
+    throw new Error('D1GP legacy ranking table not found');
+  }
+  return parseLegacyStaticRankingTable($, table);
+}
+
+function parseLegacy2014Ranking(html: string): { rows: RankingRow[]; roundNumbers: number[] } {
+  const $ = cheerio.load(html);
+  const table = $('table.ranking').first();
+  if (!table.length) {
+    throw new Error('D1GP 2014 ranking table not found');
+  }
+
+  const roundNumbers: number[] = [];
+  table.find('thead .rkta-round, thead .rkta-final').each((_, cell) => {
+    const match = $(cell).text().trim().match(/Rd\.(\d+)/i);
+    if (match) roundNumbers.push(Number.parseInt(match[1]!, 10));
+  });
+
+  const rows: RankingRow[] = [];
+  table.find('tbody.rkb tr').each((_, row) => {
+    const $row = $(row);
+    const number = parseInteger($row.find('.rkb-no').first().text());
+    if (number == null) return;
+
+    const nameJa = $row.find('.rkb-driver').first().text().trim();
+    const team = $row.find('.rkb-team').first().text().trim();
+    const roundPoints = new Map<number, number>();
+    const roundRanks = new Map<number, number>();
+
+    $row.find('.rkb-round').each((index, cell) => {
+      const roundNumber = roundNumbers[index];
+      if (roundNumber == null) return;
+      const { points, rank } = parseLegacyRankingRoundCell($, cell);
+      if (points != null) roundPoints.set(roundNumber, points);
+      if (rank != null) roundRanks.set(roundNumber, rank);
+    });
+
+    const finalIndex = roundNumbers.length - 1;
+    const finalRound = roundNumbers[finalIndex];
+    if (finalRound != null) {
+      const finalCell = $row.find('.rkb-final').get(0);
+      if (finalCell) {
+        const { points, rank } = parseLegacyRankingRoundCell($, finalCell);
+        if (points != null) roundPoints.set(finalRound, points);
+        if (rank != null) roundRanks.set(finalRound, rank);
+      }
+    }
+
+    const totalRaw = $row.find('.rkb-total').first().text().trim();
+    const totalPoints = parseLegacyRankingRoundPoints(totalRaw) ?? 0;
     registerLatinDriverFromRanking(number, nameJa);
 
     rows.push({ number, nameJa, team, roundPoints, roundRanks, totalPoints });
@@ -484,7 +890,18 @@ function parseLegacyStaticRanking(html: string): { rows: RankingRow[]; roundNumb
 
 function parseTsuisoRanking(html: string): { rows: RankingRow[]; roundNumbers: number[] } {
   if (html.includes('ranking-table') && html.includes('rank-td-driver')) {
+    for (const needle of ['Drivers Ranking', 'ドライバーズランキング']) {
+      const section = parseLegacyStaticRankingSection(html, needle);
+      if (section) return section;
+    }
+    for (const needle of ['Tsuiso Ranking', '追走ランキング']) {
+      const section = parseLegacyStaticRankingSection(html, needle);
+      if (section) return section;
+    }
     return parseLegacyStaticRanking(html);
+  }
+  if (html.includes('class="ranking"') && html.includes('rkb-driver')) {
+    return parseLegacy2014Ranking(html);
   }
 
   const $ = cheerio.load(html);
@@ -608,12 +1025,16 @@ function buildEvents(
   roundDates: Map<number, string>,
   reportRounds: Set<number>,
   rankingRows: RankingRow[],
+  auxPointsRows: RankingRow[] = [],
 ): D1Event[] {
+  const seasonIsPast = seasonYear < new Date().getUTCFullYear();
   return roundNumbers.map((roundNumber) => {
     const trackName = venueSchedule.get(roundNumber) ?? `Round ${roundNumber}`;
-    const hasPoints = rankingRows.some((row) => row.roundPoints.has(roundNumber));
+    const hasPoints = [...rankingRows, ...auxPointsRows].some(
+      (row) => (row.roundPoints.get(roundNumber) ?? 0) > 0,
+    );
     const status: D1Event['status'] =
-      reportRounds.has(roundNumber) || hasPoints ? 'FINISHED' : 'SCHEDULED';
+      reportRounds.has(roundNumber) || hasPoints || seasonIsPast ? 'FINISHED' : 'SCHEDULED';
 
     return {
       slug: eventSlug(roundNumber),
@@ -635,7 +1056,25 @@ export async function fetchD1gpSeason(seasonYear: number): Promise<D1SeasonData>
   const categoryUrls = config.categorySlugs.map((slug) => `${config.categoryBase}${slug}/`);
 
   const rankingHtml = await fetchHtml(config.rankingUrl);
-  const { rows: rankingRows, roundNumbers } = parseTsuisoRanking(rankingHtml);
+  let { rows: rankingRows, roundNumbers } = parseTsuisoRanking(rankingHtml);
+  fillMissingRoundRanksFromPoints(rankingRows);
+  const tansoRankingRows = parseLegacyTansoRankingRows(rankingHtml);
+  const tansoRoundNumbers =
+    tansoRankingRows.length > 0
+      ? [
+          ...new Set(tansoRankingRows.flatMap((row) => [...row.roundPoints.keys()])),
+        ].sort((a, b) => a - b)
+      : [];
+  if (config.roundStartsAt) {
+    roundNumbers = [
+      ...new Set([...roundNumbers, ...Object.keys(config.roundStartsAt).map(Number)]),
+    ].sort((a, b) => a - b);
+  }
+  const qualRoundNumbers = tansoRoundNumbers.length > 0 ? tansoRoundNumbers : roundNumbers;
+  const qualByRoundFromTanso =
+    tansoRankingRows.length > 0
+      ? qualGridFromTansoRankingRows(tansoRankingRows, qualRoundNumbers)
+      : new Map<number, Map<string, { position: number; points: number }>>();
   const venueSchedule = parseVenueSchedule(rankingHtml);
   if (config.roundTrackNames) {
     for (const [round, trackName] of Object.entries(config.roundTrackNames)) {
@@ -663,11 +1102,24 @@ export async function fetchD1gpSeason(seasonYear: number): Promise<D1SeasonData>
   }
   const reportRounds = new Set(reportUrlsByRound.keys());
 
-  const reportEntries = [...reportUrlsByRound.entries()].sort(([a], [b]) => a - b);
-  const reportHtmls = await Promise.all(reportEntries.map(([, url]) => fetchHtml(url)));
+  const reportHtmlByUrl = new Map<string, string>();
   const reportsByRound = new Map<number, RoundReportData>();
-  for (const [index, [roundNumber]] of reportEntries.entries()) {
-    reportsByRound.set(roundNumber, parseRoundReportFromHtml(reportHtmls[index]!));
+  for (const [roundNumber, url] of [...reportUrlsByRound.entries()].sort(([a], [b]) => a - b)) {
+    let html = reportHtmlByUrl.get(url);
+    if (!html) {
+      try {
+        html = await fetchHtml(url);
+        reportHtmlByUrl.set(url, html);
+      } catch (error) {
+        console.warn(
+          `D1GP ${seasonYear} RD${roundNumber}: report unavailable (${url}): ${
+            error instanceof Error ? error.message : error
+          }`,
+        );
+        continue;
+      }
+    }
+    reportsByRound.set(roundNumber, parseRoundReportFromHtml(html, roundNumber));
   }
 
   let photosByNumber = new Map<number, string>();
@@ -683,29 +1135,40 @@ export async function fetchD1gpSeason(seasonYear: number): Promise<D1SeasonData>
     roundDates,
     reportRounds,
     rankingRows,
+    tansoRankingRows,
   );
   const finishedRounds = events.filter((event) => event.status === 'FINISHED').map((event) => event.roundNumber);
 
   const pilots: D1Pilot[] = rankingRows
     .filter((row) => row.totalPoints > 0 || [...row.roundPoints.values()].some((points) => points > 0))
     .map((row) => {
-      const driver = resolveDriver(seasonYear, row.number, row.nameJa);
+      const driver = resolveDriver(seasonYear, row.number ?? 0, row.nameJa);
       const stages: D1StageResult[] = [];
 
       for (const roundNumber of finishedRounds) {
         const points = row.roundPoints.get(roundNumber) ?? 0;
         const report = reportsByRound.get(roundNumber);
-        const qual = report?.qualByNumber.get(row.number);
-        const tandem = report?.tandemByNumber.get(row.number);
+        const driverName = normalizeReportDriverName(row.nameJa);
+        const qual =
+          (row.number != null ? report?.qualByNumber.get(row.number) : undefined) ??
+          report?.qualByNameJa.get(driverName);
+        const tansoQual = qualByRoundFromTanso.get(roundNumber)?.get(row.nameJa);
+        const tandem =
+          (row.number != null ? report?.tandemByNumber.get(row.number) : undefined) ??
+          report?.tandemByNameJa.get(driverName);
         const rankingRoundRank = row.roundRanks.get(roundNumber);
-        const tandemPosition = tandem?.position ?? rankingRoundRank ?? null;
-        if (points <= 0 && !qual && tandemPosition == null) continue;
+        const tandemPosition = rankingRoundRank ?? tandem?.position ?? null;
+        const qualifyingPosition = qual?.position ?? tansoQual?.position ?? null;
+        const qualifyingPoints = tansoQual?.points ?? null;
+        if (points <= 0 && qualifyingPosition == null && qual?.bestScore == null && tandemPosition == null) {
+          continue;
+        }
 
         stages.push({
           eventSlug: eventSlug(roundNumber),
           roundNumber,
-          qualifyingPosition: qual?.position ?? null,
-          qualifyingPoints: null,
+          qualifyingPosition,
+          qualifyingPoints,
           qualScore100: qual?.bestScore ?? null,
           tandemPosition,
           points,
@@ -713,7 +1176,7 @@ export async function fetchD1gpSeason(seasonYear: number): Promise<D1SeasonData>
       }
 
       return {
-        slug: pilotSlug(row.number, driver.firstName, driver.lastName),
+        slug: d1PilotSlugForDriver(driver, row.number),
         firstName: driver.firstName,
         lastName: driver.lastName,
         nameAlias: driver.nameJa,
@@ -721,7 +1184,7 @@ export async function fetchD1gpSeason(seasonYear: number): Promise<D1SeasonData>
         number: row.number,
         team: row.team,
         totalPoints: row.totalPoints,
-        photoSourceUrl: photosByNumber.get(row.number) ?? null,
+        photoSourceUrl: row.number != null ? (photosByNumber.get(row.number) ?? null) : null,
         stages,
       };
     })

@@ -10,6 +10,8 @@ export interface ResolvedTrackFields {
 
 const RUSSIA = 'Russia';
 const CHINA = 'China';
+const JAPAN = 'Japan';
+const USA = 'United States';
 
 const CITY_EN: Record<string, string> = {
   москва: 'Moscow',
@@ -230,6 +232,125 @@ const CANONICAL: Array<{
     country: CHINA,
     matches: (raw, norm) => /zhejiang international|чжэцзян|绍兴|shaoxing/i.test(raw) || /zhejiang/i.test(norm),
   },
+  {
+    preferredSlug: 'ebisu-circuit',
+    name: 'Ebisu Circuit',
+    city: 'Nihonmatsu',
+    country: JAPAN,
+    matches: (raw, norm) => /\bebisu\b/i.test(raw) || /ebisu/i.test(norm),
+  },
+  {
+    preferredSlug: 'tsukuba-circuit',
+    name: 'Tsukuba Circuit',
+    city: 'Shimotsuma',
+    country: JAPAN,
+    matches: (raw, norm) => /\btsukuba\b/i.test(raw) || /tsukuba/i.test(norm),
+  },
+  {
+    preferredSlug: 'autopolis',
+    name: 'Autopolis',
+    city: 'Hita',
+    country: JAPAN,
+    matches: (raw, norm) => /\bautopolis\b/i.test(raw) || /\bap\b/i.test(norm),
+  },
+  {
+    preferredSlug: 'fuji-speedway',
+    name: 'Fuji Speedway',
+    city: 'Oyama',
+    country: JAPAN,
+    matches: (raw, norm) => /\bfuji\b/i.test(raw) && /speedway|fuji/i.test(norm),
+  },
+  {
+    preferredSlug: 'odaiba-tokyo-bay',
+    name: 'Odaiba, Tokyo Bay',
+    city: 'Tokyo',
+    country: JAPAN,
+    matches: (raw, norm) => /odaiba|tokyo bay|tokyo drift/i.test(raw) || /odaiba/i.test(norm),
+  },
+  {
+    preferredSlug: 'okuibuki-circuit',
+    name: 'Okuibuki Circuit',
+    city: 'Maibara',
+    country: JAPAN,
+    matches: (raw, norm) => /\bokui\b|okuibuki|奥伊吹/i.test(raw),
+  },
+  {
+    preferredSlug: 'suzuka-circuit',
+    name: 'Suzuka Circuit',
+    city: 'Suzuka',
+    country: JAPAN,
+    matches: (raw, norm) => /\bsuzuka\b/i.test(raw),
+  },
+  {
+    preferredSlug: 'okayama-international-circuit',
+    name: 'Okayama International Circuit',
+    city: 'Mimasaka',
+    country: JAPAN,
+    matches: (raw, norm) => /\bokayama\b/i.test(raw),
+  },
+  {
+    preferredSlug: 'sports-land-sugo',
+    name: 'Sports Land SUGO',
+    city: 'Murata',
+    country: JAPAN,
+    matches: (raw, norm) => /\bsugo\b/i.test(raw),
+  },
+  {
+    preferredSlug: 'nikko-circuit',
+    name: 'Nikko Circuit',
+    city: 'Nikko',
+    country: JAPAN,
+    matches: (raw, norm) => /\bnikko\b|nikkō/i.test(raw),
+  },
+  {
+    preferredSlug: 'bihoku-highland-circuit',
+    name: 'Bihoku Highland Circuit',
+    city: 'Shobara',
+    country: JAPAN,
+    matches: (raw, norm) => /\bbihoku\b/i.test(raw),
+  },
+  {
+    preferredSlug: 'sekia-hills',
+    name: 'Sekia Hills',
+    city: 'Ashikita',
+    country: JAPAN,
+    matches: (raw, norm) => /\bsekia\b/i.test(raw),
+  },
+  {
+    preferredSlug: 'irwindale-speedway',
+    name: 'Irwindale Speedway',
+    city: 'Irwindale',
+    country: USA,
+    matches: (raw, norm) => /\birwindale\b/i.test(raw),
+  },
+  {
+    preferredSlug: 'maishima-sports-island',
+    name: 'Maishima Sports Island',
+    city: 'Osaka',
+    country: JAPAN,
+    matches: (raw, norm) => /\bmaishima\b/i.test(raw),
+  },
+  {
+    preferredSlug: 'tokachi-international-speedway',
+    name: 'Tokachi International Speedway',
+    city: 'Sarabetsu',
+    country: JAPAN,
+    matches: (raw, norm) => /\btokachi\b/i.test(raw),
+  },
+  {
+    preferredSlug: 'aichi-sky-expo',
+    name: 'Aichi Sky Expo',
+    city: 'Tokoname',
+    country: JAPAN,
+    matches: (raw, norm) => /aichi sky expo|sky expo|centrair|chubu centrair/i.test(raw),
+  },
+  {
+    preferredSlug: 'huis-ten-bosch',
+    name: 'Huis Ten Bosch',
+    city: 'Sasebo',
+    country: JAPAN,
+    matches: (raw) => /huis ten bosch/i.test(raw),
+  },
 ];
 
 /** Remove trailing event date fragments (e.g. «, 28-29 апреля»). */
@@ -274,7 +395,12 @@ function isLikelyCity(segment: string): boolean {
   if (CITY_EN[key]) return true;
   if (/^\d/.test(segment)) return false;
   if (/[–-]\d/.test(segment)) return false;
-  return segment.length <= 40 && !/\b(raceway|ring|drive|autodrom|speedway|arena)\b/i.test(segment);
+  return (
+    segment.length <= 40 &&
+    !/\b(raceway|ring|drive|autodrom|speedway|arena|circuit|island|airport|hills|expo|park)\b/i.test(
+      segment,
+    )
+  );
 }
 
 /**

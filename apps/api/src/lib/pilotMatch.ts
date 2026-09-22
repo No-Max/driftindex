@@ -1,5 +1,10 @@
 import type { Pilot, PrismaClient } from '@prisma/client';
-import { canonicalEnglishNames, canonicalPilotSlugPriority, pilotNameKey } from './pilotNames.js';
+import {
+  canonicalPilotSlugPriority,
+  canonicalStoredPilotNames,
+  pilotNameFieldsForUpsert,
+  pilotNameKey,
+} from './pilotNames.js';
 import { findPilotBySeriesAlias, pilotAliasKey } from './pilotSeriesAlias.js';
 import { syncPilotPrimaryPhoto } from './media/pilotPhoto.js';
 import { buildNameKey, nameTokens } from './transliterate.js';
@@ -44,13 +49,11 @@ export async function findMatchingPilot(
   options?: { excludeSlugPrefix?: string; seriesId?: string },
 ): Promise<Pilot | null> {
   const excludePrefix = options?.excludeSlugPrefix;
-  const key = buildNameKey(identity.firstName, identity.lastName, identity.nameAlias);
-  if (!key || key.split('|').length < 2) return null;
 
   if (options?.seriesId) {
     const aliasMatch = await findPilotBySeriesAlias(prisma, options.seriesId, [
       identity.nameAlias,
-      `${identity.firstName} ${identity.lastName}`,
+      `${identity.firstName} ${identity.lastName}`.trim(),
       ...(identity.aliases ?? []),
     ]);
     if (
@@ -61,6 +64,9 @@ export async function findMatchingPilot(
       return aliasMatch;
     }
   }
+
+  const key = buildNameKey(identity.firstName, identity.lastName, identity.nameAlias);
+  if (!key || key.split('|').length < 2) return null;
 
   const candidates = await prisma.pilot.findMany({
     where: {
@@ -145,16 +151,15 @@ export async function mergePilotInto(
 }
 
 export async function normalizePilotRecord(prisma: PrismaClient, pilot: Pilot): Promise<Pilot> {
-  const english = canonicalEnglishNames(pilot);
-  if (english.firstName === pilot.firstName && english.lastName === pilot.lastName) {
+  const english = await canonicalStoredPilotNames(prisma, pilot);
+  const fields = pilotNameFieldsForUpsert(english);
+  if (!fields.firstName && !fields.lastName) return pilot;
+  if (fields.firstName === pilot.firstName && fields.lastName === pilot.lastName) {
     return pilot;
   }
   return prisma.pilot.update({
     where: { id: pilot.id },
-    data: {
-      firstName: english.firstName,
-      lastName: english.lastName,
-    },
+    data: fields,
   });
 }
 
@@ -194,11 +199,13 @@ export async function dedupePilotsByTransliteration(prisma: PrismaClient): Promi
   const report: PilotDedupeReport = { merged: [], reviewSuggested: [], normalized: 0 };
 
   for (const pilot of await prisma.pilot.findMany()) {
-    const english = canonicalEnglishNames(pilot);
-    if (pilot.firstName !== english.firstName || pilot.lastName !== english.lastName) {
+    const english = await canonicalStoredPilotNames(prisma, pilot);
+    const fields = pilotNameFieldsForUpsert(english);
+    if (!fields.firstName && !fields.lastName) continue;
+    if (pilot.firstName !== fields.firstName || pilot.lastName !== fields.lastName) {
       await prisma.pilot.update({
         where: { id: pilot.id },
-        data: { firstName: english.firstName, lastName: english.lastName },
+        data: fields,
       });
       report.normalized++;
     }
@@ -227,12 +234,15 @@ export async function dedupePilotsByTransliteration(prisma: PrismaClient): Promi
       report.merged.push({ from: duplicate.slug, to: canonical.slug, nameKey: group.nameKey });
     }
 
-    const english = canonicalEnglishNames(canonical);
-    await prisma.pilot.update({
-      where: { id: canonical.id },
-      data: { firstName: english.firstName, lastName: english.lastName },
-    });
-    report.normalized++;
+    const english = await canonicalStoredPilotNames(prisma, canonical);
+    const fields = pilotNameFieldsForUpsert(english);
+    if (fields.firstName || fields.lastName) {
+      await prisma.pilot.update({
+        where: { id: canonical.id },
+        data: fields,
+      });
+      report.normalized++;
+    }
   }
 
   return report;

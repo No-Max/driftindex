@@ -21,7 +21,11 @@ import { loadP4PInputs } from '../lib/p4pData.js';
 import { preferredSeriesPhotoUrl, resolveSeriesPhotoUrl } from '../lib/media/pilotPhoto.js';
 import { toPilotCard } from '../lib/pilot.js';
 import { resultDisplayNumber } from '../lib/resultNumber.js';
-import { resolvePilotDisplayNames } from '../lib/pilotNames.js';
+import {
+  resolvePilotDisplayNames,
+  resolvePilotDisplayNamesWithAliasMap,
+  seriesAliasMapForPilots,
+} from '../lib/pilotNames.js';
 import { computePilotStats, toStatsInput } from '../lib/pilotStats.js';
 import { pilotSlugLookupCandidates, stripSeriesPilotSlugPrefix } from '../lib/pilotSlug.js';
 import { prisma } from '../lib/prisma.js';
@@ -315,6 +319,9 @@ publicRouter.get('/series/:slug/seasons/:year/events/:eventSlug', async (req, re
     return b.points - a.points || a.pilot.lastName.localeCompare(b.pilot.lastName);
   });
 
+  const eventPilots = [...new Map(results.map((result) => [result.pilot.id, result.pilot])).values()];
+  const eventPilotAliasMap = await seriesAliasMapForPilots(prisma, eventPilots);
+
   const payload: SeasonEventResponse = {
     series: {
       slug: series.slug,
@@ -341,7 +348,10 @@ publicRouter.get('/series/:slug/seasons/:year/events/:eventSlug', async (req, re
     },
     source: seasonSource(season),
     results: results.map((result) => {
-      const { firstName, lastName } = resolvePilotDisplayNames(result.pilot);
+      const { firstName, lastName } = resolvePilotDisplayNamesWithAliasMap(
+        result.pilot,
+        eventPilotAliasMap,
+      );
       return {
         pilotSlug: result.pilot.slug,
         firstName,
@@ -401,8 +411,13 @@ publicRouter.get('/series/:slug/seasons/:year/standings', async (req, res) => {
 
   const events = season.events;
   const computed = computeStandings(events);
+  const standingsPilots = [...new Map(computed.map((row) => [row.pilot.id, row.pilot])).values()];
+  const standingsPilotAliasMap = await seriesAliasMapForPilots(prisma, standingsPilots);
   const standings = computed.map((row) => {
-    const { firstName, lastName } = resolvePilotDisplayNames(row.pilot);
+    const { firstName, lastName } = resolvePilotDisplayNamesWithAliasMap(
+      row.pilot,
+      standingsPilotAliasMap,
+    );
     return {
       rank: row.rank,
       pilotSlug: row.pilot.slug,
@@ -502,12 +517,19 @@ publicRouter.get('/pilots', async (req, res) => {
     orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
   });
 
+  const aliasByPilotId = await seriesAliasMapForPilots(prisma, [
+    ...p4pRows.map((row) => row.pilot),
+    ...unrankedPilots,
+  ]);
+
   const ranked: PilotListEntry[] = p4pRows.map((row) => {
     const seriesParticipations = listPilotSeasonSeries(p4pInputs, row.pilot.id);
     return {
       rank: row.rank,
       score: row.score,
-      pilot: toPilotCard(row.pilot),
+      pilot: toPilotCard(row.pilot, undefined, undefined, {
+        nameAlias: aliasByPilotId.get(row.pilot.id),
+      }),
       bestSeries: seriesParticipations[0] ?? null,
       seriesParticipations,
     };
@@ -518,7 +540,9 @@ publicRouter.get('/pilots', async (req, res) => {
     return {
       rank: null,
       score: null,
-      pilot: toPilotCard(pilot),
+      pilot: toPilotCard(pilot, undefined, undefined, {
+        nameAlias: aliasByPilotId.get(pilot.id),
+      }),
       bestSeries: seriesParticipations[0] ?? null,
       seriesParticipations,
     };
@@ -658,7 +682,16 @@ publicRouter.get('/pilots/:slug', async (req, res) => {
     ),
   );
 
-  const { firstName, lastName } = resolvePilotDisplayNames(pilot);
+  let displayNames = resolvePilotDisplayNames(pilot);
+  if (!displayNames.firstName.trim() && !displayNames.lastName.trim()) {
+    const seriesAlias = await prisma.pilotSeriesAlias.findFirst({
+      where: { pilotId: pilot.id },
+      orderBy: { updatedAt: 'desc' },
+      select: { name: true },
+    });
+    displayNames = resolvePilotDisplayNames(pilot, { nameAlias: seriesAlias?.name });
+  }
+  const { firstName, lastName } = displayNames;
   const seriesPhotoRows = pilot.seriesPhotos
     .filter((entry) => entry.photoUrl)
     .map((entry) => ({

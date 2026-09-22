@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { fetchD1gpSeason, listD1gpSeasons } from '../src/importers/d1gp.js';
 import type { D1Pilot } from '../src/importers/d1gp.js';
 import { findMatchingPilot } from '../src/lib/pilotMatch.js';
-import { canonicalEnglishNames } from '../src/lib/pilotNames.js';
+import { canonicalEnglishNames, pilotNameFieldsForUpsert } from '../src/lib/pilotNames.js';
 import { upsertPilotSeriesPhoto } from '../src/lib/media/pilotPhoto.js';
 import { upsertPilotSeriesAlias } from '../src/lib/pilotSeriesAlias.js';
 import { toQualScore100 } from '../src/lib/qualScore.js';
@@ -135,8 +135,7 @@ async function importSeason(year: number, seriesId: string) {
     const pilotRecord = await prisma.pilot.upsert({
       where: { slug: pilotSlug },
       update: {
-        firstName: english.firstName,
-        lastName: english.lastName,
+        ...pilotNameFieldsForUpsert(english),
         country: pilot.country,
       },
       create: {

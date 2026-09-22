@@ -4,6 +4,7 @@ import { computeP4P } from '../lib/p4p.js';
 import { loadP4PInputs } from '../lib/p4pData.js';
 import { buildP4PSeasonEvents } from '../lib/p4pSeasonEvents.js';
 import { toPilotCard } from '../lib/pilot.js';
+import { seriesAliasMapForPilots } from '../lib/pilotNames.js';
 import { resultDisplayNumber } from '../lib/resultNumber.js';
 import { computePilotStats, toStatsInput } from '../lib/pilotStats.js';
 import { loadSeriesLogoMap, seriesLogoFromMap } from '../lib/seriesLogos.js';
@@ -57,6 +58,28 @@ homeRouter.get('/home', async (req, res) => {
     const events = season.events;
     const standings = computeStandings(events);
     const leader = standings[0];
+    const topThree = standings.slice(0, 3);
+
+    const lastFinished = [...events].reverse().find((e) => e.status === 'FINISHED');
+    const qualWinner = lastFinished
+      ? lastFinished.results
+          .filter((r) => r.qualPosition === 1)
+          .sort((a, b) => (b.qualScore100 ?? 0) - (a.qualScore100 ?? 0))[0]
+      : undefined;
+
+    const featuredPilots = [
+      ...(leader ? [leader.pilot] : []),
+      ...topThree.map((row) => row.pilot),
+      ...(qualWinner ? [qualWinner.pilot] : []),
+    ];
+    const featuredAliasMap = await seriesAliasMapForPilots(prisma, featuredPilots);
+    const pilotCard = (
+      pilot: (typeof featuredPilots)[number],
+      number?: number | null,
+    ) =>
+      toPilotCard(pilot, number, undefined, {
+        nameAlias: featuredAliasMap.get(pilot.id),
+      });
 
     championships.push({
       series: {
@@ -68,28 +91,22 @@ homeRouter.get('/home', async (req, res) => {
       },
       seasonYear: season.year,
       seriesStartYear: startYearBySeriesId.get(series.id) ?? season.year,
-      leader: leader ? toPilotCard(leader.pilot, leader.number) : null,
+      leader: leader ? pilotCard(leader.pilot, leader.number) : null,
       leaderPoints: leader?.totalPoints ?? null,
-      topThree: standings.slice(0, 3).map((row) => ({
-        pilot: toPilotCard(row.pilot, row.number),
+      topThree: topThree.map((row) => ({
+        pilot: pilotCard(row.pilot, row.number),
         points: row.totalPoints,
       })),
       standingsPath: `/series/${series.slug}/${season.year}`,
     });
 
-    const lastFinished = [...events].reverse().find((e) => e.status === 'FINISHED');
-    if (lastFinished) {
-      const qualWinner = lastFinished.results
-        .filter((r) => r.qualPosition === 1)
-        .sort((a, b) => (b.qualScore100 ?? 0) - (a.qualScore100 ?? 0))[0];
-
-      if (qualWinner) {
+    if (lastFinished && qualWinner) {
         const runnerUp = lastFinished.results
           .filter((r) => r.qualPosition === 2)
           .sort((a, b) => (b.qualScore100 ?? 0) - (a.qualScore100 ?? 0))[0];
 
         qualWinners.push({
-          pilot: toPilotCard(qualWinner.pilot, resultDisplayNumber(qualWinner)),
+          pilot: pilotCard(qualWinner.pilot, resultDisplayNumber(qualWinner)),
           series: {
             slug: series.slug,
             name: series.name,
@@ -109,7 +126,6 @@ homeRouter.get('/home', async (req, res) => {
             ? Math.round((qualWinner.qualScore100 - runnerUp.qualScore100) * 10) / 10
             : null,
         });
-      }
     }
   }
 
@@ -159,11 +175,17 @@ homeRouter.get('/home', async (req, res) => {
   );
   const resultsByPilotId = new Map(p4pPilotResults.map((pilot) => [pilot.id, pilot.results]));
 
+  const p4pAliasMap = await seriesAliasMapForPilots(
+    prisma,
+    p4pRows.map((row) => row.pilot),
+  );
   const poundForPound = p4pRows.map((row) => ({
     rank: row.rank,
     score: row.score,
     pilot: {
-      ...toPilotCard(row.pilot),
+      ...toPilotCard(row.pilot, undefined, undefined, {
+        nameAlias: p4pAliasMap.get(row.pilot.id),
+      }),
       stats: statsByPilotId.get(row.pilot.id),
     },
     bestSeries: {
