@@ -2,6 +2,8 @@ node_modules
 dist
 .env
 apps/api/.env
+apps/web/.env.production
+deploy/umami/.env
 storage/media/*
 !storage/media/.gitkeep
 *.log
