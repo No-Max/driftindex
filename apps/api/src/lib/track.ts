@@ -61,7 +61,7 @@ export async function findOrCreateTrack(
         data: {
           name: resolved.name,
           city: bySlug.city ?? resolved.city ?? undefined,
-          country: bySlug.country ?? resolved.country ?? undefined,
+          country: input.country ?? bySlug.country ?? resolved.country ?? undefined,
           sourceUrl: bySlug.sourceUrl ?? input.sourceUrl ?? undefined,
         },
       });
@@ -78,7 +78,7 @@ export async function findOrCreateTrack(
     return prisma.track.update({
       where: { id: existing.id },
       data: {
-        country: existing.country ?? resolved.country ?? undefined,
+        country: input.country ?? existing.country ?? resolved.country ?? undefined,
         city: existing.city ?? resolved.city ?? undefined,
         sourceUrl: existing.sourceUrl ?? input.sourceUrl ?? undefined,
       },

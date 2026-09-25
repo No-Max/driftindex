@@ -92,7 +92,11 @@ async function importSeason(year: number, seriesId: string) {
 
   const eventRecords = new Map<string, { id: string }>();
   for (const event of data.events) {
-    const track = await findOrCreateTrack(prisma, { name: event.trackName, sourceUrl: data.sourceUrl });
+    const track = await findOrCreateTrack(prisma, {
+      name: event.trackName,
+      country: 'United States',
+      sourceUrl: data.sourceUrl,
+    });
     const record = await prisma.event.upsert({
       where: { seasonId_slug: { seasonId: season.id, slug: event.slug } },
       update: {
@@ -130,7 +134,7 @@ async function importSeason(year: number, seriesId: string) {
       update: {
         firstName: english.firstName,
         lastName: english.lastName,
-        country: pilot.country,
+        ...(pilot.country ? { country: pilot.country } : {}),
       },
       create: {
         slug: pilotSlug,
