@@ -16,6 +16,16 @@ import { findOrCreateTrack } from '../src/lib/track.js';
 const prisma = new PrismaClient();
 const SERIES_SLUG = 'formula-drift-pro';
 
+function sourceLabelsForUrl(sourceUrl: string): { en: string; ru: string } {
+  if (sourceUrl.includes('wikipedia.org')) {
+    return { en: 'Wikipedia — Formula D season', ru: 'Wikipedia — сезон Formula D' };
+  }
+  if (sourceUrl.includes('web.archive.org')) {
+    return { en: 'Formula Drift — Wayback archive', ru: 'Formula Drift — архив Wayback' };
+  }
+  return { en: 'Formula Drift — official results', ru: 'Formula Drift — официальные результаты' };
+}
+
 function parseYears(): number[] {
   if (process.argv.includes('--list-seasons')) return [];
 
@@ -70,13 +80,14 @@ async function importSeason(year: number, seriesId: string) {
     console.log('Cleared previous season events');
   }
 
+  const sourceLabels = sourceLabelsForUrl(data.sourceUrl);
   season = await prisma.season.upsert({
     where: { seriesId_year: { seriesId, year: data.seasonYear } },
     update: {
       nameEn: `Formula Drift PRO ${data.seasonYear}`,
       nameRu: `Formula Drift PRO ${data.seasonYear}`,
-      sourceLabelEn: 'Formula Drift — official results',
-      sourceLabelRu: 'Formula Drift — официальные результаты',
+      sourceLabelEn: sourceLabels.en,
+      sourceLabelRu: sourceLabels.ru,
       sourceUrl: data.sourceUrl,
     },
     create: {
@@ -84,8 +95,8 @@ async function importSeason(year: number, seriesId: string) {
       year: data.seasonYear,
       nameEn: `Formula Drift PRO ${data.seasonYear}`,
       nameRu: `Formula Drift PRO ${data.seasonYear}`,
-      sourceLabelEn: 'Formula Drift — official results',
-      sourceLabelRu: 'Formula Drift — официальные результаты',
+      sourceLabelEn: sourceLabels.en,
+      sourceLabelRu: sourceLabels.ru,
       sourceUrl: data.sourceUrl,
     },
   });
@@ -94,7 +105,7 @@ async function importSeason(year: number, seriesId: string) {
   for (const event of data.events) {
     const track = await findOrCreateTrack(prisma, {
       name: event.trackName,
-      country: 'United States',
+      country: event.country ?? 'United States',
       sourceUrl: data.sourceUrl,
     });
     const record = await prisma.event.upsert({

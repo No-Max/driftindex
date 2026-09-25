@@ -46,6 +46,7 @@ export interface FdEvent {
   trackName: string;
   startsAt: string;
   status: 'FINISHED' | 'SCHEDULED' | 'CANCELLED';
+  country?: string | null;
 }
 
 export interface FdSeasonData {
@@ -772,7 +773,11 @@ export async function probeFormulaDriftArchiveSeasons(
 
 export async function listFormulaDriftSeasons(): Promise<number[]> {
   const availability = await probeFormulaDriftArchiveSeasons();
-  return availability.filter((season) => season.importable).map((season) => season.year);
+  const years = availability.filter((season) => season.importable).map((season) => season.year);
+  for (const year of [2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017]) {
+    if (!years.includes(year)) years.push(year);
+  }
+  return years.sort((a, b) => b - a);
 }
 
 async function fetchFormulaDriftSeasonFromApi(seasonYear: number, standings: FdStandingsDoc): Promise<FdSeasonData> {
@@ -900,21 +905,40 @@ async function fetchFormulaDriftSeasonFromApi(seasonYear: number, standings: FdS
 }
 
 export async function fetchFormulaDriftSeason(seasonYear: number): Promise<FdSeasonData> {
-  const standings = await fetchStandings(seasonYear);
+  let standings: FdStandingsDoc | null = null;
+  try {
+    standings = await fetchStandings(seasonYear);
+  } catch {
+    standings = null;
+  }
   if (standings) {
     return fetchFormulaDriftSeasonFromApi(seasonYear, standings);
   }
 
-  const html = await fetchHtml(`${BASE}/standings/${seasonYear}/pro`);
-  if (!hasArchiveStandingsTable(html)) {
-    throw new Error(`Formula Drift PRO standings for ${seasonYear} not found`);
+  try {
+    const html = await fetchHtml(`${BASE}/standings/${seasonYear}/pro`);
+    if (hasArchiveStandingsTable(html)) {
+      const season = parseArchiveStandingsHtml(html, seasonYear);
+      if (seasonYear === 2025) {
+        const { enrichFormulaDrift2025FromNews } = await import('./formula-drift-2025-news.js');
+        const { enrichFormulaDrift2025QualSeeds } = await import('./formula-drift-2025-brackets.js');
+        return enrichFormulaDrift2025QualSeeds(await enrichFormulaDrift2025FromNews(season));
+      }
+      return season;
+    }
+  } catch {
+    // Official live pages 404 for pre-2018 seasons.
   }
 
-  const season = parseArchiveStandingsHtml(html, seasonYear);
-  if (seasonYear === 2025) {
-    const { enrichFormulaDrift2025FromNews } = await import('./formula-drift-2025-news.js');
-    const { enrichFormulaDrift2025QualSeeds } = await import('./formula-drift-2025-brackets.js');
-    return enrichFormulaDrift2025QualSeeds(await enrichFormulaDrift2025FromNews(season));
+  if (seasonYear >= 2008 && seasonYear <= 2017) {
+    const { fetchFormulaDriftSeasonFromWikipedia } = await import('./formula-drift-wikipedia.js');
+    return fetchFormulaDriftSeasonFromWikipedia(seasonYear);
   }
-  return season;
+
+  if (seasonYear === 2007) {
+    const { fetchFormulaDriftSeasonFromWayback } = await import('./formula-drift-wayback.js');
+    return fetchFormulaDriftSeasonFromWayback(seasonYear);
+  }
+
+  throw new Error(`Formula Drift PRO standings for ${seasonYear} not found`);
 }
