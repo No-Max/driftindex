@@ -3,6 +3,7 @@ import type { HomeQualWinner } from '@drift-index/shared';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useCardSlider } from '../../composables/useCardSlider';
+import { useLocalePath } from '../../composables/useLocalePath';
 import { formatPilotName } from '../../lib/formatPilotName';
 import PilotAvatar from '../PilotAvatar.vue';
 import SeriesLogo from '../SeriesLogo.vue';
@@ -12,6 +13,7 @@ const props = defineProps<{
 }>();
 
 const { t } = useI18n();
+const { localePath } = useLocalePath();
 
 const sortedItems = computed(() =>
   [...props.items].sort((a, b) => {
@@ -95,7 +97,7 @@ function eventName(item: HomeQualWinner) {
             class="card-slider__item card qual-card"
           >
             <RouterLink
-              :to="`/pilots/${item.pilot.slug}`"
+              :to="localePath(`/pilots/${item.pilot.slug}`)"
               class="qual-card__pilot"
               @click="onLinkClick"
             >
@@ -123,7 +125,7 @@ function eventName(item: HomeQualWinner) {
                   ·
                   <RouterLink
                     class="track-link"
-                    :to="`/tracks/${item.event.track.slug}`"
+                    :to="localePath(`/tracks/${item.event.track.slug}`)"
                     @click="onLinkClick"
                   >
                     {{ item.event.track.name }}

@@ -5,9 +5,11 @@ import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import { fetchSeriesProfile } from '../api/client';
 import SeriesLogo from '../components/SeriesLogo.vue';
+import { useLocalePath } from '../composables/useLocalePath';
 
 const route = useRoute();
 const { t, locale } = useI18n();
+const { localePath } = useLocalePath();
 
 const data = ref<SeriesProfileResponse | null>(null);
 const loading = ref(true);
@@ -79,7 +81,7 @@ function isEventClickable(status: SeriesProfileResponse['seasons'][0]['events'][
           size="xl"
         />
         <div class="hero__body">
-          <RouterLink to="/series" class="back-link">← {{ t('seriesDetail.back') }}</RouterLink>
+          <RouterLink :to="localePath('/series')" class="back-link">← {{ t('seriesDetail.back') }}</RouterLink>
           <h1 class="page-title">{{ data.series.name }}</h1>
           <p v-if="data.series.shortName && data.series.shortName !== data.series.name" class="muted">
             {{ data.series.shortName }}
@@ -100,7 +102,7 @@ function isEventClickable(status: SeriesProfileResponse['seasons'][0]['events'][
               {{ t('standings.eventsProgress', { finished: season.finishedEventCount, total: season.eventCount }) }}
             </p>
           </div>
-          <RouterLink :to="season.standingsPath" class="standings-link">
+          <RouterLink :to="localePath(season.standingsPath)" class="standings-link">
             {{ t('seriesDetail.openStandings') }} →
           </RouterLink>
         </div>
@@ -136,7 +138,7 @@ function isEventClickable(status: SeriesProfileResponse['seasons'][0]['events'][
                 <td>
                   <RouterLink
                     v-if="isEventClickable(event.status)"
-                    :to="event.eventPath"
+                    :to="localePath(event.eventPath)"
                     class="event-link"
                   >
                     {{ event.name }}
@@ -146,7 +148,7 @@ function isEventClickable(status: SeriesProfileResponse['seasons'][0]['events'][
                 <td>
                   <RouterLink
                     v-if="event.track && isEventClickable(event.status)"
-                    :to="`/tracks/${event.track.slug}`"
+                    :to="localePath(`/tracks/${event.track.slug}`)"
                     class="track-link"
                   >
                     {{ trackLabel(event.track) }}

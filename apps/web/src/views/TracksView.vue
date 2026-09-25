@@ -4,10 +4,12 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { fetchTracks } from '../api/client';
+import { useLocalePath } from '../composables/useLocalePath';
 
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
+const { localePath } = useLocalePath();
 
 const NO_COUNTRY = '__none__';
 const COUNTRY_QUERY = 'country';
@@ -118,7 +120,7 @@ const filteredTracks = computed(() => {
         v-for="track in filteredTracks"
         :key="track.slug"
         class="card track-card"
-        :to="`/tracks/${track.slug}`"
+        :to="localePath(`/tracks/${track.slug}`)"
       >
         <div class="track-card__photo">
           <img v-if="track.photoUrl" :src="track.photoUrl" :alt="track.name" />

@@ -8,6 +8,7 @@ import { seriesAliasMapForPilots } from '../lib/pilotNames.js';
 import { resultDisplayNumber } from '../lib/resultNumber.js';
 import { computePilotStats, toStatsInput } from '../lib/pilotStats.js';
 import { loadSeriesLogoMap, seriesLogoFromMap } from '../lib/seriesLogos.js';
+import { getOrSetCached } from '../lib/responseCache.js';
 import { computePrestigeRanking } from '../lib/seriesOverlap.js';
 import { computeStandings } from '../lib/standings.js';
 import { prisma } from '../lib/prisma.js';
@@ -18,6 +19,11 @@ export const homeRouter = Router();
 homeRouter.get('/home', async (req, res) => {
   const year = parseYear(req.query.year) ?? new Date().getFullYear();
 
+  const payload = await getOrSetCached(`home:${year}`, () => buildHomePayload(year));
+  res.json(payload);
+});
+
+async function buildHomePayload(year: number): Promise<HomeResponse> {
   const featuredSeries = await prisma.series.findMany({
     where: { featuredOrder: { not: null } },
     orderBy: { featuredOrder: 'asc' },
@@ -246,8 +252,8 @@ homeRouter.get('/home', async (req, res) => {
     },
   };
 
-  res.json(payload);
-});
+  return payload;
+}
 
 function parseYear(value: unknown): number | null {
   if (typeof value !== 'string') return null;

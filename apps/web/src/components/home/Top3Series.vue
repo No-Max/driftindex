@@ -7,6 +7,7 @@ import type {
 } from '@drift-index/shared';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useLocalePath } from '../../composables/useLocalePath';
 import { formatPilotName } from '../../lib/formatPilotName';
 import SeriesLogo from '../SeriesLogo.vue';
 
@@ -17,6 +18,7 @@ const props = defineProps<{
 }>();
 
 const { t } = useI18n();
+const { localePath } = useLocalePath();
 
 const topThreeCards = computed(() => {
   const bySlug = new Map(props.championships.map((item) => [item.series.slug, item]));
@@ -27,11 +29,11 @@ const topThreeCards = computed(() => {
 });
 
 function seriesPath(entry: SeriesPrestigeEntry) {
-  return `/series/${entry.slug}/${props.year}`;
+  return localePath(`/series/${entry.slug}/${props.year}`);
 }
 
 function pilotPath(pilot: PilotSummary) {
-  return `/pilots/${pilot.slug}`;
+  return localePath(`/pilots/${pilot.slug}`);
 }
 
 function isLeader(entry: SeriesPrestigeEntry) {
@@ -159,7 +161,7 @@ onUnmounted(() => {
       </li>
     </ol>
     <p class="top-series__footer muted">
-      <RouterLink to="/series" class="top-series__all-link">
+      <RouterLink :to="localePath('/series')" class="top-series__all-link">
         {{ t('home.topSeriesAll') }}
       </RouterLink>
     </p>

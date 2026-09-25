@@ -2,6 +2,7 @@ import 'dotenv/config';
 import cors from 'cors';
 import express from 'express';
 import { getMediaPublicBase, getMediaRoot } from './lib/media/config.js';
+import { isResponseCacheEnabled, responseCacheTtlMs } from './lib/responseCache.js';
 import { homeRouter } from './routes/home.js';
 import { publicRouter } from './routes/public.js';
 
@@ -25,5 +26,9 @@ app.use('/api', publicRouter);
 app.use('/api', homeRouter);
 
 app.listen(port, () => {
+  const cacheLabel = isResponseCacheEnabled()
+    ? `on (ttl ${responseCacheTtlMs()}ms)`
+    : 'off';
   console.log(`Drift Index API listening on http://localhost:${port}`);
+  console.log(`Response cache: ${cacheLabel}`);
 });

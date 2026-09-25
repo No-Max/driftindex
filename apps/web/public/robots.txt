@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://driftindex.pro/sitemap.xml

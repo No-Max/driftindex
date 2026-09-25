@@ -3,6 +3,7 @@ import type { HomeChampionshipCard } from '@drift-index/shared';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useCardSlider } from '../../composables/useCardSlider';
+import { useLocalePath } from '../../composables/useLocalePath';
 import { formatPilotName } from '../../lib/formatPilotName';
 import PilotAvatar from '../PilotAvatar.vue';
 import SeriesLogo from '../SeriesLogo.vue';
@@ -12,6 +13,7 @@ const props = defineProps<{
 }>();
 
 const { t } = useI18n();
+const { localePath } = useLocalePath();
 
 const itemCount = computed(() => props.items.length);
 
@@ -76,7 +78,7 @@ function seriesName(item: HomeChampionshipCard) {
             class="card-slider__item card champ-card"
           >
             <RouterLink
-              :to="item.standingsPath"
+              :to="localePath(item.standingsPath)"
               class="champ-card__link"
               @click="onLinkClick"
             >

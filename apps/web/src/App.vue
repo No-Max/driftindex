@@ -2,17 +2,18 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
+import { useLocalePath } from './composables/useLocalePath';
+import { usePageSeo } from './composables/usePageSeo';
 
 const { t, locale } = useI18n();
 const route = useRoute();
+const { localePath, switchLocale } = useLocalePath();
+
+usePageSeo();
 
 const menuOpen = ref(false);
 
 const isRu = computed(() => locale.value === 'ru');
-
-function setLocale(next: 'en' | 'ru') {
-  locale.value = next;
-}
 
 function closeMenu() {
   menuOpen.value = false;
@@ -46,7 +47,7 @@ onUnmounted(() => {
   <div class="app-shell">
     <header class="header">
       <div class="container header__inner">
-        <RouterLink to="/" class="brand">
+        <RouterLink :to="localePath('/')" class="brand">
           <span class="brand__mark">DI</span>
           <span>
             <strong>{{ t('brand') }}</strong>
@@ -74,13 +75,13 @@ onUnmounted(() => {
           class="header__nav"
           :class="{ 'header__nav--open': menuOpen }"
         >
-          <RouterLink to="/">{{ t('nav.home') }}</RouterLink>
-          <RouterLink to="/pilots">{{ t('nav.pilots') }}</RouterLink>
-          <RouterLink to="/series">{{ t('nav.series') }}</RouterLink>
-          <RouterLink to="/tracks">{{ t('nav.tracks') }}</RouterLink>
+          <RouterLink :to="localePath('/')">{{ t('nav.home') }}</RouterLink>
+          <RouterLink :to="localePath('/pilots')">{{ t('nav.pilots') }}</RouterLink>
+          <RouterLink :to="localePath('/series')">{{ t('nav.series') }}</RouterLink>
+          <RouterLink :to="localePath('/tracks')">{{ t('nav.tracks') }}</RouterLink>
           <div class="lang-switch">
-            <button :class="{ active: !isRu }" type="button" @click="setLocale('en')">{{ t('lang.en') }}</button>
-            <button :class="{ active: isRu }" type="button" @click="setLocale('ru')">{{ t('lang.ru') }}</button>
+            <button :class="{ active: !isRu }" type="button" @click="switchLocale('en')">{{ t('lang.en') }}</button>
+            <button :class="{ active: isRu }" type="button" @click="switchLocale('ru')">{{ t('lang.ru') }}</button>
           </div>
         </nav>
       </div>
@@ -200,7 +201,7 @@ onUnmounted(() => {
   font-size: 1.05rem;
 }
 
-.header__nav a.router-link-active {
+.header__nav a.router-link-exact-active {
   color: var(--accent);
 }
 

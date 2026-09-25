@@ -3,6 +3,7 @@ import type { HomeP4PEntry, HomeP4PSeriesParticipation } from '@drift-index/shar
 import { seriesEventPath } from '@drift-index/shared';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useLocalePath } from '../../composables/useLocalePath';
 import { formatAvgPlaceRange } from '../../lib/formatAvgPlace';
 import { formatPilotName } from '../../lib/formatPilotName';
 import { formatQualCell } from '../../lib/formatQualCell';
@@ -16,6 +17,7 @@ const props = defineProps<{
 }>();
 
 const { t, locale } = useI18n();
+const { localePath } = useLocalePath();
 
 const leader = computed(() => props.items.find((item) => item.rank === 1));
 const rest = computed(() => props.items.filter((item) => item.rank > 1));
@@ -25,7 +27,7 @@ function seriesName(item: HomeP4PEntry) {
 }
 
 function seriesPath(slug: string) {
-  return `/series/${slug}/${props.year}`;
+  return localePath(`/series/${slug}/${props.year}`);
 }
 
 function isFeatured(rank: number) {
@@ -58,7 +60,11 @@ function seriesLabel(event: HomeP4PEntry['seasonEvents'][number]) {
 }
 
 function eventPath(event: HomeP4PEntry['seasonEvents'][number]) {
-  return seriesEventPath(event.seriesSlug, props.year, event.eventSlug);
+  return localePath(seriesEventPath(event.seriesSlug, props.year, event.eventSlug));
+}
+
+function pilotPath(slug: string) {
+  return localePath(`/pilots/${slug}`);
 }
 
 </script>
@@ -68,12 +74,12 @@ function eventPath(event: HomeP4PEntry['seasonEvents'][number]) {
     <article class="card p4p-leader">
       <span class="p4p-leader__rank">1</span>
       <div class="p4p-leader__body">
-        <RouterLink :to="`/pilots/${leader.pilot.slug}`" class="p4p-leader__pilot-link">
+        <RouterLink :to="pilotPath(leader.pilot.slug)" class="p4p-leader__pilot-link">
           <PilotAvatar :pilot="leader.pilot" size="2xl" />
         </RouterLink>
         <div class="p4p-leader__info">
           <p class="p4p-leader__label">{{ t('home.p4pLeader') }}</p>
-          <RouterLink :to="`/pilots/${leader.pilot.slug}`" class="p4p-leader__name-link">
+          <RouterLink :to="pilotPath(leader.pilot.slug)" class="p4p-leader__name-link">
             <p class="p4p-leader__name">{{ formatPilotName(leader.pilot) }}</p>
           </RouterLink>
           <p class="p4p-leader__score">{{ leader.score }} {{ t('home.p4pScore') }}</p>
@@ -168,14 +174,14 @@ function eventPath(event: HomeP4PEntry['seasonEvents'][number]) {
         :class="isFeatured(item.rank) ? 'p4p-list__item--featured' : 'p4p-list__item--compact'"
       >
         <div class="p4p-list__link">
-          <RouterLink :to="`/pilots/${item.pilot.slug}`" class="p4p-list__rank">
+          <RouterLink :to="pilotPath(item.pilot.slug)" class="p4p-list__rank">
             {{ item.rank }}
           </RouterLink>
-          <RouterLink :to="`/pilots/${item.pilot.slug}`" class="p4p-list__avatar-link">
+          <RouterLink :to="pilotPath(item.pilot.slug)" class="p4p-list__avatar-link">
             <PilotAvatar :pilot="item.pilot" :size="isFeatured(item.rank) ? 'xl' : 'md'" />
           </RouterLink>
           <div class="p4p-list__body">
-            <RouterLink :to="`/pilots/${item.pilot.slug}`" class="p4p-list__name-link">
+            <RouterLink :to="pilotPath(item.pilot.slug)" class="p4p-list__name-link">
               <p class="p4p-list__name">{{ formatPilotName(item.pilot) }}</p>
             </RouterLink>
             <p class="p4p-list__series">
@@ -191,7 +197,7 @@ function eventPath(event: HomeP4PEntry['seasonEvents'][number]) {
               <span> · {{ bestSeriesMeta(item) }}</span>
             </p>
             <p class="p4p-list__meta">
-              <RouterLink :to="`/pilots/${item.pilot.slug}`" class="p4p-list__score">
+              <RouterLink :to="pilotPath(item.pilot.slug)" class="p4p-list__score">
                 {{ item.score }} {{ t('home.p4pScore') }}
               </RouterLink>
               <template v-if="item.pilot.stats && isFeatured(item.rank)">

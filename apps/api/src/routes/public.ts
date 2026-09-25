@@ -29,6 +29,7 @@ import {
 import { computePilotStats, toStatsInput } from '../lib/pilotStats.js';
 import { pilotSlugLookupCandidates, stripSeriesPilotSlugPrefix } from '../lib/pilotSlug.js';
 import { prisma } from '../lib/prisma.js';
+import { getOrSetCached, invalidateResponseCache, responseCacheStats } from '../lib/responseCache.js';
 import { loadSeriesLogoMap, seriesLogoFromMap } from '../lib/seriesLogos.js';
 import { computePrestigeRanking, persistPrestigeRanking } from '../lib/seriesOverlap.js';
 import { computeStandings, computeTeamStandings } from '../lib/standings.js';
@@ -37,29 +38,34 @@ import { toTrackSummary } from '../lib/trackDto.js';
 export const publicRouter = Router();
 
 publicRouter.get('/health', (_req, res) => {
-  res.json({ ok: true, service: 'drift-index-api' });
+  res.json({ ok: true, service: 'drift-index-api', cache: responseCacheStats() });
 });
 
 publicRouter.get('/series/prestige', async (req, res) => {
   const year = parseOptionalYear(req.query.year);
-  const [prestige, logoBySlug] = await Promise.all([
-    computePrestigeRanking(prisma, year ?? undefined),
-    loadSeriesLogoMap(prisma),
-  ]);
+  const cacheKey = `prestige:${year ?? 'live'}`;
 
-  const payload: SeriesPrestigeResponse = {
-    year: year ?? null,
-    totalSeries: prestige.totalSeries,
-    overlapGroups: prestige.overlapGroups,
-    historyYears: prestige.historyYears,
-    historyFromYear: prestige.historyFromYear,
-    historyToYear: prestige.historyToYear,
-    source: prestige.source,
-    entries: prestige.entries.map((entry) => ({
-      ...entry,
-      logoUrl: seriesLogoFromMap(logoBySlug, entry.slug),
-    })),
-  };
+  const payload = await getOrSetCached(cacheKey, async () => {
+    const [prestige, logoBySlug] = await Promise.all([
+      computePrestigeRanking(prisma, year ?? undefined),
+      loadSeriesLogoMap(prisma),
+    ]);
+
+    const body: SeriesPrestigeResponse = {
+      year: year ?? null,
+      totalSeries: prestige.totalSeries,
+      overlapGroups: prestige.overlapGroups,
+      historyYears: prestige.historyYears,
+      historyFromYear: prestige.historyFromYear,
+      historyToYear: prestige.historyToYear,
+      source: prestige.source,
+      entries: prestige.entries.map((entry) => ({
+        ...entry,
+        logoUrl: seriesLogoFromMap(logoBySlug, entry.slug),
+      })),
+    };
+    return body;
+  });
 
   res.json(payload);
 });
@@ -70,6 +76,8 @@ publicRouter.post('/series/prestige/recalculate', async (req, res) => {
     persistPrestigeRanking(prisma, year),
     loadSeriesLogoMap(prisma),
   ]);
+
+  invalidateResponseCache();
 
   const payload: SeriesPrestigeResponse = {
     year,
@@ -500,6 +508,91 @@ publicRouter.get('/pilots', async (req, res) => {
   const pageSize = parsePageSize(req.query.pageSize, PILOTS_PAGE_SIZE_DEFAULT);
   const searchQuery = parseSearchQuery(req.query.q);
   const seriesSlug = parseSeriesSlug(req.query.series);
+
+  const base = await getOrSetCached(`pilots:base:${year}`, () => buildPilotsBaseList(year));
+
+  let listed = base.listed;
+  if (searchQuery) {
+    listed = listed.filter((entry) => pilotMatchesSearch(entry, searchQuery));
+  }
+
+  if (seriesSlug && base.seriesFilters.some((series) => series.slug === seriesSlug)) {
+    listed = listed.filter((entry) =>
+      entry.seriesParticipations.some((participation) => participation.slug === seriesSlug),
+    );
+  }
+
+  const total = listed.length;
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
+  const page = Math.min(parsePage(req.query.page, 1), pageCount);
+  const pagePilots = listed.slice((page - 1) * pageSize, page * pageSize);
+
+  const rankedIdsOnPage = pagePilots
+    .filter((entry) => entry.rank != null)
+    .map((entry) => base.pilotIdBySlug[entry.pilot.slug])
+    .filter((id): id is string => id != null);
+
+  const statsByPilotSlug = new Map<string, ReturnType<typeof computePilotStats>>();
+  if (rankedIdsOnPage.length > 0) {
+    const rankedPilotResults = await prisma.pilot.findMany({
+      where: { id: { in: rankedIdsOnPage } },
+      include: {
+        results: {
+          include: {
+            event: {
+              include: {
+                season: { include: { series: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+    for (const pilot of rankedPilotResults) {
+      statsByPilotSlug.set(pilot.slug, computePilotStats(toStatsInput(pilot.results)));
+    }
+  }
+
+  const pilots: PilotListEntry[] = pagePilots.map((entry) => {
+    if (entry.rank == null) return entry;
+    const stats = statsByPilotSlug.get(entry.pilot.slug);
+    if (!stats) return entry;
+    return {
+      ...entry,
+      pilot: {
+        ...entry.pilot,
+        stats,
+      },
+    };
+  });
+
+  const payload: PilotsListResponse = {
+    year,
+    pilotCount: base.pilotCount,
+    seriesCount: base.seriesCount,
+    rankedCount: base.rankedCount,
+    seriesFilters: base.seriesFilters,
+    page,
+    pageSize,
+    total,
+    pageCount,
+    pilots,
+  };
+
+  res.json(payload);
+});
+
+interface PilotsBaseList {
+  pilotCount: number;
+  seriesCount: number;
+  rankedCount: number;
+  seriesFilters: PilotsListSeriesFilter[];
+  listed: PilotListEntry[];
+  /** slug → pilot id for ranked pilots (stats lookup). */
+  pilotIdBySlug: Record<string, string>;
+}
+
+async function buildPilotsBaseList(year: number): Promise<PilotsBaseList> {
   const prestige = await computePrestigeRanking(prisma, year);
   const { inputs: p4pInputs } = await loadP4PInputs(prisma, year, prestige.hardnessBySlug);
   const p4pRows = computeP4P(p4pInputs);
@@ -548,78 +641,20 @@ publicRouter.get('/pilots', async (req, res) => {
     };
   });
 
-  const pilotCount = ranked.length + unranked.length;
-  let listed = [...ranked, ...unranked];
-  if (searchQuery) {
-    listed = listed.filter((entry) => pilotMatchesSearch(entry, searchQuery));
+  const pilotIdBySlug: Record<string, string> = {};
+  for (const row of p4pRows) {
+    pilotIdBySlug[row.pilot.slug] = row.pilot.id;
   }
 
-  if (seriesSlug && seriesFilters.some((series) => series.slug === seriesSlug)) {
-    listed = listed.filter((entry) =>
-      entry.seriesParticipations.some((participation) => participation.slug === seriesSlug),
-    );
-  }
-
-  const total = listed.length;
-  const pageCount = Math.max(1, Math.ceil(total / pageSize));
-  const page = Math.min(parsePage(req.query.page, 1), pageCount);
-  const pagePilots = listed.slice((page - 1) * pageSize, page * pageSize);
-
-  const pilotIdBySlug = new Map(p4pRows.map((row) => [row.pilot.slug, row.pilot.id]));
-  const rankedIdsOnPage = pagePilots
-    .filter((entry) => entry.rank != null)
-    .map((entry) => pilotIdBySlug.get(entry.pilot.slug))
-    .filter((id): id is string => id != null);
-
-  const statsByPilotSlug = new Map<string, ReturnType<typeof computePilotStats>>();
-  if (rankedIdsOnPage.length > 0) {
-    const rankedPilotResults = await prisma.pilot.findMany({
-      where: { id: { in: rankedIdsOnPage } },
-      include: {
-        results: {
-          include: {
-            event: {
-              include: {
-                season: { include: { series: true } },
-              },
-            },
-          },
-        },
-      },
-    });
-    for (const pilot of rankedPilotResults) {
-      statsByPilotSlug.set(pilot.slug, computePilotStats(toStatsInput(pilot.results)));
-    }
-  }
-
-  const pilots: PilotListEntry[] = pagePilots.map((entry) => {
-    if (entry.rank == null) return entry;
-    const stats = statsByPilotSlug.get(entry.pilot.slug);
-    if (!stats) return entry;
-    return {
-      ...entry,
-      pilot: {
-        ...entry.pilot,
-        stats,
-      },
-    };
-  });
-
-  const payload: PilotsListResponse = {
-    year,
-    pilotCount,
+  return {
+    pilotCount: ranked.length + unranked.length,
     seriesCount: p4pInputs.length,
     rankedCount: ranked.length,
     seriesFilters,
-    page,
-    pageSize,
-    total,
-    pageCount,
-    pilots,
+    listed: [...ranked, ...unranked],
+    pilotIdBySlug,
   };
-
-  res.json(payload);
-});
+}
 
 publicRouter.get('/pilots/:slug', async (req, res) => {
   const requestedSlug = String(req.params.slug);

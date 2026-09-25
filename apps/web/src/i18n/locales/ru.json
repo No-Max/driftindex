@@ -1,6 +1,29 @@
 {
   "brand": "Drift Index",
   "tagline": "Турнирные таблицы и статистика дрифта",
+  "seo": {
+    "siteName": "Drift Index",
+    "default": {
+      "title": "Drift Index",
+      "description": "Мировые турнирные таблицы, чемпионы и рейтинг Drift Index: Formula Drift, D1GP, RDS, Drift Masters и другие серии."
+    },
+    "home": {
+      "title": "Drift Index — мировой рейтинг дрифта",
+      "description": "Сравнивайте Formula Drift, D1GP, RDS, Drift Masters и другие серии. Standings, чемпионы и глобальный рейтинг Drift Index."
+    },
+    "pilots": {
+      "title": "Пилоты — Drift Index",
+      "description": "Пилоты дрифта, P4P-рейтинг и статистика по главным чемпионатам."
+    },
+    "series": {
+      "title": "Серии — Drift Index",
+      "description": "Prestige, сложность и таблицы Formula Drift, D1GP, RDS, Drift Masters и других серий."
+    },
+    "tracks": {
+      "title": "Трассы — Drift Index",
+      "description": "Трассы главных серий дрифта — площадки, этапы и результаты."
+    }
+  },
   "nav": {
     "home": "Главная",
     "pilots": "Пилоты",

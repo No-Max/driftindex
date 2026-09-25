@@ -4,9 +4,11 @@ import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { fetchSeriesPrestige } from '../api/client';
 import SeriesLogo from '../components/SeriesLogo.vue';
+import { useLocalePath } from '../composables/useLocalePath';
 import { formatPilotName } from '../lib/formatPilotName';
 
 const { t } = useI18n();
+const { localePath } = useLocalePath();
 
 const prestige = ref<SeriesPrestigeResponse | null>(null);
 const loading = ref(true);
@@ -166,7 +168,7 @@ const prestigeColumnKeys = ['rank', 'series', 'hardness', 'samples'] as const;
                 <tr>
                   <td class="rank">{{ entry.effectiveOrder }}</td>
                   <td>
-                    <RouterLink :to="`/series/${entry.slug}`" class="series-cell-link">
+                    <RouterLink :to="localePath(`/series/${entry.slug}`)" class="series-cell-link">
                       <div class="series-cell">
                         <SeriesLogo
                           :slug="entry.slug"
@@ -202,7 +204,7 @@ const prestigeColumnKeys = ['rank', 'series', 'hardness', 'samples'] as const;
                     <p class="contrib-title">{{ t('seriesPage.overlapExamples') }}</p>
                     <ul class="contrib-list">
                       <li v-for="group in groupContributions(entry.contributions)" :key="group.pilotSlug" class="contrib-group">
-                        <RouterLink :to="`/pilots/${group.pilotSlug}`" class="pilot-link">
+                        <RouterLink :to="localePath(`/pilots/${group.pilotSlug}`)" class="pilot-link">
                           {{ contributionPilotName(group) }}
                         </RouterLink>
                         <ul class="contrib-sublist">

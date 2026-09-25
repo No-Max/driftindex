@@ -4,9 +4,11 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import { fetchTrack } from '../api/client';
+import { useLocalePath } from '../composables/useLocalePath';
 
 const route = useRoute();
 const { t, locale } = useI18n();
+const { localePath } = useLocalePath();
 
 const track = ref<TrackProfileResponse | null>(null);
 const loading = ref(true);
@@ -57,7 +59,7 @@ function formatDate(iso: string | null): string {
           <span v-else>{{ t('tracks.noPhoto') }}</span>
         </div>
         <div class="hero__body">
-          <RouterLink to="/tracks" class="back-link">← {{ t('tracks.back') }}</RouterLink>
+          <RouterLink :to="localePath('/tracks')" class="back-link">← {{ t('tracks.back') }}</RouterLink>
           <p v-if="locationLabel()" class="muted">{{ locationLabel() }}</p>
           <h1 class="page-title">{{ track.name }}</h1>
           <p class="page-subtitle">
@@ -84,7 +86,7 @@ function formatDate(iso: string | null): string {
                 <td>{{ event.seriesShortName ?? event.seriesName }} {{ event.seasonYear }}</td>
                 <td>
                   <RouterLink
-                    :to="event.status === 'FINISHED' ? event.eventPath : event.standingsPath"
+                    :to="event.status === 'FINISHED' ? localePath(event.eventPath) : localePath(event.standingsPath)"
                     class="event-link"
                   >
                     {{ event.eventName }}

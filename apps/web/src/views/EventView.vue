@@ -5,11 +5,13 @@ import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import { fetchSeasonEvent } from '../api/client';
 import SeriesLogo from '../components/SeriesLogo.vue';
+import { useLocalePath } from '../composables/useLocalePath';
 import { formatPilotName } from '../lib/formatPilotName';
 import { formatQualCell } from '../lib/formatQualCell';
 
 const route = useRoute();
 const { t, locale } = useI18n();
+const { localePath } = useLocalePath();
 
 const data = ref<SeasonEventResponse | null>(null);
 const loading = ref(true);
@@ -108,7 +110,7 @@ function formatTandemWins(row: SeasonEventResponse['results'][0]) {
             size="xl"
           />
           <div>
-            <RouterLink :to="data.event.standingsPath" class="back-link">
+            <RouterLink :to="localePath(data.event.standingsPath)" class="back-link">
               ← {{ t('eventDetail.backToStandings') }}
             </RouterLink>
             <h1 class="page-title">{{ data.event.name }}</h1>
@@ -121,7 +123,7 @@ function formatTandemWins(row: SeasonEventResponse['results'][0]) {
               <span v-if="data.event.track" class="event-meta__sep">·</span>
               <RouterLink
                 v-if="data.event.track"
-                :to="`/tracks/${data.event.track.slug}`"
+                :to="localePath(`/tracks/${data.event.track.slug}`)"
                 class="track-link"
               >
                 {{ trackLabel(data.event.track) }}
@@ -171,7 +173,7 @@ function formatTandemWins(row: SeasonEventResponse['results'][0]) {
           <tbody>
             <tr v-for="row in data.results" :key="row.pilotSlug">
               <td>
-                <RouterLink class="pilot-link" :to="`/pilots/${row.pilotSlug}`">
+                <RouterLink class="pilot-link" :to="localePath(`/pilots/${row.pilotSlug}`)">
                   <span v-if="row.number" class="muted">#{{ row.number }} · </span>
                   {{ pilotName(row) }}
                 </RouterLink>

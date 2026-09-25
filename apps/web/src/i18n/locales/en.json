@@ -1,6 +1,29 @@
 {
   "brand": "Drift Index",
   "tagline": "Drift standings, stats, and rankings",
+  "seo": {
+    "siteName": "Drift Index",
+    "default": {
+      "title": "Drift Index",
+      "description": "Global drift standings, champions, and Drift Index rankings across Formula Drift, D1GP, RDS, Drift Masters, and more."
+    },
+    "home": {
+      "title": "Drift Index — Global drift rankings",
+      "description": "Compare Formula Drift, D1GP, RDS, Drift Masters and more. Live standings, champions, and a global Drift Index ranking."
+    },
+    "pilots": {
+      "title": "Pilots — Drift Index",
+      "description": "Browse drift pilots, P4P rankings, and career stats across major championships."
+    },
+    "series": {
+      "title": "Series — Drift Index",
+      "description": "Championship prestige, hardness, and standings for Formula Drift, D1GP, RDS, Drift Masters, and more."
+    },
+    "tracks": {
+      "title": "Tracks — Drift Index",
+      "description": "Drift tracks used in major series — venues, events, and results."
+    }
+  },
   "nav": {
     "home": "Home",
     "pilots": "Pilots",

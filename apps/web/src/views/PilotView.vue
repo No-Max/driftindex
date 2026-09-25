@@ -8,12 +8,14 @@ import { fetchPilot } from '../api/client';
 import PilotAvatar from '../components/PilotAvatar.vue';
 import PilotPhotoSlider from '../components/PilotPhotoSlider.vue';
 import PilotStatsGrid from '../components/PilotStatsGrid.vue';
+import { useLocalePath } from '../composables/useLocalePath';
 import { formatPilotName } from '../lib/formatPilotName';
 import { formatQualCell } from '../lib/formatQualCell';
 
 const route = useRoute();
 const router = useRouter();
 const { t, locale } = useI18n();
+const { localePath } = useLocalePath();
 
 const pilot = ref<PilotProfileResponse | null>(null);
 const loading = ref(true);
@@ -38,7 +40,10 @@ async function load() {
     const profile = await fetchPilot(slug.value);
     pilot.value = profile;
     if (profile.slug && profile.slug !== slug.value) {
-      await router.replace({ name: 'pilot', params: { slug: profile.slug } });
+      await router.replace({
+        name: 'pilot',
+        params: { locale: route.params.locale, slug: profile.slug },
+      });
     }
   } catch {
     error.value = true;
@@ -104,7 +109,7 @@ function formatQual(result: PilotProfileResponse['results'][0]) {
           <tbody>
             <tr v-for="(result, index) in sortedResults" :key="index">
               <td>
-                <RouterLink :to="`/series/${result.seriesSlug}/${result.seasonYear}`">
+                <RouterLink :to="localePath(`/series/${result.seriesSlug}/${result.seasonYear}`)">
                   {{ seriesName(result) }} {{ result.seasonYear }}
                 </RouterLink>
               </td>
@@ -114,7 +119,7 @@ function formatQual(result: PilotProfileResponse['results'][0]) {
                 <RouterLink
                   v-if="result.track"
                   class="track-link"
-                  :to="`/tracks/${result.track.slug}`"
+                  :to="localePath(`/tracks/${result.track.slug}`)"
                 >
                   {{ result.track.name }}
                 </RouterLink>

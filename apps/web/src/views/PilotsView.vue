@@ -10,10 +10,12 @@ import { useI18n } from 'vue-i18n';
 import { fetchPilots } from '../api/client';
 import PilotAvatar from '../components/PilotAvatar.vue';
 import SeriesLogo from '../components/SeriesLogo.vue';
+import { useLocalePath } from '../composables/useLocalePath';
 import { formatAvgPlaceRange } from '../lib/formatAvgPlace';
 import { formatPilotName } from '../lib/formatPilotName';
 
 const { t } = useI18n();
+const { localePath } = useLocalePath();
 
 const PAGE_SIZE = 50;
 
@@ -127,7 +129,7 @@ function seriesMeta(series: PilotListSeriesParticipation) {
           class="pilots-list__item"
           :class="{ 'pilots-list__item--unranked': entry.rank == null }"
         >
-          <RouterLink :to="`/pilots/${entry.pilot.slug}`" class="pilots-list__link">
+          <RouterLink :to="localePath(`/pilots/${entry.pilot.slug}`)" class="pilots-list__link">
             <PilotAvatar :pilot="entry.pilot" size="md" />
             <div class="pilots-list__body">
               <p class="pilots-list__name">

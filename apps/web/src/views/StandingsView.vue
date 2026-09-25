@@ -5,11 +5,13 @@ import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import { fetchStandings } from '../api/client';
 import SeriesLogo from '../components/SeriesLogo.vue';
+import { useLocalePath } from '../composables/useLocalePath';
 import { formatPilotName } from '../lib/formatPilotName';
 import { formatQualCell } from '../lib/formatQualCell';
 
 const route = useRoute();
 const { t, locale } = useI18n();
+const { localePath } = useLocalePath();
 
 const data = ref<SeasonStandingsResponse | null>(null);
 const loading = ref(true);
@@ -92,7 +94,7 @@ function isEventClickable(event: SeasonStandingsResponse['events'][0]) {
             size="xl"
           />
           <div>
-          <RouterLink :to="`/series/${slug}`" class="back-link">← {{ t('seriesDetail.backToSeries') }}</RouterLink>
+          <RouterLink :to="localePath(`/series/${slug}`)" class="back-link">← {{ t('seriesDetail.backToSeries') }}</RouterLink>
           <h1 class="page-title">{{ seriesTitle }}</h1>
           <p class="page-subtitle">
             {{ data.season.year }} ·
@@ -123,7 +125,7 @@ function isEventClickable(event: SeasonStandingsResponse['events'][0]) {
               <th v-for="(event, index) in data.events" :key="event.slug" class="round-col">
                 <RouterLink
                   v-if="isEventClickable(event)"
-                  :to="event.eventPath"
+                  :to="localePath(event.eventPath)"
                   class="round-link"
                 >
                   {{ eventLabel(index) }}
@@ -137,7 +139,7 @@ function isEventClickable(event: SeasonStandingsResponse['events'][0]) {
             <tr v-for="row in data.standings" :key="row.pilotSlug">
               <td class="rank">{{ row.rank }}</td>
               <td>
-                <RouterLink class="pilot-link" :to="`/pilots/${row.pilotSlug}`">
+                <RouterLink class="pilot-link" :to="localePath(`/pilots/${row.pilotSlug}`)">
                   <span v-if="row.number" class="muted">#{{ row.number }} · </span>
                   {{ pilotName(row) }}
                 </RouterLink>
@@ -145,7 +147,7 @@ function isEventClickable(event: SeasonStandingsResponse['events'][0]) {
               <td v-for="(points, index) in row.eventPoints" :key="index" class="event-cell">
                 <RouterLink
                   v-if="isEventClickable(data.events[index])"
-                  :to="data.events[index].eventPath"
+                  :to="localePath(data.events[index].eventPath)"
                   class="event-cell-link"
                 >
                   <span class="event-cell__points">{{ points ?? '—' }}</span>
@@ -177,7 +179,7 @@ function isEventClickable(event: SeasonStandingsResponse['events'][0]) {
                 <th v-for="(event, index) in data.events" :key="`team-${event.slug}`" class="round-col">
                   <RouterLink
                     v-if="isEventClickable(event)"
-                    :to="event.eventPath"
+                    :to="localePath(event.eventPath)"
                     class="round-link"
                   >
                     {{ eventLabel(index) }}

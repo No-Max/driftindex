@@ -4,6 +4,7 @@ import { computed } from 'vue';
 import { RouterLink } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useCardSlider } from '../../composables/useCardSlider';
+import { useLocalePath } from '../../composables/useLocalePath';
 import SeriesLogo from '../SeriesLogo.vue';
 
 const props = defineProps<{
@@ -12,6 +13,7 @@ const props = defineProps<{
 }>();
 
 const { locale, t } = useI18n();
+const { localePath } = useLocalePath();
 
 const WINDOW_RADIUS = 4;
 
@@ -175,7 +177,7 @@ function isCurrentMonth(monthIndex: number) {
               <li v-for="event in month.events" :key="`${event.seriesSlug}-${event.eventSlug}`">
                 <component
                   :is="isEventClickable(event.status) ? RouterLink : 'div'"
-                  :to="isEventClickable(event.status) ? event.standingsPath : undefined"
+                  :to="isEventClickable(event.status) ? localePath(event.standingsPath) : undefined"
                   class="event-row"
                   :class="{ 'event-row--static': !isEventClickable(event.status) }"
                   @click="isEventClickable(event.status) && onLinkClick($event)"
@@ -198,7 +200,7 @@ function isCurrentMonth(monthIndex: number) {
                         <RouterLink
                           v-if="isEventClickable(event.status)"
                           class="track-link"
-                          :to="`/tracks/${event.track.slug}`"
+                          :to="localePath(`/tracks/${event.track.slug}`)"
                           @click="onLinkClick"
                         >
                           {{ event.track.name }}
