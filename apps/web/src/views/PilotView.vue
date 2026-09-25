@@ -65,7 +65,7 @@ function eventName(result: PilotProfileResponse['results'][0]) {
 }
 
 function formatQual(result: PilotProfileResponse['results'][0]) {
-  return formatQualCell(result.qualScore100, result.qualPosition, locale.value);
+  return formatQualCell(result.qualScore100, result.qualPosition, locale.value, result.qualPoints);
 }
 </script>
 

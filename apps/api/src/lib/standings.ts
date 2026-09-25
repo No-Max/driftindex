@@ -157,6 +157,7 @@ export function computeSeasonP4PMetrics(events: SeasonEventWithResults[]): Seaso
 export interface EventQualCell {
   qualPosition: number | null;
   qualScore100: number | null;
+  qualPoints: number | null;
 }
 
 export interface ComputedStandingRow {
@@ -198,6 +199,7 @@ export function computeStandings(events: SeasonEventWithResults[]): ComputedStan
       entry.qualByEvent.set(event.id, {
         qualPosition: result.qualPosition,
         qualScore100: result.qualScore100,
+        qualPoints: result.qualPoints,
       });
       entry.results.push({
         number: result.number,
