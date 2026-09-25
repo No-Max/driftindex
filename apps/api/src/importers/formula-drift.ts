@@ -913,7 +913,8 @@ export async function fetchFormulaDriftSeason(seasonYear: number): Promise<FdSea
   const season = parseArchiveStandingsHtml(html, seasonYear);
   if (seasonYear === 2025) {
     const { enrichFormulaDrift2025FromNews } = await import('./formula-drift-2025-news.js');
-    return enrichFormulaDrift2025FromNews(season);
+    const { enrichFormulaDrift2025QualSeeds } = await import('./formula-drift-2025-brackets.js');
+    return enrichFormulaDrift2025QualSeeds(await enrichFormulaDrift2025FromNews(season));
   }
   return season;
 }

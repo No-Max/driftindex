@@ -338,7 +338,6 @@ export async function enrichFormulaDrift2025FromNews(season: FdSeasonData): Prom
         continue;
       }
       const stage = ensureStage(pilot, event);
-      stage.qualifyingPosition = row.position;
       if (stage.qualifyingPoints == null) stage.qualifyingPoints = row.points;
     }
   }
