@@ -40,6 +40,7 @@ export interface TrackSummary {
 export interface StandingQualCell {
   qualPosition: number | null;
   qualScore100: number | null;
+  qualPoints: number | null;
 }
 
 export interface StandingRow {

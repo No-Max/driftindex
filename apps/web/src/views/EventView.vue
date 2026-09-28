@@ -28,7 +28,8 @@ const sourceLabel = computed(() => {
 
 const showQual = computed(() =>
   (data.value?.results ?? []).some(
-    (row) => row.qualScore100 != null || row.qualPosition != null,
+    (row) =>
+      row.qualScore100 != null || row.qualPosition != null || row.qualPoints != null,
   ),
 );
 
@@ -63,7 +64,7 @@ function pilotName(row: SeasonEventResponse['results'][0]) {
 }
 
 function formatQual(row: SeasonEventResponse['results'][0]) {
-  return formatQualCell(row.qualScore100, row.qualPosition, locale.value);
+  return formatQualCell(row.qualScore100, row.qualPosition, locale.value, row.qualPoints);
 }
 
 function formatDate(iso: string | null): string {

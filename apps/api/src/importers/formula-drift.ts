@@ -46,6 +46,7 @@ export interface FdEvent {
   trackName: string;
   startsAt: string;
   status: 'FINISHED' | 'SCHEDULED' | 'CANCELLED';
+  country?: string | null;
 }
 
 export interface FdSeasonData {
@@ -169,9 +170,12 @@ function parseDriverName(rawName: string): { firstName: string; lastName: string
 
 function titleCase(value: string): string {
   return value
-    .toLowerCase()
     .split(/([\s-'])/)
-    .map((part) => (/^[a-z]/i.test(part) ? part.charAt(0).toUpperCase() + part.slice(1) : part))
+    .map((part) => {
+      if (/^[A-Z]{2,3}$/.test(part)) return part;
+      const lower = part.toLowerCase();
+      return /^[a-z]/i.test(part) ? lower.charAt(0).toUpperCase() + lower.slice(1) : part;
+    })
     .join('');
 }
 
@@ -625,7 +629,26 @@ export function parseArchiveStandingsHtml(html: string, seasonYear: number): FdS
       const rawValue = cells[cellIndex] ?? '';
       cellIndex += 1;
 
-      if (column.kind === 'seed') continue;
+      if (column.kind === 'seed') {
+        const seedPoints = parseIntCell(rawValue);
+        if (seedPoints == null) continue;
+        const event = eventRecords.find((item) => item.roundNumber === column.roundNumber);
+        if (!event) continue;
+        const stage =
+          stageByRound.get(column.roundNumber) ??
+          ({
+            eventSlug: event.slug,
+            roundNumber: event.roundNumber,
+            qualifyingPosition: null,
+            qualifyingPoints: null,
+            qualScore100: null,
+            tandemPosition: null,
+            points: 0,
+          } satisfies FdStageResult);
+        stage.qualifyingPoints = seedPoints;
+        stageByRound.set(column.roundNumber, stage);
+        continue;
+      }
 
       const numericValue = parseIntCell(rawValue);
       const event = eventRecords.find((item) => item.roundNumber === column.roundNumber);
@@ -649,17 +672,24 @@ export function parseArchiveStandingsHtml(html: string, seasonYear: number): FdS
 
       if (column.kind === 'finish' && numericValue != null) {
         stage.points = numericValue;
-        stage.tandemPosition = competitionPointsToPosition(numericValue, seasonYear);
+        if (seasonYear !== 2025) {
+          stage.tandemPosition = competitionPointsToPosition(numericValue, seasonYear);
+        }
       }
 
       stageByRound.set(column.roundNumber, stage);
     }
 
     for (const stage of stageByRound.values()) {
-      if (stage.points <= 0 && stage.qualifyingPosition == null && stage.tandemPosition == null) {
+      if (
+        stage.points <= 0 &&
+        (stage.qualifyingPoints ?? 0) <= 0 &&
+        stage.qualifyingPosition == null &&
+        stage.tandemPosition == null
+      ) {
         continue;
       }
-      if (stage.tandemPosition == null && stage.qualifyingPosition != null) {
+      if (seasonYear < 2025 && stage.tandemPosition == null && stage.qualifyingPosition != null) {
         stage.tandemPosition = stage.qualifyingPosition;
       }
       pilot.stages.push(stage);
@@ -743,7 +773,11 @@ export async function probeFormulaDriftArchiveSeasons(
 
 export async function listFormulaDriftSeasons(): Promise<number[]> {
   const availability = await probeFormulaDriftArchiveSeasons();
-  return availability.filter((season) => season.importable).map((season) => season.year);
+  const years = availability.filter((season) => season.importable).map((season) => season.year);
+  for (const year of [2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017]) {
+    if (!years.includes(year)) years.push(year);
+  }
+  return years.sort((a, b) => b - a);
 }
 
 async function fetchFormulaDriftSeasonFromApi(seasonYear: number, standings: FdStandingsDoc): Promise<FdSeasonData> {
@@ -871,15 +905,40 @@ async function fetchFormulaDriftSeasonFromApi(seasonYear: number, standings: FdS
 }
 
 export async function fetchFormulaDriftSeason(seasonYear: number): Promise<FdSeasonData> {
-  const standings = await fetchStandings(seasonYear);
+  let standings: FdStandingsDoc | null = null;
+  try {
+    standings = await fetchStandings(seasonYear);
+  } catch {
+    standings = null;
+  }
   if (standings) {
     return fetchFormulaDriftSeasonFromApi(seasonYear, standings);
   }
 
-  const html = await fetchHtml(`${BASE}/standings/${seasonYear}/pro`);
-  if (!hasArchiveStandingsTable(html)) {
-    throw new Error(`Formula Drift PRO standings for ${seasonYear} not found`);
+  try {
+    const html = await fetchHtml(`${BASE}/standings/${seasonYear}/pro`);
+    if (hasArchiveStandingsTable(html)) {
+      const season = parseArchiveStandingsHtml(html, seasonYear);
+      if (seasonYear === 2025) {
+        const { enrichFormulaDrift2025FromNews } = await import('./formula-drift-2025-news.js');
+        const { enrichFormulaDrift2025QualSeeds } = await import('./formula-drift-2025-brackets.js');
+        return enrichFormulaDrift2025QualSeeds(await enrichFormulaDrift2025FromNews(season));
+      }
+      return season;
+    }
+  } catch {
+    // Official live pages 404 for pre-2018 seasons.
   }
 
-  return parseArchiveStandingsHtml(html, seasonYear);
+  if (seasonYear >= 2008 && seasonYear <= 2017) {
+    const { fetchFormulaDriftSeasonFromWikipedia } = await import('./formula-drift-wikipedia.js');
+    return fetchFormulaDriftSeasonFromWikipedia(seasonYear);
+  }
+
+  if (seasonYear === 2007) {
+    const { fetchFormulaDriftSeasonFromWayback } = await import('./formula-drift-wayback.js');
+    return fetchFormulaDriftSeasonFromWayback(seasonYear);
+  }
+
+  throw new Error(`Formula Drift PRO standings for ${seasonYear} not found`);
 }

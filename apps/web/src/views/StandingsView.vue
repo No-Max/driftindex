@@ -63,12 +63,16 @@ function formatQualCellForRow(
 ) {
   const qual = row.eventQual[index];
   if (!qual) return '—';
-  return formatQualCell(qual.qualScore100, qual.qualPosition, locale.value);
+  return formatQualCell(qual.qualScore100, qual.qualPosition, locale.value, qual.qualPoints);
 }
 
 function hasAnyQualData(standings: SeasonStandingsResponse['standings']) {
   return standings.some((row) =>
-    row.eventQual.some((qual) => qual != null && (qual.qualScore100 != null || qual.qualPosition != null)),
+    row.eventQual.some(
+      (qual) =>
+        qual != null &&
+        (qual.qualScore100 != null || qual.qualPosition != null || qual.qualPoints != null),
+    ),
   );
 }
 
