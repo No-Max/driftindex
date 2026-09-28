@@ -1,4 +1,5 @@
 import * as cheerio from 'cheerio';
+import type { Element } from 'domhandler';
 import { transliterate } from '../lib/transliterate.js';
 import type { FdEvent, FdPilot, FdSeasonData, FdStageResult } from './formula-drift.js';
 
@@ -241,7 +242,7 @@ function isEventCode(header: string): boolean {
   return /^[A-Z]{2,4}$/.test(normalized);
 }
 
-function tableMatrix($: cheerio.CheerioAPI, table: cheerio.Element): string[][] {
+function tableMatrix($: cheerio.CheerioAPI, table: Element): string[][] {
   const rows: string[][] = [];
   $(table)
     .find('tr')
