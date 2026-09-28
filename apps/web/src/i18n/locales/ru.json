@@ -52,6 +52,7 @@
     "p4pOtherSeries": "Также в",
     "p4pColSeries": "Серия",
     "p4pColRound": "Этап",
+    "p4pPodiumTrophies": "Подиумы на этапах: {gold} первых, {silver} вторых, {bronze} третьих. Победы в квалификации: {qual}",
     "noEvents": "Нет этапов",
     "pointsShort": "очк.",
     "seriesSince": "с {year}",
@@ -81,6 +82,7 @@
     },
     "eventStatus": {
       "scheduled": "Скоро",
+      "waiting_results": "Ждём результаты",
       "finished": "Сыгран",
       "cancelled": "Отменён"
     },
@@ -168,6 +170,7 @@
     "back": "Все серии",
     "backToSeries": "Обзор серии",
     "seasonCount": "Сезонов в базе: {count}",
+    "seasonTabs": "Сезоны по годам",
     "noSeasons": "Нет данных по сезонам",
     "noEvents": "В этом сезоне нет этапов",
     "openStandings": "Таблица сезона",

@@ -149,6 +149,7 @@ describe('parseWikipediaSeasonHtml', () => {
 
     const mcquarrie = season.pilots.find((pilot) => pilot.slug === 'tyler-mcquarrie');
     assert.equal(mcquarrie?.stages[0]?.points, 49);
+    assert.equal(mcquarrie?.stages[0]?.tandemPosition, null);
     assert.equal(mcquarrie?.stages[1]?.points, 0);
   });
 
@@ -174,6 +175,7 @@ describe('parseWikipediaSeasonHtml', () => {
     assert.equal(season.events[2]?.name, 'Uncharted Territory');
     assert.equal(season.events[2]?.trackName, 'Orlando Speed World');
     assert.equal(season.events[4]?.trackName, 'Evergreen Speedway');
+    // Winner column marks Aasbø at most championship rounds (not every code resolves to a name match)
     assert.equal(season.pilots[0]?.stages.filter((stage) => stage.tandemPosition === 1).length, 4);
   });
 });

@@ -1,4 +1,5 @@
 import type { HomeResponse } from '@drift-index/shared';
+import { resolvePublicEventStatus } from '@drift-index/shared';
 import { Router } from 'express';
 import { computeP4P } from '../lib/p4p.js';
 import { loadP4PInputs } from '../lib/p4pData.js';
@@ -242,7 +243,7 @@ async function buildHomePayload(year: number): Promise<HomeResponse> {
       name: event.name,
       track: toTrackSummary(event.track),
       startsAt: event.startsAt!.toISOString(),
-      status: event.status,
+      status: resolvePublicEventStatus(event.status, event.startsAt),
       standingsPath: `/series/${event.season.series.slug}/${event.season.year}`,
     })),
     poundForPound,

@@ -271,6 +271,11 @@ function formatTandemWins(row: SeasonEventResponse['results'][0]) {
   color: var(--verified);
 }
 
+.status-badge--waiting_results {
+  background: rgba(234, 179, 8, 0.14);
+  color: #eab308;
+}
+
 .status-badge--cancelled {
   background: rgba(255, 255, 255, 0.06);
   color: var(--muted);

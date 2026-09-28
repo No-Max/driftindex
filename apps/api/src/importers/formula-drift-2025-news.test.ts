@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 import {
   finishRowsFromTable,
   nameKey,
+  parseProPodiumFromNewsText,
   roundNumberFromNewsTitle,
 } from './formula-drift-2025-news.js';
 
@@ -46,6 +47,26 @@ describe('finishRowsFromTable', () => {
     assert.deepEqual(finishRowsFromTable(rows), [
       { position: 1, name: 'James Deane' },
       { position: 2, name: 'Fredric Aasbo' },
+    ]);
+  });
+});
+
+describe('parseProPodiumFromNewsText', () => {
+  it('reads modern PRO competition blocks and legacy event results', () => {
+    const modern =
+      'RESULTS FROM FD PRO COMPETITION 1. James Deane (Ireland) – Ford 2. Simen Olsen (Norway) – Nissan 3. Aurimas Bakchis (Lithuania) – Nissan NOTES';
+    assert.deepEqual(parseProPodiumFromNewsText(modern).map((row) => row.name), [
+      'James Deane',
+      'Simen Olsen',
+      'Aurimas Bakchis',
+    ]);
+
+    const legacy =
+      'Round 7: Title Fight Event Results 1. Foust, Tanner Rockstar 1st Place 2. Gittin, Vaughn Monster 2nd Place 3. Takatori, Michihiro Nissan 3rd Place';
+    assert.deepEqual(parseProPodiumFromNewsText(legacy).map((row) => row.name), [
+      'Tanner Foust',
+      'Vaughn Gittin',
+      'Michihiro Takatori',
     ]);
   });
 });

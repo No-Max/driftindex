@@ -14,8 +14,14 @@ const { localePath } = useLocalePath();
 const data = ref<SeriesProfileResponse | null>(null);
 const loading = ref(true);
 const error = ref(false);
+const selectedYear = ref<number | null>(null);
 
 const slug = computed(() => String(route.params.slug));
+
+const selectedSeason = computed(() => {
+  if (!data.value || selectedYear.value == null) return null;
+  return data.value.seasons.find((s) => s.year === selectedYear.value) ?? null;
+});
 
 async function load() {
   loading.value = true;
@@ -32,6 +38,21 @@ async function load() {
 
 onMounted(load);
 watch(() => route.fullPath, load);
+
+watch(
+  () => data.value?.seasons,
+  (seasons) => {
+    if (!seasons?.length) {
+      selectedYear.value = null;
+      return;
+    }
+    const stillVisible = seasons.some((s) => s.year === selectedYear.value);
+    if (!stillVisible) {
+      selectedYear.value = seasons[0].year;
+    }
+  },
+  { immediate: true },
+);
 
 function seasonName(season: SeriesProfileResponse['seasons'][0]) {
   const localized = locale.value === 'ru' ? season.nameRu : season.nameEn;
@@ -94,80 +115,110 @@ function isEventClickable(status: SeriesProfileResponse['seasons'][0]['events'][
 
       <p v-if="data.seasons.length === 0" class="muted">{{ t('seriesDetail.noSeasons') }}</p>
 
-      <section v-for="season in data.seasons" :key="season.year" class="season-block">
-        <div class="season-head">
-          <div>
-            <h2 class="section-title">{{ seasonName(season) }}</h2>
-            <p class="muted season-meta">
-              {{ t('standings.eventsProgress', { finished: season.finishedEventCount, total: season.eventCount }) }}
-            </p>
-          </div>
-          <RouterLink :to="localePath(season.standingsPath)" class="standings-link">
-            {{ t('seriesDetail.openStandings') }} →
-          </RouterLink>
-        </div>
-
-        <p v-if="season.source" class="source-meta muted">
-          {{ t('standings.source') }}:
-          <a
-            v-if="season.source.url"
-            :href="season.source.url"
-            target="_blank"
-            rel="noopener noreferrer"
+      <template v-else>
+        <div class="season-tabs" role="tablist" :aria-label="t('seriesDetail.seasonTabs')">
+          <button
+            v-for="season in data.seasons"
+            :id="`season-tab-${season.year}`"
+            :key="season.year"
+            type="button"
+            role="tab"
+            class="season-tab"
+            :class="{ 'season-tab--active': season.year === selectedYear }"
+            :aria-selected="season.year === selectedYear"
+            :aria-controls="`season-panel-${season.year}`"
+            @click="selectedYear = season.year"
           >
-            {{ sourceLabel(season) }}
-          </a>
-          <span v-else>{{ sourceLabel(season) }}</span>
-        </p>
-
-        <div v-if="season.events.length > 0" class="card table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>{{ t('tracks.round') }}</th>
-                <th>{{ t('seriesDetail.date') }}</th>
-                <th>{{ t('pilot.event') }}</th>
-                <th>{{ t('seriesDetail.track') }}</th>
-                <th>{{ t('seriesDetail.status') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="event in season.events" :key="event.slug">
-                <td class="muted">{{ t('standings.round', { n: event.roundNumber }) }}</td>
-                <td class="muted">{{ formatDate(event.startsAt) }}</td>
-                <td>
-                  <RouterLink
-                    v-if="isEventClickable(event.status)"
-                    :to="localePath(event.eventPath)"
-                    class="event-link"
-                  >
-                    {{ event.name }}
-                  </RouterLink>
-                  <span v-else class="event-name">{{ event.name }}</span>
-                </td>
-                <td>
-                  <RouterLink
-                    v-if="event.track && isEventClickable(event.status)"
-                    :to="localePath(`/tracks/${event.track.slug}`)"
-                    class="track-link"
-                  >
-                    {{ trackLabel(event.track) }}
-                  </RouterLink>
-                  <span v-else-if="event.track" class="muted">{{ trackLabel(event.track) }}</span>
-                  <span v-else class="muted">—</span>
-                </td>
-                <td>
-                  <span class="status-badge" :class="`status-badge--${event.status.toLowerCase()}`">
-                    {{ eventStatusLabel(event.status) }}
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+            {{ season.year }}
+          </button>
         </div>
 
-        <p v-else class="muted">{{ t('seriesDetail.noEvents') }}</p>
-      </section>
+        <section
+          v-if="selectedSeason"
+          :id="`season-panel-${selectedSeason.year}`"
+          class="season-block"
+          role="tabpanel"
+          :aria-labelledby="`season-tab-${selectedSeason.year}`"
+        >
+          <div class="season-head">
+            <div>
+              <h2 class="section-title">{{ seasonName(selectedSeason) }}</h2>
+              <p class="muted season-meta">
+                {{
+                  t('standings.eventsProgress', {
+                    finished: selectedSeason.finishedEventCount,
+                    total: selectedSeason.eventCount,
+                  })
+                }}
+              </p>
+            </div>
+            <RouterLink :to="localePath(selectedSeason.standingsPath)" class="standings-link">
+              {{ t('seriesDetail.openStandings') }} →
+            </RouterLink>
+          </div>
+
+          <p v-if="selectedSeason.source" class="source-meta muted">
+            {{ t('standings.source') }}:
+            <a
+              v-if="selectedSeason.source.url"
+              :href="selectedSeason.source.url"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {{ sourceLabel(selectedSeason) }}
+            </a>
+            <span v-else>{{ sourceLabel(selectedSeason) }}</span>
+          </p>
+
+          <div v-if="selectedSeason.events.length > 0" class="card table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>{{ t('tracks.round') }}</th>
+                  <th>{{ t('seriesDetail.date') }}</th>
+                  <th>{{ t('pilot.event') }}</th>
+                  <th>{{ t('seriesDetail.track') }}</th>
+                  <th>{{ t('seriesDetail.status') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="event in selectedSeason.events" :key="event.slug">
+                  <td class="muted">{{ t('standings.round', { n: event.roundNumber }) }}</td>
+                  <td class="muted">{{ formatDate(event.startsAt) }}</td>
+                  <td>
+                    <RouterLink
+                      v-if="isEventClickable(event.status)"
+                      :to="localePath(event.eventPath)"
+                      class="event-link"
+                    >
+                      {{ event.name }}
+                    </RouterLink>
+                    <span v-else class="event-name">{{ event.name }}</span>
+                  </td>
+                  <td>
+                    <RouterLink
+                      v-if="event.track && isEventClickable(event.status)"
+                      :to="localePath(`/tracks/${event.track.slug}`)"
+                      class="track-link"
+                    >
+                      {{ trackLabel(event.track) }}
+                    </RouterLink>
+                    <span v-else-if="event.track" class="muted">{{ trackLabel(event.track) }}</span>
+                    <span v-else class="muted">—</span>
+                  </td>
+                  <td>
+                    <span class="status-badge" :class="`status-badge--${event.status.toLowerCase()}`">
+                      {{ eventStatusLabel(event.status) }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p v-else class="muted">{{ t('seriesDetail.noEvents') }}</p>
+        </section>
+      </template>
     </template>
   </section>
 </template>
@@ -197,6 +248,39 @@ function isEventClickable(status: SeriesProfileResponse['seasons'][0]['events'][
 
 .back-link:hover {
   color: var(--accent);
+}
+
+.season-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.season-tab {
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font-family: Oswald, sans-serif;
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    border-color 0.15s,
+    background 0.15s;
+}
+
+.season-tab:hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+.season-tab--active {
+  color: var(--text);
+  border-color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .season-block {
@@ -276,6 +360,11 @@ function isEventClickable(status: SeriesProfileResponse['seasons'][0]['events'][
 .status-badge--scheduled {
   background: rgba(34, 197, 94, 0.12);
   color: var(--verified);
+}
+
+.status-badge--waiting_results {
+  background: rgba(234, 179, 8, 0.14);
+  color: #eab308;
 }
 
 .status-badge--cancelled {

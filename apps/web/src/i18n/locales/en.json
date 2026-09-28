@@ -52,6 +52,7 @@
     "p4pOtherSeries": "Also in",
     "p4pColSeries": "Series",
     "p4pColRound": "Round",
+    "p4pPodiumTrophies": "Event podiums: {gold} first, {silver} second, {bronze} third. Qualifying wins: {qual}",
     "noEvents": "No events",
     "pointsShort": "pts",
     "seriesSince": "since {year}",
@@ -81,6 +82,7 @@
     },
     "eventStatus": {
       "scheduled": "Upcoming",
+      "waiting_results": "Waiting results",
       "finished": "Done",
       "cancelled": "Cancelled"
     },
@@ -168,6 +170,7 @@
     "back": "All series",
     "backToSeries": "Series overview",
     "seasonCount": "{count} seasons tracked",
+    "seasonTabs": "Seasons by year",
     "noSeasons": "No season data yet",
     "noEvents": "No events in this season",
     "openStandings": "Season standings",

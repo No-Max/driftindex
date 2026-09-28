@@ -1,7 +1,12 @@
 import * as cheerio from 'cheerio';
 import type { Element } from 'domhandler';
 import { transliterate } from '../lib/transliterate.js';
-import type { FdEvent, FdPilot, FdSeasonData, FdStageResult } from './formula-drift.js';
+import {
+  type FdEvent,
+  type FdPilot,
+  type FdSeasonData,
+  type FdStageResult,
+} from './formula-drift.js';
 
 const WIKI_API = 'https://en.wikipedia.org/w/api.php';
 const WIKI_UA = 'DriftIndexBot/1.0 (https://driftindex.pro; Formula Drift archive import)';
@@ -435,6 +440,23 @@ function buildEvents(
   return { events, winners };
 }
 
+function applyWikiRoundWinners(pilots: FdPilot[], events: FdEvent[], winners: Array<string | null>): void {
+  for (let index = 0; index < events.length; index += 1) {
+    const winnerName = winners[index];
+    if (!winnerName) continue;
+    const winnerKey = wikiNameKey(winnerName);
+    const event = events[index]!;
+    for (const pilot of pilots) {
+      if (wikiNameKey(pilot.nameAlias ?? `${pilot.firstName} ${pilot.lastName}`) !== winnerKey) {
+        continue;
+      }
+      const stage = pilot.stages.find((item) => item.eventSlug === event.slug);
+      if (stage) stage.tandemPosition = 1;
+      break;
+    }
+  }
+}
+
 function buildPilots(
   drivers: WikiDriverRow[],
   events: FdEvent[],
@@ -452,14 +474,13 @@ function buildPilots(
       if (score == null) return;
       const event = events[index];
       if (!event) return;
-      const winner = winners[index];
       stages.push({
         eventSlug: event.slug,
         roundNumber: event.roundNumber,
         qualifyingPosition: null,
         qualifyingPoints: null,
         qualScore100: null,
-        tandemPosition: winner && wikiNameKey(winner) === wikiNameKey(driver.name) ? 1 : null,
+        tandemPosition: null,
         points: Math.round(score),
       });
     });
@@ -479,6 +500,7 @@ function buildPilots(
     });
   }
 
+  applyWikiRoundWinners(pilots, events, winners);
   return pilots;
 }
 

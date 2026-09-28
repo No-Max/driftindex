@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
+  assignTandemPlacesByStagePoints,
   namesFromWaybackDriverSlug,
   parseFormulaDrift2007StandingsHtml,
   parseWaybackPointsCell,
@@ -76,11 +77,44 @@ describe('parseFormulaDrift2007StandingsHtml', () => {
     assert.equal(foust.number, 34);
     assert.equal(foust.stages.reduce((sum, stage) => sum + stage.points, 0), 608);
     assert.equal(foust.stages.at(-1)?.tandemPosition, 1);
-    assert.equal(foust.stages[0]?.qualifyingPoints, 8);
+    assert.equal(foust.stages[0]?.qualifyingPoints, null);
+    assert.equal(foust.stages[0]?.qualScore100, null);
+    assert.equal(foust.stages[0]?.points, 96);
+    assert.equal(foust.stages[0]?.tandemPosition, null);
 
     const hubinette = season.pilots.find((pilot) => pilot.slug === 'samuel-hubinette');
-    assert.equal(hubinette?.stages[1]?.qualifyingPoints, 0.25);
+    assert.equal(hubinette?.stages[1]?.qualifyingPoints, null);
     assert.equal(hubinette?.stages[1]?.points, 0);
     assert.equal(hubinette?.stages[2]?.tandemPosition, 1);
+  });
+
+  it('assigns shared tandem places for tied stage points', () => {
+    const stage = (points: number) => ({
+      eventSlug: 'e1',
+      roundNumber: 1,
+      qualifyingPosition: null,
+      qualifyingPoints: null,
+      qualScore100: null,
+      tandemPosition: null as number | null,
+      points,
+    });
+    const base = {
+      firstName: 'X',
+      lastName: 'Y',
+      nameAlias: 'X Y',
+      country: null,
+      number: null,
+      photoSourceUrl: null,
+      team: null,
+    };
+    const pilots = [
+      { ...base, slug: 'a', fdDriverId: 1, stages: [stage(80)] },
+      { ...base, slug: 'b', fdDriverId: 2, stages: [stage(80)] },
+      { ...base, slug: 'c', fdDriverId: 3, stages: [stage(60)] },
+    ];
+    assignTandemPlacesByStagePoints(pilots);
+    assert.equal(pilots[0]!.stages[0]!.tandemPosition, 1);
+    assert.equal(pilots[1]!.stages[0]!.tandemPosition, 1);
+    assert.equal(pilots[2]!.stages[0]!.tandemPosition, 3);
   });
 });

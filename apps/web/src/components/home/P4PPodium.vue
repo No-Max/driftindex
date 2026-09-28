@@ -8,6 +8,7 @@ import { formatAvgPlaceRange } from '../../lib/formatAvgPlace';
 import { formatPilotName } from '../../lib/formatPilotName';
 import { formatQualCell } from '../../lib/formatQualCell';
 import PilotAvatar from '../PilotAvatar.vue';
+import PilotSeasonTrophies from '../PilotSeasonTrophies.vue';
 import PilotStatsGrid from '../PilotStatsGrid.vue';
 import SeriesLogo from '../SeriesLogo.vue';
 
@@ -82,7 +83,14 @@ function pilotPath(slug: string) {
           <RouterLink :to="pilotPath(leader.pilot.slug)" class="p4p-leader__name-link">
             <p class="p4p-leader__name">{{ formatPilotName(leader.pilot) }}</p>
           </RouterLink>
-          <p class="p4p-leader__score">{{ leader.score }} {{ t('home.p4pScore') }}</p>
+          <div class="p4p-leader__score-row">
+            <p class="p4p-leader__score">{{ leader.score }} {{ t('home.p4pScore') }}</p>
+            <PilotSeasonTrophies
+              :events="leader.seasonEvents"
+              :series-slug="leader.bestSeries.slug"
+              size="md"
+            />
+          </div>
           <div class="p4p-leader__series-block">
             <div class="p4p-leader__series-item p4p-leader__series-item--primary">
               <SeriesLogo
@@ -200,6 +208,10 @@ function pilotPath(slug: string) {
               <RouterLink :to="pilotPath(item.pilot.slug)" class="p4p-list__score">
                 {{ item.score }} {{ t('home.p4pScore') }}
               </RouterLink>
+              <PilotSeasonTrophies
+                :events="item.seasonEvents"
+                :series-slug="item.bestSeries.slug"
+              />
               <template v-if="item.pilot.stats && isFeatured(item.rank)">
                 <span>{{ item.pilot.stats.eventsCount }} {{ t('pilot.stats.eventsShort') }}</span>
                 <span v-if="item.pilot.stats.avgQualScore != null">
@@ -299,8 +311,17 @@ function pilotPath(slug: string) {
   line-height: 1.1;
 }
 
-.p4p-leader__score {
+.p4p-leader__score-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem 0.65rem;
   margin: 0.75rem 0 0;
+}
+
+.p4p-leader__score {
+  margin: 0;
   font-size: 1.35rem;
   font-weight: 700;
   color: var(--accent);
@@ -620,6 +641,10 @@ function pilotPath(slug: string) {
   .p4p-leader__info {
     flex: 1;
     min-width: 0;
+  }
+
+  .p4p-leader__score-row {
+    justify-content: flex-start;
   }
 
 }

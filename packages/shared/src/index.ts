@@ -1,4 +1,6 @@
-export type EventStatus = 'SCHEDULED' | 'FINISHED' | 'CANCELLED';
+export type { DbEventStatus, EventStatus } from './eventStatus.js';
+export { resolvePublicEventStatus } from './eventStatus.js';
+import type { EventStatus } from './eventStatus.js';
 
 export {
   compareEventResultsChronologically,

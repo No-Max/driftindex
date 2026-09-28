@@ -1,5 +1,11 @@
 import * as cheerio from 'cheerio';
-import type { FdEvent, FdPilot, FdSeasonData, FdStageResult } from './formula-drift.js';
+import {
+  applyFdTandemPositions,
+  type FdEvent,
+  type FdPilot,
+  type FdSeasonData,
+  type FdStageResult,
+} from './formula-drift.js';
 
 const WAYBACK_UA = 'DriftIndexBot/1.0 (https://driftindex.pro; Formula Drift archive import)';
 
@@ -93,7 +99,7 @@ export function namesFromWaybackDriverSlug(slug: string): { firstName: string; l
   };
 }
 
-function fdDriverIdFromSlug(driverSlug: string): number {
+export function fdDriverIdFromSlug(driverSlug: string): number {
   let hash = 0;
   for (const char of driverSlug) {
     hash = (hash * 31 + char.charCodeAt(0)) | 0;
@@ -123,10 +129,12 @@ function eventRecords(): FdEvent[] {
   }));
 }
 
+/** Rank each event by stage points (desc); tied points share place (1,2,2,4…). */
+export { assignTandemPlacesByStagePoints } from './formula-drift.js';
+
 export function parseFormulaDrift2007StandingsHtml(html: string): FdSeasonData {
   const $ = cheerio.load(html);
   const events = eventRecords();
-  const winners = new Set(FD_2007_ROUNDS.map((round) => round.winnerSlug));
   const pilots = new Map<string, FdPilot>();
 
   $('table').each((_, table) => {
@@ -158,19 +166,17 @@ export function parseFormulaDrift2007StandingsHtml(html: string): FdSeasonData {
         if (qualifyingPoints == null && competitionPoints == null) continue;
 
         const event = events[eventIndex]!;
+        // Wayback Q column is championship qualifying points (0.25–8), not a 100-scale
+        // judge score — fold into stage points only; do not expose as displayable qual.
         const combined = (qualifyingPoints ?? 0) + (competitionPoints ?? 0);
         stages.push({
           eventSlug: event.slug,
           roundNumber: event.roundNumber,
           qualifyingPosition: null,
-          qualifyingPoints,
+          qualifyingPoints: null,
           qualScore100: null,
-          tandemPosition:
-            winners.has(slug) && FD_2007_ROUNDS[eventIndex]!.winnerSlug === slug
-              ? 1
-              : competitionPoints === 100
-                ? 1
-                : null,
+          tandemPosition: null,
+          tandemFinishPoints: competitionPoints != null ? Math.round(competitionPoints) : null,
           points: Math.round(combined),
         });
       }
@@ -196,11 +202,14 @@ export function parseFormulaDrift2007StandingsHtml(html: string): FdSeasonData {
     throw new Error('Wayback 2007 Formula Drift standings table parsed empty');
   }
 
+  const pilotList = [...pilots.values()];
+  applyFdTandemPositions(pilotList, 2007, (stage) => stage.tandemFinishPoints ?? null);
+
   return {
     sourceUrl: FD_2007_WAYBACK_URL,
     seasonYear: 2007,
     events,
-    pilots: [...pilots.values()],
+    pilots: pilotList,
   };
 }
 

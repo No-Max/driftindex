@@ -44,6 +44,8 @@ export function nameKey(value: string): string {
 }
 
 export function roundNumberFromNewsTitle(title: string): number | null {
+  const roundColon = title.match(/Round\s+(\d+)\s*:/i);
+  if (roundColon) return Number.parseInt(roundColon[1]!, 10);
   const numbered = title.match(/(?:FINAL\s+)?ROUND\s+(\d+)/i);
   if (numbered) return Number.parseInt(numbered[1]!, 10);
   if (/OPENING ROUND/i.test(title)) return 1;
@@ -148,13 +150,13 @@ function venueFromLocation(location: string | null): string | null {
   return venue || null;
 }
 
-async function fetchNewsPosts(): Promise<NewsPost[]> {
+async function fetchNewsPostsForYear(seasonYear: number): Promise<NewsPost[]> {
   const posts: NewsPost[] = [];
-  for (let page = 1; page <= 5; page += 1) {
+  for (let page = 1; page <= 8; page += 1) {
     const url = new URL(NEWS_API);
     url.searchParams.set('per_page', '100');
-    url.searchParams.set('after', '2025-01-01T00:00:00');
-    url.searchParams.set('before', '2026-01-01T00:00:00');
+    url.searchParams.set('after', `${seasonYear}-01-01T00:00:00`);
+    url.searchParams.set('before', `${seasonYear}-12-31T23:59:59`);
     url.searchParams.set('page', String(page));
     const response = await fetch(url, {
       headers: { accept: 'application/json', 'user-agent': 'DriftIndexImporter/1.0' },
@@ -181,21 +183,81 @@ async function fetchNewsPosts(): Promise<NewsPost[]> {
   return posts;
 }
 
+async function fetchNewsPosts(): Promise<NewsPost[]> {
+  return fetchNewsPostsForYear(2025);
+}
+
 function isProspecOnly(title: string): boolean {
   return /PROSPEC/i.test(title) && !/PRO/i.test(title.replace(/PROSPEC/gi, ''));
 }
 
 function isProCompetitionPost(title: string): boolean {
-  return /COMPETITION RESULTS/i.test(title) && !isProspecOnly(title) && !/SUPER DRIFT/i.test(title);
+  if (isProspecOnly(title) || /SUPER DRIFT/i.test(title)) return false;
+  if (/COMPETITION RESULTS/i.test(title) && /PRO/i.test(title)) return true;
+  if (/Formula DRIFT/i.test(title) && /Round \d+:/i.test(title) && /Results/i.test(title)) {
+    return !/Qualifying/i.test(title);
+  }
+  return false;
+}
+
+export function parseProPodiumFromNewsText(rawText: string): FdNewsFinishRow[] {
+  const text = rawText.replace(/\s+/g, ' ');
+
+  const modernStart = text.search(/RESULTS FROM FD PRO COMPETITION/i);
+  if (modernStart >= 0) {
+    const slice = text.slice(modernStart, modernStart + 900);
+    const finish: FdNewsFinishRow[] = [];
+    for (const match of slice.matchAll(/([123])\.\s+([A-Za-z .'-]+?)\s+\([A-Za-z\s]+\)\s*[–—-]/g)) {
+      finish.push({ position: Number.parseInt(match[1]!, 10), name: match[2]!.trim() });
+    }
+    if (finish.length >= 1) return finish.slice(0, 3);
+  }
+
+  const legacy = text.match(
+    /Event Results\s+1\.\s+([^,]+),\s*(.+?)\s+1st Place\s+2\.\s+([^,]+),\s*(.+?)\s+2nd Place\s+3\.\s+([^,]+),\s*(.+?)\s+3rd Place/i,
+  );
+  if (legacy) {
+    const legacyName = (last: string, firstBlob: string) => {
+      const first = firstBlob.trim().split(/\s+/)[0] ?? firstBlob.trim();
+      return `${first} ${last.trim()}`;
+    };
+    return [
+      { position: 1, name: legacyName(legacy[1]!, legacy[2]!) },
+      { position: 2, name: legacyName(legacy[3]!, legacy[4]!) },
+      { position: 3, name: legacyName(legacy[5]!, legacy[6]!) },
+    ];
+  }
+
+  return [];
+}
+
+function finishFromNewsHtml(html: string): FdNewsFinishRow[] {
+  const fromTable = finishRowsFromTable(parseNewsDriverTable(html));
+  if (fromTable.length >= 3) return fromTable;
+
+  const $ = cheerio.load(html);
+  const fromText = parseProPodiumFromNewsText($('body').text());
+  if (fromText.length > fromTable.length) return fromText;
+  return fromTable;
+}
+
+function competitionPostScore(link: string, finishCount: number): number {
+  let score = finishCount;
+  if (/competition-results-from/i.test(link)) score += 100;
+  if (/wins-round|wins-final/i.test(link)) score -= 40;
+  return score;
 }
 
 function isProSeedingPost(title: string): boolean {
   return /SEEDING/i.test(title) && !isProspecOnly(title) && !/COMPETITION RESULTS/i.test(title);
 }
 
-export async function loadFormulaDrift2025News(): Promise<Map<number, FdNewsRoundMeta>> {
-  const posts = await fetchNewsPosts();
+export async function loadFormulaDriftNewsForYear(
+  seasonYear: number,
+): Promise<Map<number, FdNewsRoundMeta>> {
+  const posts = await fetchNewsPostsForYear(seasonYear);
   const rounds = new Map<number, FdNewsRoundMeta>();
+  const roundScore = new Map<number, number>();
 
   const ensure = (roundNumber: number, sourceUrl: string): FdNewsRoundMeta => {
     const existing = rounds.get(roundNumber);
@@ -218,25 +280,58 @@ export async function loadFormulaDrift2025News(): Promise<Map<number, FdNewsRoun
     if (!isProCompetitionPost(post.title)) continue;
     const roundNumber = roundNumberFromNewsTitle(post.title);
     if (!roundNumber) continue;
+    const finish = finishFromNewsHtml(post.html);
+    const score = competitionPostScore(post.link, finish.length);
+    const prevScore = roundScore.get(roundNumber) ?? -1;
+    if (score < prevScore) continue;
+
     const round = ensure(roundNumber, post.link);
     const details = parseEventDetails(post.html);
     round.startsAt = details.startsAt ?? round.startsAt;
     round.location = details.location ?? round.location;
     round.venue = venueFromLocation(round.location);
     round.eventTitle = details.eventTitle ?? round.eventTitle;
-    round.finish = finishRowsFromTable(parseNewsDriverTable(post.html));
+    round.finish = finish;
     round.sourceUrl = post.link;
+    roundScore.set(roundNumber, score);
   }
 
-  for (const post of posts) {
-    if (!isProSeedingPost(post.title)) continue;
-    const roundNumber = roundNumberFromNewsTitle(post.title);
-    if (!roundNumber) continue;
-    const round = ensure(roundNumber, post.link);
-    round.seeding = seedingRowsFromTable(parseNewsDriverTable(post.html));
+  if (seasonYear === 2025) {
+    for (const post of posts) {
+      if (!isProSeedingPost(post.title)) continue;
+      const roundNumber = roundNumberFromNewsTitle(post.title);
+      if (!roundNumber) continue;
+      const round = ensure(roundNumber, post.link);
+      round.seeding = seedingRowsFromTable(parseNewsDriverTable(post.html));
+    }
   }
 
   return rounds;
+}
+
+export async function loadFormulaDrift2025News(): Promise<Map<number, FdNewsRoundMeta>> {
+  return loadFormulaDriftNewsForYear(2025);
+}
+
+/** Apply official FD news podium (P1–P3) onto existing stage rows. */
+export async function enrichFormulaDriftPodiumFromNews(season: FdSeasonData): Promise<FdSeasonData> {
+  const news = await loadFormulaDriftNewsForYear(season.seasonYear);
+
+  for (const event of season.events) {
+    const round = news.get(event.roundNumber);
+    if (!round || round.finish.length === 0) continue;
+
+    for (const row of round.finish) {
+      if (row.position > 3) continue;
+      const pilot = matchNewsPilot(season.pilots, row.name);
+      if (!pilot) continue;
+      const stage = pilot.stages.find((item) => item.roundNumber === event.roundNumber);
+      if (!stage) continue;
+      stage.tandemPosition = row.position;
+    }
+  }
+
+  return season;
 }
 
 export function matchNewsPilot(pilots: FdPilot[], rawName: string): FdPilot | null {

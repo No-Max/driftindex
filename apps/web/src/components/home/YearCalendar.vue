@@ -119,7 +119,10 @@ function formatDay(iso: string) {
 }
 
 function statusClass(status: HomeCalendarEvent['status']) {
-  return status === 'FINISHED' ? 'done' : status === 'CANCELLED' ? 'cancelled' : 'upcoming';
+  if (status === 'FINISHED') return 'done';
+  if (status === 'CANCELLED') return 'cancelled';
+  if (status === 'WAITING_RESULTS') return 'waiting';
+  return 'upcoming';
 }
 
 function isEventClickable(status: HomeCalendarEvent['status']) {
@@ -452,6 +455,11 @@ function isCurrentMonth(monthIndex: number) {
 .event-row__status.upcoming {
   background: rgba(34, 197, 94, 0.12);
   color: var(--verified);
+}
+
+.event-row__status.waiting {
+  background: rgba(234, 179, 8, 0.14);
+  color: #eab308;
 }
 
 .event-row__status.cancelled {
