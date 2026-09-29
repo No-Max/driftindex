@@ -30,6 +30,11 @@ export interface SeasonSummary {
   finishedEventCount: number;
 }
 
+export interface TrackPhoto {
+  photoUrl: string;
+  sourceUrl: string | null;
+}
+
 export interface TrackSummary {
   slug: string;
   name: string;
@@ -402,6 +407,7 @@ export interface TracksListResponse {
 }
 
 export interface TrackProfileResponse extends TrackSummary {
+  photos: TrackPhoto[];
   events: Array<{
     seriesSlug: string;
     seriesName: string;

@@ -25,7 +25,6 @@ export const RDS_GP_TRACK_PHOTO_SOURCES: Record<string, string> = {
   'red-ring': 'https://rdsgp.com/images/w549/news/178912134353381.jpg',
   'primring': 'https://rdsgp.com/images/w549/news/178816163033234.jpg',
   'turbodrom-belaya-strela': 'https://rdsgp.com/images/w549/news/178755529910710.jpg',
-  'auchan-kultury-41': 'https://rdsgp.com/images/w549/news/178720439458895.jpg',
   'severny-mall': 'https://rdsgp.com/images/w549/news/178670428931485.jpg',
   'stk-pilot': 'https://rdsgp.com/images/w549/news/178569019033209.jpg',
 };

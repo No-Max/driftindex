@@ -130,11 +130,9 @@ const filteredTracks = computed(() => {
         <div class="track-card__body">
           <p v-if="locationLabel(track)" class="track-card__location muted">{{ locationLabel(track) }}</p>
           <h2>{{ track.name }}</h2>
-          <p class="track-card__description">
-            {{ track.description || t('tracks.noDescription') }}
-          </p>
           <div class="track-card__meta">
             <span>{{ t('tracks.eventCount', { count: track.eventCount }) }}</span>
+            <span>{{ t('tracks.seriesCount', { count: track.series.length }) }}</span>
             <span v-if="seriesLabel(track)">{{ seriesLabel(track) }}</span>
           </div>
         </div>
@@ -274,18 +272,11 @@ const filteredTracks = computed(() => {
   font-size: 1.05rem;
 }
 
-.track-card__description {
-  margin: 0.55rem 0 0;
-  color: var(--muted);
-  font-size: 0.88rem;
-  line-height: 1.45;
-}
-
 .track-card__meta {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
-  margin-top: 0.85rem;
+  margin-top: 0.75rem;
 }
 
 .track-card__meta span {

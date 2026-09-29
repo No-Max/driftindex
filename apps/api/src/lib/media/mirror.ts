@@ -7,7 +7,8 @@ import {
   pilotSeriesPortraitRelativePath,
   seriesLogoRelativePath,
   toPublicMediaPath,
-  trackPhotoRelativePath,
+  trackPhotoGalleryRelativePath,
+  trackPhotoLegacyRelativePath,
 } from './config.js';
 
 export interface MirroredPhoto {
@@ -91,14 +92,59 @@ export interface MirroredSeriesLogo {
   logoSourceUrl: string | null;
 }
 
-export async function mirrorTrackPhoto(
-  trackSlug: string,
-  sourceUrl: string,
+async function writeTrackPhotoWebp(
+  relativePath: string,
+  buffer: Buffer,
+  photoSourceUrl: string,
 ): Promise<MirroredPhoto> {
-  const relativePath = trackPhotoRelativePath(trackSlug);
   const destPath = path.join(getMediaRoot(), relativePath);
   await fs.mkdir(path.dirname(destPath), { recursive: true });
 
+  await sharp(buffer)
+    .rotate()
+    .resize(1280, 720, { fit: 'cover', withoutEnlargement: true })
+    .webp({ quality: 85 })
+    .toFile(destPath);
+
+  return {
+    photoUrl: toPublicMediaPath(relativePath),
+    photoSourceUrl,
+    photoUpdatedAt: new Date(),
+  };
+}
+
+export async function mirrorTrackPhotoFromLocal(
+  trackSlug: string,
+  localPath: string,
+  photoSourceUrl?: string,
+  galleryIndex?: number,
+): Promise<MirroredPhoto> {
+  try {
+    const buffer = await fs.readFile(localPath);
+    const relativePath =
+      galleryIndex != null
+        ? trackPhotoGalleryRelativePath(trackSlug, galleryIndex)
+        : trackPhotoLegacyRelativePath(trackSlug);
+    return await writeTrackPhotoWebp(
+      relativePath,
+      buffer,
+      photoSourceUrl ?? `file://${path.resolve(localPath)}`,
+    );
+  } catch (error) {
+    console.warn(`Failed to mirror track photo from file ${trackSlug}:`, error);
+    return {
+      photoUrl: null,
+      photoSourceUrl: photoSourceUrl ?? localPath,
+      photoUpdatedAt: null,
+    };
+  }
+}
+
+export async function mirrorTrackPhoto(
+  trackSlug: string,
+  sourceUrl: string,
+  galleryIndex?: number,
+): Promise<MirroredPhoto> {
   try {
     const userAgent = sourceUrl.includes('wikimedia.org')
       ? 'DriftIndex/1.0 (https://driftalmanac.ru; track photo sync)'
@@ -111,17 +157,11 @@ export async function mirrorTrackPhoto(
     }
 
     const buffer = Buffer.from(await response.arrayBuffer());
-    await sharp(buffer)
-      .rotate()
-      .resize(1280, 720, { fit: 'cover', withoutEnlargement: true })
-      .webp({ quality: 85 })
-      .toFile(destPath);
-
-    return {
-      photoUrl: toPublicMediaPath(relativePath),
-      photoSourceUrl: sourceUrl,
-      photoUpdatedAt: new Date(),
-    };
+    const relativePath =
+      galleryIndex != null
+        ? trackPhotoGalleryRelativePath(trackSlug, galleryIndex)
+        : trackPhotoLegacyRelativePath(trackSlug);
+    return await writeTrackPhotoWebp(relativePath, buffer, sourceUrl);
   } catch (error) {
     console.warn(`Failed to mirror track photo ${trackSlug}:`, error);
     return { photoUrl: null, photoSourceUrl: sourceUrl, photoUpdatedAt: null };

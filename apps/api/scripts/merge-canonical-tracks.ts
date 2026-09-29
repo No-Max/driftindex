@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import { resolveTrackFields } from '../src/lib/trackCanonical.js';
+import { syncTrackCoverPhoto } from '../src/lib/trackPhotos.js';
 
 const prisma = new PrismaClient();
 const DRY_RUN = process.argv.includes('--dry-run');
@@ -30,13 +31,20 @@ async function main() {
   }
 
   let eventsRetargeted = 0;
+  let photosMoved = 0;
   let tracksRemoved = 0;
 
   for (const [slug, { fields, sourceIds, names }] of [...buckets.entries()].sort()) {
     const uniqueNames = [...new Set(names)];
     if (uniqueNames.length < 2 && sourceIds.length < 2) {
       const only = tracks.find((track) => track.id === sourceIds[0]);
-      if (only && only.slug === slug && only.name === fields.name && only.country === fields.country) {
+      if (
+        only &&
+        only.slug === slug &&
+        only.name === fields.name &&
+        only.country === fields.country &&
+        only.city === fields.city
+      ) {
         continue;
       }
     }
@@ -67,10 +75,35 @@ async function main() {
     });
     eventsRetargeted += update.count;
 
+    const duplicateIds = sourceIds.filter((id) => id !== canonical.id);
+    if (duplicateIds.length) {
+      const existingMax = await prisma.trackPhoto.aggregate({
+        where: { trackId: canonical.id },
+        _max: { sortOrder: true },
+      });
+      let nextOrder = (existingMax._max.sortOrder ?? -1) + 1;
+
+      const orphanPhotos = await prisma.trackPhoto.findMany({
+        where: { trackId: { in: duplicateIds } },
+        orderBy: [{ trackId: 'asc' }, { sortOrder: 'asc' }],
+      });
+
+      for (const photo of orphanPhotos) {
+        await prisma.trackPhoto.update({
+          where: { id: photo.id },
+          data: { trackId: canonical.id, sortOrder: nextOrder++ },
+        });
+        photosMoved += 1;
+      }
+
+      await syncTrackCoverPhoto(prisma, canonical.id);
+    }
+
     const removed = await prisma.track.deleteMany({
       where: {
-        id: { in: sourceIds.filter((id) => id !== canonical.id) },
+        id: { in: duplicateIds },
         events: { none: {} },
+        photos: { none: {} },
       },
     });
     tracksRemoved += removed.count;
@@ -79,7 +112,7 @@ async function main() {
   console.log(
     DRY_RUN
       ? '\nDry run only.'
-      : `\nDone: retargeted ${eventsRetargeted} event(s), removed ${tracksRemoved} duplicate track row(s).`,
+      : `\nDone: retargeted ${eventsRetargeted} event(s), moved ${photosMoved} photo(s), removed ${tracksRemoved} duplicate track row(s).`,
   );
 }
 

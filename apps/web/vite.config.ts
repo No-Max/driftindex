@@ -4,7 +4,7 @@ import { defineConfig, loadEnv } from 'vite';
 
 const LOCAL_API = 'http://localhost:5021';
 
-/** Serve /media from local API first, then fall back to production. */
+/** Serve /media from production (VPS) first in dev; local mirror as fallback. */
 function mediaFallbackProxy(remoteOrigin: string): Plugin {
   return {
     name: 'media-fallback-proxy',
@@ -16,7 +16,7 @@ function mediaFallbackProxy(remoteOrigin: string): Plugin {
         }
 
         const origins =
-          remoteOrigin === LOCAL_API ? [LOCAL_API] : [LOCAL_API, remoteOrigin];
+          remoteOrigin === LOCAL_API ? [LOCAL_API] : [remoteOrigin, LOCAL_API];
 
         for (const origin of origins) {
           try {

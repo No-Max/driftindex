@@ -9,20 +9,27 @@ const FEATURED = [
   { slug: 'd1gp', name: 'D1 Grand Prix', shortName: 'D1GP', country: 'JP', order: 3, weight: 1.1 },
   { slug: 'rds-gp', name: 'Russian Drift Series GP', shortName: 'RDS GP', country: 'RU', order: 4, weight: 0.95 },
   { slug: 'royal-ds', name: 'Royal Drift Series', shortName: 'Royal DS', country: 'CN', order: 5, weight: 0.9 },
-  { slug: 'drift-kings', name: 'Drift Kings', shortName: 'DK', country: 'INT', order: 6, weight: 0.85 },
 ] as const;
 
-async function upsertSeriesCatalog(year: number) {
-  for (const s of FEATURED) {
+/** Kept for imports and pilot history; not shown in prestige / home / P4P. */
+const CATALOG_ONLY = [
+  { slug: 'drift-kings', name: 'Drift Kings', shortName: 'DK', country: 'INT', weight: 0.85 },
+] as const;
+
+type CatalogSeries = (typeof FEATURED)[number] | (typeof CATALOG_ONLY)[number];
+
+async function upsertSeriesCatalog(year: number, catalog: readonly CatalogSeries[]) {
+  for (const s of catalog) {
+    const featuredOrder = 'order' in s ? s.order : null;
     const row = await prisma.series.upsert({
       where: { slug: s.slug },
-      update: { name: s.name, shortName: s.shortName, featuredOrder: s.order, defaultWeight: s.weight },
+      update: { name: s.name, shortName: s.shortName, featuredOrder, defaultWeight: s.weight },
       create: {
         slug: s.slug,
         name: s.name,
         shortName: s.shortName,
         country: s.country,
-        featuredOrder: s.order,
+        featuredOrder,
         defaultWeight: s.weight,
       },
     });
@@ -52,10 +59,11 @@ async function upsertSeriesCatalog(year: number) {
 
 async function main() {
   const year = new Date().getFullYear();
-  await upsertSeriesCatalog(year);
+  await upsertSeriesCatalog(year, FEATURED);
+  await upsertSeriesCatalog(year, CATALOG_ONLY);
 
   console.log(
-    `Seed complete: ${FEATURED.length} featured series catalog entries. ` +
+    `Seed complete: ${FEATURED.length} featured + ${CATALOG_ONLY.length} catalog-only series. ` +
       `Import real data with: npm run db:import:royal-ds`,
   );
 }

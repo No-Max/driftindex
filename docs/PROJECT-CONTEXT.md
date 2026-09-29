@@ -112,7 +112,8 @@ Remote URL: `git@github.com-personal:No-Max/driftindex.git`
 | 3 | d1gp | D1 Grand Prix |
 | 4 | rds-gp | RDS GP |
 | 5 | royal-ds | Royal Drift Series |
-| 6 | drift-kings | Drift Kings |
+
+**Catalog-only** (import + pilot history, `featuredOrder` null): `drift-kings`.
 
 Show **data source** per season (`sourceLabelEn/Ru`, `sourceUrl`) — not verified/unverified badges.
 
@@ -126,7 +127,7 @@ Show **data source** per season (`sourceLabelEn/Ru`, `sourceUrl`) — not verifi
 S = (N − seriesRank + 1) / N
 ```
 
-- `N` = count of featured series (6)
+- `N` = count of featured series (5)
 - `seriesRank` = position in prestige list (1 = top → S = 1, last → S = 1/N)
 - **Not** the old `100/place × manual weight` formula
 

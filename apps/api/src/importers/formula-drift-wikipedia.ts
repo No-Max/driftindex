@@ -42,7 +42,7 @@ export const EVENT_CODE_DEFAULTS: Record<string, EventCodeDefault> = {
   ENG: { name: 'The Gauntlet', trackName: 'Englishtown Raceway Park', country: 'United States' },
   LVS: { name: 'Las Vegas Motor Speedway', trackName: 'Las Vegas Motor Speedway', country: 'United States' },
   EVS: { name: 'Throwdown', trackName: 'Evergreen Speedway', country: 'United States' },
-  SON: { name: 'Infineon Raceway', trackName: 'Infineon Raceway', country: 'United States' },
+  SON: { name: 'Infineon Raceway', trackName: 'Sonoma Raceway', country: 'United States' },
   IRW: { name: 'Title Fight', trackName: 'Irwindale Speedway', country: 'United States' },
   WTS: { name: 'The Gauntlet', trackName: 'Wall Township Speedway', country: 'United States' },
   PBR: { name: 'Palm Beach International Raceway', trackName: 'Palm Beach International Raceway', country: 'United States' },

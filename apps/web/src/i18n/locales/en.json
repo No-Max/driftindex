@@ -222,8 +222,8 @@
     "title": "Tracks",
     "subtitle": "Venues used by tracked drift championships.",
     "noPhoto": "Photo pending",
-    "noDescription": "Description pending.",
     "eventCount": "{count} events",
+    "seriesCount": "{count} series",
     "filterCountry": "Filter by country",
     "filterAllCountries": "All countries",
     "countryUnknown": "Country not set",
@@ -232,7 +232,11 @@
     "eventsTitle": "Events on this track",
     "date": "Date",
     "round": "Round",
-    "noDate": "No date"
+    "noDate": "No date",
+    "photoPrev": "Previous photo",
+    "photoNext": "Next photo",
+    "photoGallery": "Track photos",
+    "photoGoTo": "Photo {n}"
   },
   "states": {
     "loading": "Loading…",

@@ -2,6 +2,7 @@ import 'dotenv/config';
 import cors from 'cors';
 import express from 'express';
 import { getMediaPublicBase, getMediaRoot } from './lib/media/config.js';
+import { createMediaRemoteProxy } from './lib/media/remoteProxy.js';
 import { isResponseCacheEnabled, responseCacheTtlMs } from './lib/responseCache.js';
 import { homeRouter } from './routes/home.js';
 import { publicRouter } from './routes/public.js';
@@ -22,6 +23,10 @@ app.use(
     fallthrough: true,
   }),
 );
+const mediaRemoteOrigin = process.env.MEDIA_REMOTE_ORIGIN?.trim();
+if (process.env.NODE_ENV !== 'production' && mediaRemoteOrigin) {
+  app.use(getMediaPublicBase(), createMediaRemoteProxy(mediaRemoteOrigin));
+}
 app.use('/api', publicRouter);
 app.use('/api', homeRouter);
 

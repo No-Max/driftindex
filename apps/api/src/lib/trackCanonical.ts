@@ -12,6 +12,7 @@ const RUSSIA = 'Russia';
 const CHINA = 'China';
 const JAPAN = 'Japan';
 const USA = 'United States';
+const CANADA = 'Canada';
 const LATVIA = 'Latvia';
 const AUSTRIA = 'Austria';
 const POLAND = 'Poland';
@@ -23,6 +24,8 @@ const FRANCE = 'France';
 const SPAIN = 'Spain';
 const ITALY = 'Italy';
 const FINLAND = 'Finland';
+const GREECE = 'Greece';
+const CYPRUS = 'Cyprus';
 
 const CITY_EN: Record<string, string> = {
   москва: 'Moscow',
@@ -161,18 +164,15 @@ const CANONICAL: Array<{
     matches: (raw, norm) => /лубянск/i.test(raw),
   },
   {
-    preferredSlug: 'auchan-kultury-41',
-    name: 'Auchan Kultury 41',
-    city: 'Saint Petersburg',
-    country: RUSSIA,
-    matches: (raw, norm) => /культур\s*41|площадка ашан/i.test(raw),
-  },
-  {
     preferredSlug: 'severny-mall',
     name: 'Severny Mall',
     city: 'Saint Petersburg',
     country: RUSSIA,
-    matches: (raw, norm) => /северный молл|severny mall/i.test(raw),
+    // Same parking lot: ТРЦ Северный Молл / Парк Хаус, пр. Культуры 41 (Ашан)
+    matches: (raw, norm) =>
+      /северный молл|severny mall|park house/i.test(raw) ||
+      /культур\s*41|площадка ашан|ашан.*культур|auchan.*kultur/i.test(raw) ||
+      /auchan-kultury-41/i.test(norm),
   },
   {
     preferredSlug: 'nring',
@@ -332,7 +332,160 @@ const CANONICAL: Array<{
     name: 'Irwindale Speedway',
     city: 'Irwindale',
     country: USA,
-    matches: (raw, norm) => /\birwindale\b/i.test(raw),
+    matches: (raw, norm) => /\birwindale\b/i.test(raw) || /toyota speedway/i.test(norm),
+  },
+  {
+    preferredSlug: 'sonoma-raceway',
+    name: 'Sonoma Raceway',
+    city: 'Sonoma',
+    country: USA,
+    matches: (raw, norm) =>
+      /sonoma raceway|\binfineon\b|sears point/i.test(norm) || /\binfineon\b|sears point/i.test(raw),
+  },
+  {
+    preferredSlug: 'streets-of-long-beach',
+    name: 'Streets of Long Beach',
+    city: 'Long Beach',
+    country: USA,
+    matches: (raw, norm) => /streets of long beach/i.test(norm) || norm === 'long beach',
+  },
+  {
+    preferredSlug: 'road-atlanta',
+    name: 'Road Atlanta',
+    city: 'Braselton',
+    country: USA,
+    matches: (raw, norm) =>
+      /road atlanta|michelin raceway/i.test(norm) || norm === 'atlanta',
+  },
+  {
+    preferredSlug: 'evergreen-speedway',
+    name: 'Evergreen Speedway',
+    city: 'Monroe',
+    country: USA,
+    matches: (raw, norm) =>
+      /evergreen speedway/i.test(norm) ||
+      norm === 'monroe' ||
+      /^monroe\s*\(r\d+\)$/i.test(norm) ||
+      norm === 'seattle',
+  },
+  {
+    preferredSlug: 'old-bridge-township-raceway-park',
+    name: 'Old Bridge Township Raceway Park',
+    city: 'Old Bridge',
+    country: USA,
+    matches: (raw, norm) => /englishtown|old bridge township/i.test(norm),
+  },
+  {
+    preferredSlug: 'wall-township-speedway',
+    name: 'Wall Township Speedway',
+    city: 'Wall Township',
+    country: USA,
+    matches: (raw, norm) =>
+      /wall township|wall speedway|wall stadium/i.test(norm) || norm === 'new jersey',
+  },
+  {
+    preferredSlug: 'orlando-speed-world',
+    name: 'Orlando Speed World',
+    city: 'Bithlo',
+    country: USA,
+    matches: (raw, norm) => /orlando speed world/i.test(norm) || norm === 'orlando',
+  },
+  {
+    preferredSlug: 'world-wide-technology-raceway',
+    name: 'World Wide Technology Raceway',
+    city: 'Madison',
+    country: USA,
+    matches: (raw, norm) =>
+      /world wide technology/i.test(norm) ||
+      norm === 'st. louis' ||
+      /^st\. louis\s*\(r\d+\)$/i.test(norm),
+  },
+  {
+    preferredSlug: 'texas-motor-speedway',
+    name: 'Texas Motor Speedway',
+    city: 'Fort Worth',
+    country: USA,
+    matches: (raw, norm) =>
+      /texas motor speedway/i.test(norm) ||
+      norm === 'texas' ||
+      /^texas\s*\(r\d+\)$/i.test(norm),
+  },
+  {
+    preferredSlug: 'las-vegas-motor-speedway',
+    name: 'Las Vegas Motor Speedway',
+    city: 'Las Vegas',
+    country: USA,
+    matches: (raw, norm) => /las vegas motor speedway/i.test(norm) || norm === 'las vegas',
+  },
+  {
+    preferredSlug: 'grantsville',
+    name: 'Grantsville',
+    city: 'Grantsville',
+    country: USA,
+    matches: (raw, norm) => norm === 'grantsville' || /burt brothers/i.test(norm),
+  },
+  {
+    preferredSlug: 'homestead-miami-speedway',
+    name: 'Homestead-Miami Speedway',
+    city: 'Homestead',
+    country: USA,
+    matches: (raw, norm) => /homestead/i.test(norm),
+  },
+  {
+    preferredSlug: 'palm-beach-international-raceway',
+    name: 'Palm Beach International Raceway',
+    city: 'Jupiter',
+    country: USA,
+    matches: (raw, norm) => /palm beach|moroso/i.test(norm),
+  },
+  {
+    preferredSlug: 'erie',
+    name: 'Erie',
+    city: 'Erie',
+    country: USA,
+    matches: (raw, norm) => /\berie\b|lake erie/i.test(norm),
+  },
+  {
+    preferredSlug: 'stafford',
+    name: 'Stafford',
+    city: 'Stafford Springs',
+    country: USA,
+    matches: (raw, norm) => /stafford/i.test(norm),
+  },
+  {
+    preferredSlug: 'indianapolis',
+    name: 'Indianapolis',
+    city: 'Indianapolis',
+    country: USA,
+    matches: (raw, norm) => /indianapolis|lucas oil raceway/i.test(norm),
+  },
+  {
+    preferredSlug: 'reliant-center',
+    name: 'Reliant Center',
+    city: 'Houston',
+    country: USA,
+    matches: (raw, norm) => /reliant|nrg (center|park)/i.test(norm),
+  },
+  {
+    preferredSlug: 'soldier-field',
+    name: 'Soldier Field',
+    city: 'Chicago',
+    country: USA,
+    matches: (raw, norm) => /soldier field/i.test(norm),
+  },
+  {
+    preferredSlug: 'summit-point-raceway',
+    name: 'Summit Point Raceway',
+    city: 'Summit Point',
+    country: USA,
+    matches: (raw, norm) => /summit point/i.test(norm),
+  },
+  {
+    preferredSlug: 'autodrome-saint-eustache',
+    name: 'Autodrome Saint-Eustache',
+    city: 'Saint-Eustache',
+    country: CANADA,
+    matches: (raw, norm) => /saint[- ]?eustache|st\.?\s*eustache/i.test(norm),
   },
   {
     preferredSlug: 'maishima-sports-island',
@@ -409,7 +562,7 @@ const CANONICAL: Array<{
     name: 'RabócsiRing',
     city: 'Máriapócs',
     country: HUNGARY,
-    matches: (raw) => /rab[oó]csi/i.test(raw),
+    matches: (raw, norm) => /rab[oó]csi/i.test(raw) || /trackwood/i.test(norm),
   },
   {
     preferredSlug: 'nurburgring',
@@ -536,6 +689,55 @@ const CANONICAL: Array<{
     city: 'Alahärmä',
     country: FINLAND,
     matches: (raw) => /power park/i.test(raw),
+  },
+  {
+    preferredSlug: 'achna-speedway',
+    name: 'Achna Speedway',
+    city: 'Achna',
+    country: CYPRUS,
+    matches: (raw) => /achna/i.test(raw),
+  },
+  {
+    preferredSlug: 'anneau-du-rhin',
+    name: 'Anneau du Rhin',
+    city: 'Biltzheim',
+    country: FRANCE,
+    matches: (raw) => /anneau du rhin/i.test(raw),
+  },
+  {
+    preferredSlug: 'autodrom-s-omczyn',
+    name: 'Autodrom Słomczyn',
+    city: 'Słomczyn',
+    country: POLAND,
+    matches: (raw) => /s[łl]omczyn/i.test(raw),
+  },
+  {
+    preferredSlug: 'circuit-de-navarra',
+    name: 'Circuit de Navarra',
+    city: 'Los Arcos',
+    country: SPAIN,
+    matches: (raw) => /navarra/i.test(raw),
+  },
+  {
+    preferredSlug: 'nigrita-circuit',
+    name: 'Nigrita Circuit',
+    city: 'Nigrita',
+    country: GREECE,
+    matches: (raw) => /nigrita/i.test(raw),
+  },
+  {
+    preferredSlug: 'serres-racing-circuit',
+    name: 'Serres Racing Circuit',
+    city: 'Serres',
+    country: GREECE,
+    matches: (raw) => /serres/i.test(raw),
+  },
+  {
+    preferredSlug: 'tokol-drift-arena',
+    name: 'Tököl Drift Arena',
+    city: 'Tököl',
+    country: HUNGARY,
+    matches: (raw) => /t[öo]k[öo]l/i.test(raw),
   },
 ];
 

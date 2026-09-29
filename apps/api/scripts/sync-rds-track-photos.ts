@@ -4,6 +4,11 @@ import { almanacEventIdFromDbSlug } from '../src/importers/almanac-rds-event.js'
 import { RDS_GP_TRACK_PHOTO_SOURCES } from '../src/data/rds-gp-track-photos.js';
 import { fetchRdsPagePhotoSourceUrl, rdsGpEventPageUrl } from '../src/importers/rds-gp.js';
 import { mirrorTrackPhoto } from '../src/lib/media/mirror.js';
+import {
+  appendTrackPhotoFromMirror,
+  nextTrackGalleryIndex,
+  syncTrackCoverPhoto,
+} from '../src/lib/trackPhotos.js';
 
 const prisma = new PrismaClient();
 
@@ -58,14 +63,15 @@ async function main() {
 
   for (const track of tracks) {
     let sourceUrl = RDS_GP_TRACK_PHOTO_SOURCES[track.slug] ?? null;
-    let photo = sourceUrl ? await mirrorTrackPhoto(track.slug, sourceUrl) : null;
+    const galleryIndex = await nextTrackGalleryIndex(prisma, track.id);
+    let photo = sourceUrl ? await mirrorTrackPhoto(track.slug, sourceUrl, galleryIndex) : null;
 
     if (!photo?.photoUrl) {
       const scraped = await scrapePhotoForTrack(track.id, series.id);
       if (scraped) {
         sourceUrl = scraped.sourceUrl;
         console.log(`  ${track.slug}: scraped ← ${scraped.pageUrl}`);
-        photo = await mirrorTrackPhoto(track.slug, sourceUrl);
+        photo = await mirrorTrackPhoto(track.slug, sourceUrl, galleryIndex);
       }
     }
 
@@ -76,10 +82,13 @@ async function main() {
       continue;
     }
 
+    await prisma.trackPhoto.deleteMany({ where: { trackId: track.id } });
+    await appendTrackPhotoFromMirror(prisma, track.id, photo);
     await prisma.track.update({
       where: { id: track.id },
-      data: { photoUrl: photo.photoUrl, sourceUrl },
+      data: { sourceUrl },
     });
+    await syncTrackCoverPhoto(prisma, track.id);
 
     mirrored += 1;
     console.log(`  ${track.slug} → ${photo.photoUrl}`);

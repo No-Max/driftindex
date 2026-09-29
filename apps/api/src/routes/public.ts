@@ -35,6 +35,7 @@ import { loadSeriesLogoMap, seriesLogoFromMap } from '../lib/seriesLogos.js';
 import { computePrestigeRanking, persistPrestigeRanking } from '../lib/seriesOverlap.js';
 import { computeStandings, computeTeamStandings } from '../lib/standings.js';
 import { toTrackSummary } from '../lib/trackDto.js';
+import { loadTrackPhotosForProfile } from '../lib/trackPhotos.js';
 
 export const publicRouter = Router();
 
@@ -99,7 +100,8 @@ publicRouter.post('/series/prestige/recalculate', async (req, res) => {
 
 publicRouter.get('/series', async (_req, res) => {
   const series = await prisma.series.findMany({
-    orderBy: { name: 'asc' },
+    where: { featuredOrder: { not: null } },
+    orderBy: { featuredOrder: 'asc' },
     include: {
       seasons: {
         orderBy: { year: 'desc' },
@@ -254,8 +256,11 @@ publicRouter.get('/tracks/:slug', async (req, res) => {
     return;
   }
 
+  const photos = await loadTrackPhotosForProfile(prisma, track.id, track.photoUrl);
+
   const payload: TrackProfileResponse = {
     ...toTrackSummary(track)!,
+    photos,
     events: track.events.map((event) => ({
       seriesSlug: event.season.series.slug,
       seriesName: event.season.series.name,

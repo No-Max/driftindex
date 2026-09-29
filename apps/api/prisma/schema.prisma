@@ -113,19 +113,33 @@ model Event {
 }
 
 model Track {
-  id          String   @id @default(cuid())
-  slug        String   @unique
+  id          String       @id @default(cuid())
+  slug        String       @unique
   name        String
   country     String?
   city        String?
   description String?
+  /** Cover image for lists; first gallery photo when gallery exists. */
   photoUrl    String?
   sourceUrl   String?
+  photos      TrackPhoto[]
   events      Event[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   @@index([name])
+}
+
+model TrackPhoto {
+  id        String   @id @default(cuid())
+  trackId   String
+  track     Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  photoUrl  String
+  sourceUrl String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([trackId, sortOrder])
 }
 
 model Pilot {

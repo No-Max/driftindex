@@ -31,7 +31,12 @@ export function seriesLogoRelativePath(seriesSlug: string): string {
   return `series/${seriesSlug}.webp`;
 }
 
-/** One cover photo per track: tracks/{trackSlug}.webp */
-export function trackPhotoRelativePath(trackSlug: string): string {
+/** Legacy single-file path: tracks/{trackSlug}.webp */
+export function trackPhotoLegacyRelativePath(trackSlug: string): string {
   return `tracks/${trackSlug}.webp`;
+}
+
+/** Gallery file: tracks/{trackSlug}/{index}.webp (index is 1-based). */
+export function trackPhotoGalleryRelativePath(trackSlug: string, index: number): string {
+  return `tracks/${trackSlug}/${index}.webp`;
 }

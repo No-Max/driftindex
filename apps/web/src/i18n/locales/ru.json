@@ -222,8 +222,8 @@
     "title": "Трассы",
     "subtitle": "Площадки, на которых проходят этапы отслеживаемых чемпионатов.",
     "noPhoto": "Фото пока нет",
-    "noDescription": "Описание пока не добавлено.",
     "eventCount": "{count} этапов",
+    "seriesCount": "{count} серий",
     "filterCountry": "Фильтр по стране",
     "filterAllCountries": "Все страны",
     "countryUnknown": "Страна не указана",
@@ -232,7 +232,11 @@
     "eventsTitle": "Этапы на этой трассе",
     "date": "Дата",
     "round": "Раунд",
-    "noDate": "Без даты"
+    "noDate": "Без даты",
+    "photoPrev": "Предыдущее фото",
+    "photoNext": "Следующее фото",
+    "photoGallery": "Фото трассы",
+    "photoGoTo": "Фото {n}"
   },
   "states": {
     "loading": "Загрузка…",

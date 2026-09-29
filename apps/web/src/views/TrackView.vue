@@ -4,6 +4,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import { fetchTrack } from '../api/client';
+import TrackPhotoSlider from '../components/TrackPhotoSlider.vue';
 import { useLocalePath } from '../composables/useLocalePath';
 
 const route = useRoute();
@@ -37,6 +38,23 @@ function locationLabel(): string {
   return [track.value.city, track.value.country].filter(Boolean).join(', ');
 }
 
+const seriesCount = computed(() => {
+  if (!track.value) return 0;
+  return new Set(track.value.events.map((event) => event.seriesSlug)).size;
+});
+
+const seriesNames = computed(() => {
+  if (!track.value) return '';
+  const seen = new Set<string>();
+  const names: string[] = [];
+  for (const event of track.value.events) {
+    if (seen.has(event.seriesSlug)) continue;
+    seen.add(event.seriesSlug);
+    names.push(event.seriesShortName ?? event.seriesName);
+  }
+  return names.join(' · ');
+});
+
 function formatDate(iso: string | null): string {
   if (!iso) return t('tracks.noDate');
   return new Intl.DateTimeFormat(locale.value, {
@@ -55,15 +73,17 @@ function formatDate(iso: string | null): string {
     <template v-else-if="track">
       <div class="hero card">
         <div class="hero__photo">
-          <img v-if="track.photoUrl" :src="track.photoUrl" :alt="track.name" />
-          <span v-else>{{ t('tracks.noPhoto') }}</span>
+          <TrackPhotoSlider :key="track.slug" :photos="track.photos" :alt="track.name" />
         </div>
         <div class="hero__body">
           <RouterLink :to="localePath('/tracks')" class="back-link">← {{ t('tracks.back') }}</RouterLink>
           <p v-if="locationLabel()" class="muted">{{ locationLabel() }}</p>
           <h1 class="page-title">{{ track.name }}</h1>
-          <p class="page-subtitle">
-            {{ track.description || t('tracks.noDescription') }}
+          <p class="page-subtitle track-stats">
+            <span>{{ t('tracks.eventCount', { count: track.events.length }) }}</span>
+            <span aria-hidden="true">·</span>
+            <span>{{ t('tracks.seriesCount', { count: seriesCount }) }}</span>
+            <span v-if="seriesNames" class="track-stats__series">{{ seriesNames }}</span>
           </p>
         </div>
       </div>
@@ -115,22 +135,24 @@ function formatDate(iso: string | null): string {
 }
 
 .hero__photo {
-  display: grid;
-  place-items: center;
   min-height: 260px;
-  background: var(--surface-2);
-  color: var(--muted);
-}
-
-.hero__photo img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
 }
 
 .hero__body {
   padding: 1.5rem;
+}
+
+.track-stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem 0.55rem;
+}
+
+.track-stats__series {
+  width: 100%;
+  color: var(--muted);
+  font-size: 0.92em;
 }
 
 .back-link,
