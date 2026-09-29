@@ -210,7 +210,7 @@ async function upsertPilotsAndResults(
           const { mirrored } = await upsertPilotSeriesPhoto(db, {
             pilotId: pilotRecord.id,
             seriesId,
-            pilotSlug: pilot.slug,
+            pilotSlug: pilotRecord.slug,
             seriesSlug: SERIES_SLUG,
             photoSourceUrl,
           });

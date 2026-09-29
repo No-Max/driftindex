@@ -64,11 +64,88 @@ export function transliterate(value: string): string {
 }
 
 export function normalizeToken(value: string): string {
-  return transliterate(value)
+  const raw = transliterate(value)
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '')
     .trim();
+  if (!raw) return raw;
+  return TOKEN_EQUIVALENTS[raw] ?? raw;
 }
+
+/**
+ * Fold common given-name transliteration variants (BY/UA/RU/EN)
+ * so «Kiryl» matches «Kirill», «Sergey» matches «Sergei», etc.
+ */
+const TOKEN_EQUIVALENTS: Record<string, string> = {
+  // Кирилл
+  kiryl: 'kirill',
+  kyryl: 'kirill',
+  kyrill: 'kirill',
+  cyril: 'kirill',
+  // Сергей
+  sergey: 'sergei',
+  sergii: 'sergei',
+  serhii: 'sergei',
+  serhiy: 'sergei',
+  serhij: 'sergei',
+  // Дмитрий
+  dmitry: 'dmitrii',
+  dmitri: 'dmitrii',
+  dmytro: 'dmitrii',
+  // Александр
+  alexander: 'aleksandr',
+  alexandr: 'aleksandr',
+  // Алексей / Олексій
+  alexey: 'aleksei',
+  alexei: 'aleksei',
+  oleksii: 'aleksei',
+  oleksiy: 'aleksei',
+  // Михаил
+  michael: 'mikhail',
+  mykhailo: 'mikhail',
+  // Андрей
+  andrey: 'andrei',
+  andriy: 'andrei',
+  // Евгений
+  evgeny: 'evgenii',
+  yevgeniy: 'evgenii',
+  yevgeny: 'evgenii',
+  eugene: 'evgenii',
+  // Юрий
+  yury: 'yurii',
+  yuriy: 'yurii',
+  jurij: 'yurii',
+  // Максим
+  maxim: 'maksim',
+  // Владимир
+  volodymyr: 'vladimir',
+  // Павел
+  pavlo: 'pavel',
+  // Илья
+  illya: 'ilya',
+  ilia: 'ilya',
+  // Денис
+  denys: 'denis',
+  // Данил / Даниил
+  daniil: 'danil',
+  // Николай
+  nikolay: 'nikolai',
+  mykola: 'nikolai',
+  // Фамилии / редкие
+  mackevich: 'matskevich',
+  matskievich: 'matskevich',
+  vasilyev: 'vasilev',
+  vasyliev: 'vasilev',
+  jakebsons: 'jekabsons',
+  poytolaakso: 'poytalaakso',
+  mattala: 'maattala',
+  jager: 'jaeger',
+  rahahovskyi: 'rarahovskyi',
+  khibino: 'hibino',
+  salomakhin: 'solomakhin',
+  sylvestras: 'silvestras',
+  matthew: 'matt',
+};
 
 export function nameTokens(...parts: Array<string | null | undefined>): string[] {
   const tokens = new Set<string>();

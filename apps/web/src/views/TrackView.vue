@@ -126,20 +126,36 @@ function formatDate(iso: string | null): string {
 .track-page {
   display: grid;
   gap: 1.5rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.hero,
+.events-section {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .hero {
   display: grid;
-  grid-template-columns: minmax(220px, 360px) 1fr;
+  grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
   overflow: hidden;
 }
 
 .hero__photo {
+  min-width: 0;
   min-height: 260px;
 }
 
 .hero__body {
+  min-width: 0;
   padding: 1.5rem;
+}
+
+.hero__body .page-title {
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .track-stats {
@@ -147,12 +163,20 @@ function formatDate(iso: string | null): string {
   flex-wrap: wrap;
   align-items: baseline;
   gap: 0.4rem 0.55rem;
+  max-width: 100%;
 }
 
 .track-stats__series {
   width: 100%;
   color: var(--muted);
   font-size: 0.92em;
+  overflow-wrap: anywhere;
+}
+
+.events-section .table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .back-link,
@@ -174,7 +198,20 @@ function formatDate(iso: string | null): string {
 
 @media (max-width: 720px) {
   .hero {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hero__photo {
+    min-height: 200px;
+  }
+
+  .hero__body {
+    padding: 1.1rem 1.15rem;
+  }
+
+  .events-section :deep(th),
+  .events-section :deep(td) {
+    padding: 0.75rem 0.85rem;
   }
 }
 </style>

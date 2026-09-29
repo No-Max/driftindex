@@ -142,6 +142,12 @@ onUnmounted(() => {
   font-size: 0.8rem;
 }
 
+@media (max-width: 420px) {
+  .brand small {
+    display: none;
+  }
+}
+
 .brand__mark {
   display: grid;
   place-items: center;
@@ -233,6 +239,8 @@ onUnmounted(() => {
 
 .main {
   padding: 2.25rem 0 4.5rem;
+  min-width: 0;
+  max-width: 100%;
 }
 
 @media (max-width: 1024px) {

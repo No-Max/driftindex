@@ -106,6 +106,12 @@ onMounted(async () => {
   margin-bottom: 0;
 }
 
+@media (max-width: 420px) {
+  .hero .page-title {
+    font-size: 1.75rem;
+  }
+}
+
 .home-section {
   display: grid;
 }

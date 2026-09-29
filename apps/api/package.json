@@ -49,7 +49,9 @@
     "db:import:drift-kings": "tsx scripts/import-drift-kings.ts",
     "db:import:drift-kings:all": "tsx scripts/import-drift-kings.ts --all",
     "db:import:drift-kings:2026": "tsx scripts/import-drift-kings-2026.ts",
-    "db:rename:pilot-slugs": "tsx scripts/rename-series-pilot-slugs.ts"
+    "db:rename:pilot-slugs": "tsx scripts/rename-series-pilot-slugs.ts",
+    "db:rename:rds-pilot-slugs": "tsx scripts/rename-rds-pilot-slugs.ts",
+    "db:rename:pilot-slugs-human": "tsx scripts/rename-pilot-slugs-human.ts"
   },
   "dependencies": {
     "@drift-index/shared": "*",

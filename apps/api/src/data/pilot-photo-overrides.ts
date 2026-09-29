@@ -13,5 +13,5 @@ export const PILOT_PHOTO_SERIES_ALIAS: Record<string, string[]> = {
 
 /** Mirrored prefer-series portrait when primary is stale or missing on disk. */
 export const PILOT_PHOTO_PREFER_URL: Partial<Record<string, string>> = {
-  'tomas-kiely': '/media/pilots/rds-37718/rds-gp.webp',
+  'tomas-kiely': '/media/pilots/tomas-kiely/rds-gp.webp',
 };
