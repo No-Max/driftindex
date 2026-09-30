@@ -49,4 +49,16 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://driftindex.pro/ru/tracks"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://driftindex.pro/en/tracks"/>
   </url>
+  <url>
+    <loc>https://driftindex.pro/en/votes</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://driftindex.pro/en/votes"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://driftindex.pro/ru/votes"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://driftindex.pro/en/votes"/>
+  </url>
+  <url>
+    <loc>https://driftindex.pro/ru/votes</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://driftindex.pro/en/votes"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://driftindex.pro/ru/votes"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://driftindex.pro/en/votes"/>
+  </url>
 </urlset>

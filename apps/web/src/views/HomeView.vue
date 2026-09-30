@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import type { HomeResponse } from '@drift-index/shared';
+import type { HomeResponse, PollDetail } from '@drift-index/shared';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { fetchHome } from '../api/client';
+import { fetchHome, fetchPolls } from '../api/client';
 import ChampionshipSlider from '../components/home/ChampionshipSlider.vue';
-import FanVoteStubs from '../components/home/FanVoteStubs.vue';
+import FanVoteResults from '../components/home/FanVoteResults.vue';
 import P4PPodium from '../components/home/P4PPodium.vue';
 import QualWinners from '../components/home/QualWinners.vue';
 import SectionHeading from '../components/home/SectionHeading.vue';
@@ -13,6 +13,8 @@ import YearCalendar from '../components/home/YearCalendar.vue';
 
 const { t } = useI18n();
 const data = ref<HomeResponse | null>(null);
+const pilotsPoll = ref<PollDetail | null>(null);
+const seriesPoll = ref<PollDetail | null>(null);
 const loading = ref(true);
 const error = ref(false);
 
@@ -26,9 +28,17 @@ const heroSubtitle = computed(() => {
   return t('home.subtitle');
 });
 
+const hasFanVotes = computed(() => Boolean(pilotsPoll.value || seriesPoll.value));
+
 onMounted(async () => {
   try {
-    data.value = await fetchHome(2026);
+    const [home, pollsPayload] = await Promise.all([
+      fetchHome(2026),
+      fetchPolls().catch(() => ({ polls: [] as PollDetail[] })),
+    ]);
+    data.value = home;
+    pilotsPoll.value = pollsPayload.polls.find((poll) => poll.type === 'PILOTS') ?? null;
+    seriesPoll.value = pollsPayload.polls.find((poll) => poll.type === 'SERIES') ?? null;
   } catch {
     error.value = true;
   } finally {
@@ -50,6 +60,14 @@ onMounted(async () => {
     <template v-else-if="data">
       <section class="home-section home-section--p4p">
         <P4PPodium :items="data.poundForPound" :year="data.year" />
+      </section>
+
+      <section v-if="hasFanVotes" class="home-section">
+        <SectionHeading
+          :title="t('home.sections.fanVotes')"
+          :subtitle="t('home.sections.fanVotesSub')"
+        />
+        <FanVoteResults :pilots-poll="pilotsPoll" :series-poll="seriesPoll" />
       </section>
 
       <section v-if="data.seriesPrestige.entries.length > 0" class="home-section">
@@ -86,11 +104,6 @@ onMounted(async () => {
           :subtitle="t('home.sections.calendarSub')"
         />
         <YearCalendar :year="data.year" :events="data.calendar" />
-      </section>
-
-      <section class="home-section">
-        <SectionHeading :title="t('home.sections.fanVotes')" />
-        <FanVoteStubs />
       </section>
     </template>
   </div>

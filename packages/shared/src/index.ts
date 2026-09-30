@@ -161,6 +161,9 @@ export interface PilotStats {
   tandemWins: number;
   tandemWinPct: number | null;
   avgQualScore: number | null;
+  firstPlaces: number;
+  secondPlaces: number;
+  thirdPlaces: number;
 }
 
 export interface PilotSummary {
@@ -436,4 +439,35 @@ export interface TrackProfileResponse extends TrackSummary {
     standingsPath: string;
     eventPath: string;
   }>;
+}
+
+export interface PollOptionView {
+  id: string;
+  label: string;
+  sortOrder: number;
+  photoUrl: string | null;
+  pilotSlug: string | null;
+  meta: Record<string, unknown> | null;
+  voteCount: number;
+}
+
+export interface PollSummary {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  status: 'ACTIVE' | 'INACTIVE' | 'CLOSED';
+  type: 'PILOTS' | 'CARS' | 'SERIES' | 'TEAMS' | 'TRACKS' | 'DUEL';
+  year: number | null;
+  sortOrder: number;
+  totalVotes: number;
+  myOptionId: string | null;
+}
+
+export interface PollDetail extends PollSummary {
+  options: PollOptionView[];
+}
+
+export interface PollListResponse {
+  polls: PollDetail[];
 }

@@ -1,6 +1,6 @@
 {
   "brand": "Drift Index",
-  "tagline": "Drift standings, stats, and rankings",
+  "tagline": "Best pilots beyond the series",
   "seo": {
     "siteName": "Drift Index",
     "default": {
@@ -22,6 +22,10 @@
     "tracks": {
       "title": "Tracks — Drift Index",
       "description": "Drift tracks used in major series — venues, events, and results."
+    },
+    "votes": {
+      "title": "Fan votes — Drift Index",
+      "description": "Vote for the best drift pilot of the season. Top 3 from each series on one ballot."
     }
   },
   "nav": {
@@ -29,12 +33,18 @@
     "pilots": "Pilots",
     "series": "Series",
     "tracks": "Tracks",
+    "votes": "Votes",
+    "footer": "Footer navigation",
     "openMenu": "Open menu",
     "closeMenu": "Close menu"
   },
   "lang": {
     "en": "EN",
-    "ru": "RU"
+    "ru": "RU",
+    "label": "Language"
+  },
+  "footer": {
+    "copyright": "© {year} Drift Index"
   },
   "home": {
     "title": "Drift Index",
@@ -67,6 +77,7 @@
     "calendarPrev": "Previous months",
     "calendarNext": "Next months",
     "topSeriesAll": "Full series prestige ranking →",
+    "fanVotesCta": "More votes →",
     "hardnessHelpAria": "Explain Hardness",
     "sections": {
       "topSeries": "Top 3 series",
@@ -77,9 +88,10 @@
       "qualWinnersSub": "Pole position at the latest round of each series",
       "calendar": "Calendar {year}",
       "calendarSub": "All rounds across series",
-      "p4p": "Drift Index · {year}",
+      "p4p": "World Drift Pilots standing {year}",
       "p4pSub": "Season mean place, Hardness, and awards across featured series",
-      "fanVotes": "Fan votes"
+      "fanVotes": "Fan votes",
+      "fanVotesSub": "Current results for best pilot and best series"
     },
     "eventStatus": {
       "scheduled": "Upcoming",
@@ -88,10 +100,58 @@
       "cancelled": "Cancelled"
     },
     "fanVote": {
-      "pilot": "Best pilot",
+      "pilot": "World best pilot",
+      "pilotSub": "Select your favourite and press “Vote”",
+      "series": "Best series",
+      "seriesSub": "Pick your favourite championship",
+      "seriesPage": "Series",
+      "platform": "Best drift platform",
+      "platformSub": "Pick your favourite drift chassis",
+      "platforms": {
+        "bmw-e92": {
+          "name": "BMW E92",
+          "models": "3 Series Coupe · 2006–2013",
+          "why": "Balanced RWD chassis with huge aftermarket — a staple in Europe and RDS"
+        },
+        "nissan-s15": {
+          "name": "Nissan S15",
+          "models": "Silvia Spec-R · 1999–2002",
+          "why": "Classic S-chassis — still a core pro and street-drift platform worldwide"
+        },
+        "supra-a80": {
+          "name": "Supra A80",
+          "models": "Toyota Supra MK4 · 1993–2002",
+          "why": "Legendary 2JZ platform — the icon of big-power drift builds"
+        }
+      },
+      "eventsShort": "events",
+      "tracksShort": "tracks",
       "car": "Best car",
-      "comingSoon": "Voting opens at season end"
+      "comingSoon": "Voting opens at season end",
+      "loginToVote": "Sign in with Telegram to vote",
+      "loginUnavailable": "Login is not configured",
+      "loginFailed": "Could not sign in with Telegram",
+      "checking": "Checking session…",
+      "signedIn": "Signed in",
+      "logout": "Log out",
+      "totalVotes": "{count} votes",
+      "seriesRank": "#{rank} {series}",
+      "emptyBallot": "No candidates yet — waiting for season results",
+      "voteFailed": "Could not save your vote",
+      "vote": "Vote",
+      "voted": "Your vote",
+      "profile": "Profile",
+      "duelTitle": "Who wins the duel",
+      "duelSub": "Drift Index #1 vs #2 — pick the winner",
+      "duelBlockSub": "Drift Index and series leaders — pick each winner",
+      "seriesDuelTitle": "{a} vs {b}",
+      "seriesDuelSub": "Series leaders — pick the winner",
+      "duelPair": "Drift Index #{a} vs #{b}"
     }
+  },
+  "votes": {
+    "title": "Fan votes",
+    "subtitle": "Vote for your favorites and their cars, and follow the stats"
   },
   "standings": {
     "title": "Season standings",
@@ -222,6 +282,9 @@
       "events": "Events",
       "seasons": "Seasons",
       "avgQual": "Avg qual",
+      "firstPlaces": "1st places",
+      "secondPlaces": "2nd places",
+      "thirdPlaces": "3rd places",
       "duelsShort": "duels",
       "eventsShort": "events",
       "qualShort": "/100"

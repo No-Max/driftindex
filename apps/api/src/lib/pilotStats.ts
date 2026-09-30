@@ -4,6 +4,7 @@ export interface PilotResultForStats {
   qualScore100: number | null;
   tandemBattles: number | null;
   tandemWins: number | null;
+  tandemPosition: number | null;
   eventStatus: string;
   seriesSlug: string;
   seasonYear: number;
@@ -16,6 +17,9 @@ export interface PilotStats {
   tandemWins: number;
   tandemWinPct: number | null;
   avgQualScore: number | null;
+  firstPlaces: number;
+  secondPlaces: number;
+  thirdPlaces: number;
 }
 
 export function computePilotStats(results: PilotResultForStats[]): PilotStats {
@@ -26,6 +30,15 @@ export function computePilotStats(results: PilotResultForStats[]): PilotStats {
   const tandemBattles = withBattles.reduce((sum, r) => sum + (r.tandemBattles ?? 0), 0);
   const tandemWins = withBattles.reduce((sum, r) => sum + (r.tandemWins ?? 0), 0);
 
+  let firstPlaces = 0;
+  let secondPlaces = 0;
+  let thirdPlaces = 0;
+  for (const result of finished) {
+    if (result.tandemPosition === 1) firstPlaces += 1;
+    else if (result.tandemPosition === 2) secondPlaces += 1;
+    else if (result.tandemPosition === 3) thirdPlaces += 1;
+  }
+
   return {
     eventsCount: finished.length,
     seasonsCount: seasons.size,
@@ -34,6 +47,9 @@ export function computePilotStats(results: PilotResultForStats[]): PilotStats {
     tandemWinPct:
       tandemBattles > 0 ? Math.round((tandemWins / tandemBattles) * 1000) / 10 : null,
     avgQualScore: averageQualScore100(finished.map((r) => r.qualScore100)),
+    firstPlaces,
+    secondPlaces,
+    thirdPlaces,
   };
 }
 
@@ -47,6 +63,7 @@ export function toStatsInput(
     qualScore100: number | null;
     tandemBattles: number | null;
     tandemWins: number | null;
+    tandemPosition: number | null;
     event: {
       status: string;
       season: { year: number; series: { slug: string } };
@@ -57,6 +74,7 @@ export function toStatsInput(
     qualScore100: result.qualScore100,
     tandemBattles: result.tandemBattles,
     tandemWins: result.tandemWins,
+    tandemPosition: result.tandemPosition,
     eventStatus: result.event.status,
     seriesSlug: result.event.season.series.slug,
     seasonYear: result.event.season.year,

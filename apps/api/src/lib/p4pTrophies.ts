@@ -28,13 +28,12 @@ export function p4pTrophyBonusFromCounts(counts: P4PTrophyCounts): number {
 }
 
 /**
- * Sum podium + qual-win bonuses for every pilot across all loaded featured-series events.
- * Applied once to raw P4P after best-series selection (not when choosing best series).
+ * Sum podium + qual-win counts for every pilot across all loaded featured-series events.
  */
-export function computeP4PTrophyBonusByPilotId(
+export function computeP4PTrophyCountsByPilotId(
   events: readonly SeasonEventWithSeries[],
   pointsPlaceByEventId: Map<string, Map<string, number>>,
-): Map<string, number> {
+): Map<string, P4PTrophyCounts> {
   const countsByPilot = new Map<string, P4PTrophyCounts>();
 
   for (const event of events) {
@@ -61,6 +60,18 @@ export function computeP4PTrophyBonusByPilotId(
     }
   }
 
+  return countsByPilot;
+}
+
+/**
+ * Sum podium + qual-win bonuses for every pilot across all loaded featured-series events.
+ * Applied once to raw P4P after best-series selection (not when choosing best series).
+ */
+export function computeP4PTrophyBonusByPilotId(
+  events: readonly SeasonEventWithSeries[],
+  pointsPlaceByEventId: Map<string, Map<string, number>>,
+): Map<string, number> {
+  const countsByPilot = computeP4PTrophyCountsByPilotId(events, pointsPlaceByEventId);
   const bonusByPilot = new Map<string, number>();
   for (const [pilotId, counts] of countsByPilot) {
     const bonus = p4pTrophyBonusFromCounts(counts);

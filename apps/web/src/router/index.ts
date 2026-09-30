@@ -8,6 +8,7 @@ import SeriesView from '../views/SeriesView.vue';
 import StandingsView from '../views/StandingsView.vue';
 import TrackView from '../views/TrackView.vue';
 import TracksView from '../views/TracksView.vue';
+import VotesView from '../views/VotesView.vue';
 import { i18n } from '../i18n';
 import {
   type AppLocale,
@@ -27,6 +28,12 @@ export const router = createRouter({
       name: 'home',
       component: HomeView,
       meta: { seoKey: 'home' },
+    },
+    {
+      path: `/${localeParam}/votes`,
+      name: 'votes',
+      component: VotesView,
+      meta: { seoKey: 'votes' },
     },
     {
       path: `/${localeParam}/series/:slug/:year/:eventSlug`,

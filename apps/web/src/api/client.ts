@@ -2,6 +2,8 @@ import type {
   HomeResponse,
   PilotProfileResponse,
   PilotsListResponse,
+  PollDetail,
+  PollListResponse,
   SeasonEventResponse,
   SeasonStandingsResponse,
   SeriesPrestigeResponse,
@@ -11,7 +13,10 @@ import type {
 } from '@drift-index/shared';
 
 async function getJson<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(path, init);
+  const response = await fetch(path, {
+    credentials: 'same-origin',
+    ...init,
+  });
   if (!response.ok) {
     throw new Error(`Request failed: ${response.status}`);
   }
@@ -92,4 +97,16 @@ export function fetchPilot(slug: string) {
 export function fetchHome(year?: number) {
   const query = year ? `?year=${year}` : '';
   return getJson<HomeResponse>(`/api/home${query}`);
+}
+
+export function fetchPolls() {
+  return getJson<PollListResponse>('/api/polls');
+}
+
+export function castPollVote(slug: string, optionId: string) {
+  return getJson<PollDetail>(`/api/polls/${encodeURIComponent(slug)}/vote`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ optionId }),
+  });
 }

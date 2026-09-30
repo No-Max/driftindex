@@ -9,6 +9,7 @@ import PilotAvatar from '../components/PilotAvatar.vue';
 import PilotPhotoSlider from '../components/PilotPhotoSlider.vue';
 import PilotStatsGrid from '../components/PilotStatsGrid.vue';
 import { useLocalePath } from '../composables/useLocalePath';
+import { formatCountryName } from '../lib/formatCountryName';
 import { formatPilotName } from '../lib/formatPilotName';
 import { formatQualCell } from '../lib/formatQualCell';
 
@@ -26,6 +27,11 @@ const slug = computed(() => String(route.params.slug));
 const displayName = computed(() => {
   if (!pilot.value) return '';
   return formatPilotName(pilot.value);
+});
+
+const countryLabel = computed(() => {
+  if (!pilot.value?.country) return '';
+  return formatCountryName(pilot.value.country, locale.value);
 });
 
 const sortedResults = computed(() => {
@@ -86,7 +92,7 @@ function formatQual(result: PilotProfileResponse['results'][0]) {
         <div>
           <h1 class="page-title">{{ displayName }}</h1>
           <p class="page-subtitle">
-            <span v-if="pilot.country">{{ pilot.country }}</span>
+            <span v-if="countryLabel">{{ countryLabel }}</span>
           </p>
         </div>
       </div>

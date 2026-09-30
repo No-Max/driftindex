@@ -1,13 +1,24 @@
 <script setup lang="ts">
 import type { PilotStats } from '@drift-index/shared';
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-defineProps<{
-  stats: PilotStats;
-  compact?: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    stats: PilotStats;
+    compact?: boolean;
+    /** Podium + battle wins. Defaults to on when not compact. */
+    showAwards?: boolean;
+  }>(),
+  {
+    compact: false,
+    showAwards: undefined,
+  },
+);
 
 const { t } = useI18n();
+
+const awardsVisible = computed(() => props.showAwards ?? !props.compact);
 
 function formatQual(value: number | null) {
   if (value == null) return '—';
@@ -16,7 +27,13 @@ function formatQual(value: number | null) {
 </script>
 
 <template>
-  <dl class="stats" :class="{ 'stats--compact': compact }">
+  <dl
+    class="stats"
+    :class="{
+      'stats--compact': compact,
+      'stats--with-awards': awardsVisible,
+    }"
+  >
     <div class="stats__item">
       <dt>{{ t('pilot.stats.events') }}</dt>
       <dd>{{ stats.eventsCount }}</dd>
@@ -29,6 +46,20 @@ function formatQual(value: number | null) {
       <dt>{{ t('pilot.stats.avgQual') }}</dt>
       <dd>{{ formatQual(stats.avgQualScore) }}</dd>
     </div>
+    <template v-if="awardsVisible">
+      <div class="stats__item">
+        <dt>{{ t('pilot.stats.firstPlaces') }}</dt>
+        <dd>{{ stats.firstPlaces }}</dd>
+      </div>
+      <div class="stats__item">
+        <dt>{{ t('pilot.stats.secondPlaces') }}</dt>
+        <dd>{{ stats.secondPlaces }}</dd>
+      </div>
+      <div class="stats__item">
+        <dt>{{ t('pilot.stats.thirdPlaces') }}</dt>
+        <dd>{{ stats.thirdPlaces }}</dd>
+      </div>
+    </template>
   </dl>
 </template>
 
@@ -41,12 +72,17 @@ function formatQual(value: number | null) {
   min-width: 0;
 }
 
+.stats--with-awards {
+  grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+}
+
 .stats__item {
   min-width: 0;
   padding: 0.85rem 1rem;
   border-radius: 12px;
   background: var(--surface-2);
   border: 1px solid var(--border);
+  text-align: center;
 }
 
 .stats__item dt {

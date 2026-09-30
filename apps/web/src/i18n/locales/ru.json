@@ -1,6 +1,6 @@
 {
   "brand": "Drift Index",
-  "tagline": "Турнирные таблицы и статистика дрифта",
+  "tagline": "Лучшие пилоты вне серий",
   "seo": {
     "siteName": "Drift Index",
     "default": {
@@ -22,6 +22,10 @@
     "tracks": {
       "title": "Трассы — Drift Index",
       "description": "Трассы главных серий дрифта — площадки, этапы и результаты."
+    },
+    "votes": {
+      "title": "Голосование — Drift Index",
+      "description": "Голосуйте за лучшего пилота сезона. Топ-3 каждой серии в одном бюллетене."
     }
   },
   "nav": {
@@ -29,12 +33,18 @@
     "pilots": "Пилоты",
     "series": "Серии",
     "tracks": "Трассы",
+    "votes": "Голосования",
+    "footer": "Навигация в подвале",
     "openMenu": "Открыть меню",
     "closeMenu": "Закрыть меню"
   },
   "lang": {
     "en": "EN",
-    "ru": "RU"
+    "ru": "RU",
+    "label": "Язык"
+  },
+  "footer": {
+    "copyright": "© {year} Drift Index"
   },
   "home": {
     "title": "Drift Index",
@@ -67,6 +77,7 @@
     "calendarPrev": "Предыдущие месяцы",
     "calendarNext": "Следующие месяцы",
     "topSeriesAll": "Полный prestige-рейтинг серий →",
+    "fanVotesCta": "More votes →",
     "hardnessHelpAria": "Что такое сложность",
     "sections": {
       "topSeries": "Топ‑3 серии",
@@ -77,9 +88,10 @@
       "qualWinnersSub": "Pole на последнем этапе каждой серии",
       "calendar": "Календарь {year}",
       "calendarSub": "Все этапы серий",
-      "p4p": "Drift Index · {year}",
+      "p4p": "World Drift Pilots standing {year}",
       "p4pSub": "Среднее место, сложность серии и награды во всех учитываемых чемпионатах",
-      "fanVotes": "Голосование фанатов"
+      "fanVotes": "Голосование фанатов",
+      "fanVotesSub": "Текущие итоги: лучший пилот и лучшая серия"
     },
     "eventStatus": {
       "scheduled": "Скоро",
@@ -88,10 +100,58 @@
       "cancelled": "Отменён"
     },
     "fanVote": {
-      "pilot": "Лучший пилот",
+      "pilot": "Лучший пилот мира",
+      "pilotSub": "Выберите фаворита и нажмите «Проголосовать»",
+      "series": "Лучшая серия",
+      "seriesSub": "Выберите любимый чемпионат",
+      "seriesPage": "Серия",
+      "platform": "Лучшая платформа",
+      "platformSub": "Выберите любимую дрифт-платформу",
+      "platforms": {
+        "bmw-e92": {
+          "name": "BMW E92",
+          "models": "3 Series Coupe · 2006–2013",
+          "why": "Баланс и огромный aftermarket — опора Европы и RDS"
+        },
+        "nissan-s15": {
+          "name": "Nissan S15",
+          "models": "Silvia Spec-R · 1999–2002",
+          "why": "Классика S-chassis — до сих пор ядро про- и стрит-дрифта"
+        },
+        "supra-a80": {
+          "name": "Supra A80",
+          "models": "Toyota Supra MK4 · 1993–2002",
+          "why": "Легендарная платформа 2JZ — икона мощных дрифт-билдов"
+        }
+      },
+      "eventsShort": "этапов",
+      "tracksShort": "трасс",
       "car": "Лучший автомобиль",
-      "comingSoon": "Голосование откроется в конце сезона"
+      "comingSoon": "Голосование откроется в конце сезона",
+      "loginToVote": "Войдите через Telegram, чтобы голосовать",
+      "loginUnavailable": "Вход пока не настроен",
+      "loginFailed": "Не удалось войти через Telegram",
+      "checking": "Проверяем сессию…",
+      "signedIn": "Вы вошли",
+      "logout": "Выйти",
+      "totalVotes": "Голосов: {count}",
+      "seriesRank": "#{rank} {series}",
+      "emptyBallot": "Пока нет кандидатов — ждём результаты сезона",
+      "voteFailed": "Не удалось сохранить голос",
+      "vote": "Проголосовать",
+      "voted": "Ваш голос",
+      "profile": "Профиль",
+      "duelTitle": "Кто победит в дуэли",
+      "duelSub": "Drift Index #1 vs #2 — выберите победителя",
+      "duelBlockSub": "Drift Index и лидеры серий — выберите победителей",
+      "seriesDuelTitle": "{a} vs {b}",
+      "seriesDuelSub": "Лидеры серий — выберите победителя",
+      "duelPair": "Drift Index #{a} vs #{b}"
     }
+  },
+  "votes": {
+    "title": "Голосование",
+    "subtitle": "Голосуйте за ваших любимцев и их автомобили, следите за статистикой"
   },
   "standings": {
     "title": "Турнирная таблица",
@@ -222,6 +282,9 @@
       "events": "Этапы",
       "seasons": "Сезоны",
       "avgQual": "Сред. квала",
+      "firstPlaces": "1-е места",
+      "secondPlaces": "2-е места",
+      "thirdPlaces": "3-и места",
       "duelsShort": "парные",
       "eventsShort": "этапов",
       "qualShort": "/100"
