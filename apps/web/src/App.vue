@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
+import BrandMark from './components/BrandMark.vue';
 import { useLocalePath } from './composables/useLocalePath';
 import { usePageSeo } from './composables/usePageSeo';
 
@@ -48,7 +49,9 @@ onUnmounted(() => {
     <header class="header">
       <div class="container header__inner">
         <RouterLink :to="localePath('/')" class="brand">
-          <span class="brand__mark">DI</span>
+          <span class="brand__mark">
+            <BrandMark :title="t('brand')" />
+          </span>
           <span>
             <strong>{{ t('brand') }}</strong>
             <small>{{ t('tagline') }}</small>
@@ -154,11 +157,9 @@ onUnmounted(() => {
   width: 42px;
   height: 42px;
   border-radius: 12px;
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-family: Oswald, sans-serif;
-  font-weight: 600;
+  background: #000;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .header__menu-btn {

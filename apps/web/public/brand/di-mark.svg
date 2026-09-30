@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 132 137" fill="none" role="img" aria-label="Drift Index">
+  <rect width="132" height="137" fill="#000"/>
+  <path
+    fill="#ff4d1a"
+    fill-rule="evenodd"
+    d="
+      M19 35
+      H48
+      C66 35 84 48 84 68.5
+      C84 89 66 102 48 102
+      H19
+      Z
+      M40 52
+      H50
+      C60 52 63 58 63 68.5
+      C63 79 60 85 50 85
+      H40
+      Z
+    "
+  />
+  <rect x="94" y="33" width="20" height="13" fill="#ff4d1a"/>
+  <rect x="94" y="57" width="20" height="46" fill="#ff4d1a"/>
+</svg>
