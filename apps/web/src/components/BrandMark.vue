@@ -16,12 +16,14 @@ const GIF_MS = 2280;
 const INTERVAL_MS = 5000;
 
 const playing = ref(false);
-const gifKey = ref(0);
+const gifSrc = ref('/brand/di-mark.gif');
+const gifReady = ref(false);
 const reduceMotion = ref(false);
 
 let mq: MediaQueryList | null = null;
 let intervalId = 0;
 let hideTimer = 0;
+let playKey = 0;
 
 function clearTimers() {
   if (intervalId) {
@@ -34,9 +36,17 @@ function clearTimers() {
   }
 }
 
-function playOnce() {
+function restartGif() {
+  playKey += 1;
+  gifReady.value = false;
+  gifSrc.value = `/brand/di-mark.gif?play=${playKey}`;
+}
+
+function onGifLoad() {
   if (reduceMotion.value) return;
-  gifKey.value += 1;
+  // Ignore stale loads from a previous cycle.
+  if (!gifSrc.value.includes(`play=${playKey}`)) return;
+  gifReady.value = true;
   playing.value = true;
   if (hideTimer) window.clearTimeout(hideTimer);
   hideTimer = window.setTimeout(() => {
@@ -45,10 +55,16 @@ function playOnce() {
   }, GIF_MS);
 }
 
+function playOnce() {
+  if (reduceMotion.value) return;
+  restartGif();
+}
+
 function onMotionChange() {
   reduceMotion.value = mq?.matches ?? false;
   if (reduceMotion.value) {
     playing.value = false;
+    gifReady.value = false;
     clearTimers();
   } else if (!intervalId) {
     startLoop();
@@ -58,7 +74,6 @@ function onMotionChange() {
 function startLoop() {
   clearTimers();
   if (reduceMotion.value) return;
-  // First play shortly after mount, then every INTERVAL_MS
   hideTimer = window.setTimeout(() => {
     playOnce();
     intervalId = window.setInterval(playOnce, INTERVAL_MS);
@@ -69,6 +84,9 @@ onMounted(() => {
   mq = window.matchMedia('(prefers-reduced-motion: reduce)');
   reduceMotion.value = mq.matches;
   mq.addEventListener('change', onMotionChange);
+  // Warm the GIF into browser cache so the first opacity swap is clean.
+  const warm = new Image();
+  warm.src = '/brand/di-mark.gif';
   startLoop();
 });
 
@@ -95,13 +113,14 @@ onUnmounted(() => {
       decoding="async"
     />
     <img
-      v-if="playing"
       class="brand-mark__gif"
-      :src="`/brand/di-mark.gif?play=${gifKey}`"
+      :class="{ 'brand-mark__gif--ready': gifReady }"
+      :src="gifSrc"
       alt=""
       width="132"
       height="137"
       decoding="async"
+      @load="onGifLoad"
     />
   </span>
 </template>
@@ -129,12 +148,24 @@ onUnmounted(() => {
   user-select: none;
 }
 
-.brand-mark--playing .brand-mark__static {
-  visibility: hidden;
+.brand-mark__static {
+  position: relative;
+  z-index: 1;
+  opacity: 1;
 }
 
 .brand-mark__gif {
   position: relative;
-  z-index: 1;
+  z-index: 0;
+  opacity: 0;
+}
+
+.brand-mark--playing .brand-mark__static {
+  opacity: 0;
+}
+
+.brand-mark--playing .brand-mark__gif--ready {
+  z-index: 2;
+  opacity: 1;
 }
 </style>
