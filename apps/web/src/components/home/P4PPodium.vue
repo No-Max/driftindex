@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { HomeP4PEntry, HomeP4PSeriesParticipation } from '@drift-index/shared';
+import type { HomeP4PEntry, HomeP4PLedSeries, HomeP4PSeriesParticipation } from '@drift-index/shared';
 import { seriesEventPath } from '@drift-index/shared';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -20,11 +20,33 @@ const props = defineProps<{
 const { t, locale } = useI18n();
 const { localePath } = useLocalePath();
 
-const leader = computed(() => props.items.find((item) => item.rank === 1));
-const rest = computed(() => props.items.filter((item) => item.rank > 1));
+const leader = computed(() =>
+  props.items.find((item) => item.rank === 1 && item.section !== 'seriesLeader'),
+);
+/** All non-#1 entries shown in the side list, ordered by Drift Index rank. */
+const listItems = computed(() =>
+  props.items
+    .filter((item) => item.rank !== 1 || item.section === 'seriesLeader')
+    .slice()
+    .sort((a, b) => a.rank - b.rank || a.pilot.slug.localeCompare(b.pilot.slug)),
+);
 
-function seriesName(item: HomeP4PEntry) {
-  return item.bestSeries.name;
+function hasRankGapBefore(index: number): boolean {
+  if (index <= 0) return false;
+  const prev = listItems.value[index - 1];
+  const curr = listItems.value[index];
+  if (!prev || !curr) return false;
+  return curr.rank !== prev.rank + 1;
+}
+
+function seriesParticipations(item: HomeP4PEntry): HomeP4PSeriesParticipation[] {
+  return [item.bestSeries, ...item.otherSeries];
+}
+
+function ledSeriesLabel(series: HomeP4PLedSeries, fullName = false) {
+  return t('home.p4pSeriesLeaderBadge', {
+    series: fullName ? series.name : (series.shortName ?? series.name),
+  });
 }
 
 function seriesPath(slug: string) {
@@ -43,10 +65,6 @@ function seriesMeta(series: HomeP4PSeriesParticipation) {
     parts.push(t('home.p4pAvgQual', { score: series.avgQualScore.toFixed(1) }));
   }
   return parts.join(' · ');
-}
-
-function bestSeriesMeta(item: HomeP4PEntry) {
-  return seriesMeta(item.bestSeries);
 }
 
 function formatQual(
@@ -83,13 +101,17 @@ function pilotPath(slug: string) {
           <RouterLink :to="pilotPath(leader.pilot.slug)" class="p4p-leader__name-link">
             <p class="p4p-leader__name">{{ formatPilotName(leader.pilot) }}</p>
           </RouterLink>
+          <div v-if="(leader.ledSeries?.length ?? 0) > 0" class="p4p-leader__badges">
+            <span
+              v-for="series in leader.ledSeries"
+              :key="series.slug"
+              class="p4p-leader-badge p4p-leader-badge--lg"
+            >
+              {{ ledSeriesLabel(series, true) }}
+            </span>
+          </div>
           <div class="p4p-leader__score-row">
             <p class="p4p-leader__score">{{ leader.score }} {{ t('home.p4pScore') }}</p>
-            <PilotSeasonTrophies
-              :events="leader.seasonEvents"
-              :series-slug="leader.bestSeries.slug"
-              size="md"
-            />
           </div>
           <div class="p4p-leader__series-block">
             <div class="p4p-leader__series-item p4p-leader__series-item--primary">
@@ -100,10 +122,15 @@ function pilotPath(slug: string) {
                 size="sm"
               />
               <RouterLink :to="seriesPath(leader.bestSeries.slug)" class="p4p-series-link">
-                {{ seriesName(leader) }}
+                {{ leader.bestSeries.shortName ?? leader.bestSeries.name }}
               </RouterLink>
-              <span> · {{ bestSeriesMeta(leader) }}</span>
+              <span> · {{ seriesMeta(leader.bestSeries) }}</span>
               <span class="muted">· {{ t('pilots.hardnessShort') }} {{ leader.bestSeries.weight }}</span>
+              <PilotSeasonTrophies
+                :events="leader.seasonEvents"
+                :series-slug="leader.bestSeries.slug"
+                size="md"
+              />
             </div>
           </div>
           <div v-if="leader.otherSeries.length > 0" class="p4p-leader__other-series">
@@ -121,10 +148,15 @@ function pilotPath(slug: string) {
                   size="sm"
                 />
                 <RouterLink :to="seriesPath(series.slug)" class="p4p-series-link">
-                  {{ series.name }}
+                  {{ series.shortName ?? series.name }}
                 </RouterLink>
                 <span> · {{ seriesMeta(series) }}</span>
                 <span class="muted">· {{ t('pilots.hardnessShort') }} {{ series.weight }}</span>
+                <PilotSeasonTrophies
+                  :events="leader.seasonEvents"
+                  :series-slug="series.slug"
+                  size="md"
+                />
               </li>
             </ul>
           </div>
@@ -174,64 +206,91 @@ function pilotPath(slug: string) {
       </div>
     </article>
 
+    <div class="p4p-list-column">
     <ol class="p4p-list">
-      <li
-        v-for="item in rest"
-        :key="item.pilot.slug"
-        class="p4p-list__item"
-        :class="isFeatured(item.rank) ? 'p4p-list__item--featured' : 'p4p-list__item--compact'"
-      >
-        <div class="p4p-list__link">
-          <RouterLink :to="pilotPath(item.pilot.slug)" class="p4p-list__rank">
-            {{ item.rank }}
-          </RouterLink>
-          <RouterLink :to="pilotPath(item.pilot.slug)" class="p4p-list__avatar-link">
-            <PilotAvatar :pilot="item.pilot" :size="isFeatured(item.rank) ? 'xl' : 'md'" />
-          </RouterLink>
-          <div class="p4p-list__body">
-            <RouterLink :to="pilotPath(item.pilot.slug)" class="p4p-list__name-link">
-              <p class="p4p-list__name">{{ formatPilotName(item.pilot) }}</p>
+      <template v-for="(item, index) in listItems" :key="item.pilot.slug">
+        <li
+          v-if="hasRankGapBefore(index)"
+          class="p4p-list__gap"
+          aria-hidden="true"
+        />
+        <li
+          class="p4p-list__item"
+          :class="{
+            'p4p-list__item--featured': isFeatured(item.rank),
+            'p4p-list__item--compact': !isFeatured(item.rank),
+            'p4p-list__item--series-leader': (item.ledSeries?.length ?? 0) > 0,
+          }"
+        >
+          <div class="p4p-list__link">
+            <RouterLink :to="pilotPath(item.pilot.slug)" class="p4p-list__avatar-link">
+              <PilotAvatar :pilot="item.pilot" :size="isFeatured(item.rank) ? 'xl' : 'md'" />
             </RouterLink>
-            <p class="p4p-list__series">
-              <SeriesLogo
-                :slug="item.bestSeries.slug"
-                :name="item.bestSeries.name"
-                :logo-url="item.bestSeries.logoUrl"
-                size="sm"
-              />
-              <RouterLink :to="seriesPath(item.bestSeries.slug)" class="p4p-series-link">
-                {{ seriesName(item) }}
+            <div class="p4p-list__body">
+              <RouterLink :to="pilotPath(item.pilot.slug)" class="p4p-list__name-link">
+                <p class="p4p-list__name">
+                  {{ formatPilotName(item.pilot) }}
+                  <span
+                    v-for="series in item.ledSeries ?? []"
+                    :key="series.slug"
+                    class="p4p-leader-badge"
+                  >
+                    {{ ledSeriesLabel(series) }}
+                  </span>
+                </p>
               </RouterLink>
-              <span> · {{ bestSeriesMeta(item) }}</span>
-            </p>
-            <p class="p4p-list__meta">
-              <RouterLink :to="pilotPath(item.pilot.slug)" class="p4p-list__score">
-                {{ item.score }} {{ t('home.p4pScore') }}
-              </RouterLink>
-              <PilotSeasonTrophies
-                :events="item.seasonEvents"
-                :series-slug="item.bestSeries.slug"
-              />
-              <template v-if="item.pilot.stats && isFeatured(item.rank)">
+              <p class="p4p-list__series">
+                <span
+                  v-for="series in seriesParticipations(item)"
+                  :key="series.slug"
+                  class="p4p-list__series-item"
+                >
+                  <SeriesLogo
+                    :slug="series.slug"
+                    :name="series.name"
+                    :logo-url="series.logoUrl"
+                    size="sm"
+                  />
+                  <span>{{ seriesMeta(series) }}</span>
+                  <span class="muted">· {{ t('pilots.hardnessShort') }} {{ series.weight }}</span>
+                  <PilotSeasonTrophies
+                    :events="item.seasonEvents"
+                    :series-slug="series.slug"
+                  />
+                </span>
+              </p>
+              <p v-if="item.pilot.stats && isFeatured(item.rank)" class="p4p-list__meta">
                 <span>{{ item.pilot.stats.eventsCount }} {{ t('pilot.stats.eventsShort') }}</span>
                 <span v-if="item.pilot.stats.avgQualScore != null">
                   {{ item.pilot.stats.avgQualScore.toFixed(1) }} {{ t('pilot.stats.qualShort') }}
                 </span>
-              </template>
-            </p>
+              </p>
+            </div>
+            <RouterLink :to="pilotPath(item.pilot.slug)" class="p4p-list__tail">
+              <span class="p4p-list__rank">{{ item.rank }}</span>
+              <span class="p4p-list__score">{{ item.score }}</span>
+            </RouterLink>
           </div>
-        </div>
-      </li>
+        </li>
+      </template>
     </ol>
+    </div>
   </div>
 </template>
 
 <style scoped>
 .p4p {
   display: grid;
-  grid-template-columns: minmax(360px, 480px) 1fr;
+  grid-template-columns: minmax(360px, 510px) 1fr;
   gap: 1.25rem;
-  align-items: stretch;
+  align-items: start;
+}
+
+.p4p-list-column {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
 }
 
 .p4p-leader {
@@ -311,6 +370,43 @@ function pilotPath(slug: string) {
   line-height: 1.1;
 }
 
+.p4p-leader__badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 0.55rem;
+}
+
+.p4p-leader-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.38rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.55rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.p4p-leader-badge--lg {
+  padding: 0.28rem 0.7rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+}
+
+.p4p-list__name .p4p-leader-badge {
+  flex-shrink: 0;
+  font-size: 0.5rem;
+  padding: 0.1rem 0.32rem;
+}
+
 .p4p-leader__score-row {
   display: flex;
   flex-wrap: wrap;
@@ -371,6 +467,10 @@ function pilotPath(slug: string) {
 .p4p-leader__series-item--primary {
   border-color: rgba(255, 77, 26, 0.45);
   box-shadow: 0 0 0 1px rgba(255, 77, 26, 0.12);
+}
+
+.p4p-leader__series-item :deep(.season-trophies) {
+  margin-left: 0.15rem;
 }
 
 .p4p-series-link {
@@ -445,8 +545,16 @@ function pilotPath(slug: string) {
   padding: 0;
   display: grid;
   gap: 0.65rem;
-  height: 100%;
   align-content: start;
+}
+
+.p4p-list__gap {
+  height: 0;
+  margin: 0.45rem 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+  list-style: none;
+  padding: 0;
 }
 
 .p4p-list__item {
@@ -466,10 +574,17 @@ function pilotPath(slug: string) {
   background: var(--surface-2);
 }
 
+.p4p-list__item--series-leader {
+  border-color: rgba(255, 77, 26, 0.35);
+}
+
+.p4p-list__item--series-leader:hover {
+  border-color: rgba(255, 77, 26, 0.5);
+}
+
 .p4p-list__link {
-  position: relative;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.85rem;
   padding: 0.85rem 1rem;
@@ -481,24 +596,27 @@ function pilotPath(slug: string) {
   padding: 0.65rem 0.9rem;
 }
 
-.p4p-list__item--compact .p4p-list__rank {
-  top: 0.65rem;
-  right: 0.9rem;
-}
-
 .p4p-list__rank,
 .p4p-list__avatar-link,
 .p4p-list__name-link,
-.p4p-list__score {
+.p4p-list__score,
+.p4p-list__tail {
   color: inherit;
   text-decoration: none;
 }
 
+.p4p-list__tail {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  align-self: stretch;
+  justify-content: space-between;
+  gap: 0.35rem;
+  min-width: 2.75rem;
+  flex-shrink: 0;
+}
+
 .p4p-list__rank {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  z-index: 1;
   font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;
   font-size: 1.4rem;
   font-weight: 700;
@@ -509,14 +627,27 @@ function pilotPath(slug: string) {
   opacity: 0.9;
 }
 
+.p4p-list__score {
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  line-height: 1;
+}
+
 .p4p-list__avatar-link,
 .p4p-list__name-link:hover,
-.p4p-list__score:hover {
+.p4p-list__tail:hover .p4p-list__rank,
+.p4p-list__tail:hover .p4p-list__score {
   color: var(--accent);
 }
 
 .p4p-list__item--featured .p4p-list__rank {
   font-size: 1.85rem;
+}
+
+.p4p-list__item--featured .p4p-list__score {
+  font-size: 0.95rem;
 }
 
 .p4p-list__item--featured :deep(.avatar--xl) {
@@ -528,12 +659,7 @@ function pilotPath(slug: string) {
 .p4p-list__body {
   min-width: 0;
   max-width: 100%;
-  padding-right: 2rem;
   overflow: hidden;
-}
-
-.p4p-list__item--featured .p4p-list__body {
-  padding-right: 2.5rem;
 }
 
 .p4p-list__name-link {
@@ -547,9 +673,11 @@ function pilotPath(slug: string) {
   font-family: Oswald, sans-serif;
   text-transform: uppercase;
   font-size: 1rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.4rem;
+  min-width: 0;
 }
 
 .p4p-list__item--featured .p4p-list__name {
@@ -560,28 +688,51 @@ function pilotPath(slug: string) {
   font-size: 0.92rem;
 }
 
+.p4p-list__item--compact .p4p-list__rank {
+  font-size: 1.2rem;
+}
+
+.p4p-list__item--compact .p4p-list__score {
+  font-size: 0.78rem;
+}
+
 .p4p-list__series {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.35rem 0;
   margin: 0.15rem 0 0;
   font-size: 0.78rem;
   color: var(--muted);
   max-width: 100%;
   min-width: 0;
-  overflow: hidden;
 }
 
-.p4p-list__series .p4p-series-link,
-.p4p-list__series > span {
+.p4p-list__series-item {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-.p4p-list__series .p4p-series-link {
-  flex-shrink: 1;
+.p4p-list__series-item :deep(.season-trophies) {
+  margin-left: 0.1rem;
+}
+
+.p4p-list__series-item :deep(.series-logo) {
+  width: 28px;
+  height: 28px;
+}
+
+.p4p-list__series-item:not(:last-child)::after {
+  content: '';
+  display: inline-block;
+  width: 1px;
+  height: 1.05rem;
+  margin: 0 0.55rem;
+  background: var(--border);
+  vertical-align: middle;
 }
 
 .p4p-list__meta {
@@ -595,24 +746,8 @@ function pilotPath(slug: string) {
   min-width: 0;
 }
 
-.p4p-list__meta > span,
-.p4p-list__meta .p4p-list__score {
-  min-width: 0;
-  max-width: 100%;
-}
-
 .p4p-list__item--compact .p4p-list__series {
   font-size: 0.72rem;
-}
-
-.p4p-list__meta .p4p-list__score {
-  font-weight: 700;
-  color: var(--accent);
-  font-size: 0.72rem;
-}
-
-.p4p-list__item--featured .p4p-list__meta .p4p-list__score {
-  font-size: 0.78rem;
 }
 
 @media (max-width: 1023px) {
@@ -644,6 +779,10 @@ function pilotPath(slug: string) {
   }
 
   .p4p-leader__score-row {
+    justify-content: flex-start;
+  }
+
+  .p4p-leader__badges {
     justify-content: flex-start;
   }
 
@@ -680,23 +819,8 @@ function pilotPath(slug: string) {
     padding: 0.55rem 0.75rem;
   }
 
-  .p4p-list__rank {
-    top: 0.65rem;
-    right: 0.75rem;
-  }
-
-  .p4p-list__item--compact .p4p-list__rank {
-    top: 0.55rem;
-    right: 0.75rem;
-  }
-
   .p4p-list__body {
-    padding-right: 2.25rem;
     overflow: visible;
-  }
-
-  .p4p-list__item--featured .p4p-list__body {
-    padding-right: 2.75rem;
   }
 
   .p4p-list__name {
@@ -720,8 +844,7 @@ function pilotPath(slug: string) {
     overflow-wrap: anywhere;
   }
 
-  .p4p-list__meta > span,
-  .p4p-list__meta .p4p-list__score {
+  .p4p-list__meta > span {
     white-space: normal;
     overflow-wrap: anywhere;
   }

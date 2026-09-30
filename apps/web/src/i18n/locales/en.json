@@ -50,6 +50,7 @@
     "p4pLeader": "Drift Index #1",
     "p4pSeasonEvents": "Season events",
     "p4pOtherSeries": "Also in",
+    "p4pSeriesLeaderBadge": "{series} leader",
     "p4pColSeries": "Series",
     "p4pColRound": "Round",
     "p4pPodiumTrophies": "Event podiums: {gold} first, {silver} second, {bronze} third. Qualifying wins: {qual}",
@@ -77,7 +78,7 @@
       "calendar": "Calendar {year}",
       "calendarSub": "All rounds across series",
       "p4p": "Drift Index · {year}",
-      "p4pSub": "Season mean event place adjusted by Hardness",
+      "p4pSub": "Season mean place, Hardness, and awards across featured series",
       "fanVotes": "Fan votes"
     },
     "eventStatus": {
@@ -136,16 +137,24 @@
         "body": "We compare pilots who race in more than one series. If their average finish is worse in one championship than in the others, that series is rated tougher. Hardness ranks series from most to least difficult."
       },
       "p4p": {
-        "title": "2. Drift Index",
-        "body": "Each driver's score comes from their season in series: average event place, missed rounds, qualifying level, and how hard that series is. A strong result in a tougher championship weighs more. We take the best series result; racing in an extra series adds a small bonus. Higher index points means a stronger season."
+        "title": "4. Drift Index",
+        "body": "A driver's season score across series accounts for:",
+        "items": {
+          "place": "average event place",
+          "missed": "missed events",
+          "qual": "qualifying",
+          "hardness": "series difficulty",
+          "awards": "awards (event podiums and qualifying wins across all featured championships)"
+        },
+        "footer": "A strong result in a tougher championship weighs more — we take the best series result."
       },
       "indexPoints": {
-        "title": "3. Event results",
+        "title": "2. Event results",
         "body": "Every round is converted to a comparable score from finishing position and how deep the qualifying grid was that weekend. That keeps events fair when entry lists differ in size."
       },
-      "noData": {
-        "title": "4. Series without crossover",
-        "body": "If nobody from a series also appears in our other tracked championships, we cannot estimate its difficulty. Those series stay in the prestige table but are left out of Drift Index until crossover data exists."
+      "leadersDiff": {
+        "title": "3. Series leaders",
+        "body": "Season leaders in a series can differ from leaders ranked by our method: each championship has its own points system, while we base the score on a driver's average event place in that series over the season."
       }
     },
     "catalogTitle": "Championship catalog",

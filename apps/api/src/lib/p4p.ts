@@ -33,6 +33,10 @@ export function applyMultiSeriesBonus(rawP4P: number, seriesCount: number): numb
   return rawP4P - P4P_MULTI_SERIES_BONUS * seriesCount;
 }
 
+export function applyTrophyBonus(rawP4P: number, trophyBonus: number): number {
+  return rawP4P - trophyBonus;
+}
+
 /** Raw P4P (lower is better) → display score where #1 has the most points. */
 export function p4pDisplayScore(rawP4P: number): number {
   return Math.round((100 - rawP4P) * 100) / 100;
@@ -93,10 +97,14 @@ export interface P4PResult {
   otherSeries: P4PSeriesParticipation[];
 }
 
-/** P4P = min(avgPlace − Hardness − qual/100) − 0.1×series (lower raw is better). */
+/**
+ * P4P = min(avgPlace − Hardness − qual/100) − 0.1×series − trophies
+ * (lower raw is better; trophies summed across all featured series).
+ */
 export function computeP4P(
   seriesList: P4PInputSeries[],
   limit?: number,
+  trophyBonusByPilotId?: ReadonlyMap<string, number>,
 ): P4PResult[] {
   const seriesCountByPilot = countP4PSeriesByPilot(seriesList);
   type PilotSeriesRow = {
@@ -155,17 +163,20 @@ export function computeP4P(
     };
   }
 
-  const sorted = [...bestByPilot.values()].sort((a, b) => {
-    const rawA = applyMultiSeriesBonus(a.adjusted, seriesCountByPilot.get(a.pilot.id) ?? 0);
-    const rawB = applyMultiSeriesBonus(b.adjusted, seriesCountByPilot.get(b.pilot.id) ?? 0);
-    return rawA - rawB || a.pilot.lastName.localeCompare(b.pilot.lastName);
-  });
-
-  return (limit != null ? sorted.slice(0, limit) : sorted).map((row, index) => {
-    const rawP4P = applyMultiSeriesBonus(
+  function rawFor(row: PilotSeriesRow): number {
+    const multi = applyMultiSeriesBonus(
       row.adjusted,
       seriesCountByPilot.get(row.pilot.id) ?? 0,
     );
+    return applyTrophyBonus(multi, trophyBonusByPilotId?.get(row.pilot.id) ?? 0);
+  }
+
+  const sorted = [...bestByPilot.values()].sort(
+    (a, b) => rawFor(a) - rawFor(b) || a.pilot.lastName.localeCompare(b.pilot.lastName),
+  );
+
+  return (limit != null ? sorted.slice(0, limit) : sorted).map((row, index) => {
+    const rawP4P = rawFor(row);
     const otherSeries = (allSeriesByPilot.get(row.pilot.id) ?? [])
       .filter((entry) => entry.seriesSlug !== row.seriesSlug)
       .sort((a, b) => a.adjusted - b.adjusted)

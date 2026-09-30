@@ -4,6 +4,7 @@ import { Router } from 'express';
 import { computeP4P } from '../lib/p4p.js';
 import { loadP4PInputs } from '../lib/p4pData.js';
 import { buildP4PSeasonEvents } from '../lib/p4pSeasonEvents.js';
+import { computeP4PTrophyBonusByPilotId } from '../lib/p4pTrophies.js';
 import { toPilotCard } from '../lib/pilot.js';
 import { seriesAliasMapForPilots } from '../lib/pilotNames.js';
 import { resultDisplayNumber } from '../lib/resultNumber.js';
@@ -155,13 +156,47 @@ async function buildHomePayload(year: number): Promise<HomeResponse> {
     },
   });
 
-  const { inputs: p4pInputs, pointsPlaceByEventId } = await loadP4PInputs(
+  const { inputs: p4pInputs, pointsPlaceByEventId, seasonEvents } = await loadP4PInputs(
     prisma,
     year,
     prestige.hardnessBySlug,
   );
-  const p4pRows = computeP4P(p4pInputs, 10);
-  const featuredSeriesSlugs = new Set(p4pInputs.map((series) => series.slug));
+  const trophyBonusByPilotId = computeP4PTrophyBonusByPilotId(
+    seasonEvents,
+    pointsPlaceByEventId,
+  );
+  const p4pAllRows = computeP4P(p4pInputs, undefined, trophyBonusByPilotId);
+  const p4pTopRows = p4pAllRows.slice(0, 10);
+  const topPilotIds = new Set(p4pTopRows.map((row) => row.pilot.id));
+  const p4pSeriesSlugs = new Set(p4pInputs.map((series) => series.slug));
+
+  // Season points-leaders of featured (P4P) series.
+  const ledSeriesByPilotId = new Map<
+    string,
+    Array<{ slug: string; name: string; shortName: string | null }>
+  >();
+  const seriesLeaderPilotIds = new Set<string>();
+  for (const card of championships) {
+    if (!p4pSeriesSlugs.has(card.series.slug) || !card.leader) continue;
+    const leaderRow = p4pAllRows.find((row) => row.pilot.slug === card.leader!.slug);
+    if (!leaderRow) continue;
+    const led = ledSeriesByPilotId.get(leaderRow.pilot.id) ?? [];
+    led.push({
+      slug: card.series.slug,
+      name: card.series.name,
+      shortName: card.series.shortName,
+    });
+    ledSeriesByPilotId.set(leaderRow.pilot.id, led);
+    if (!topPilotIds.has(leaderRow.pilot.id)) {
+      seriesLeaderPilotIds.add(leaderRow.pilot.id);
+    }
+  }
+
+  const p4pSeriesLeaderRows = p4pAllRows.filter((row) =>
+    seriesLeaderPilotIds.has(row.pilot.id),
+  );
+  const p4pRows = [...p4pTopRows, ...p4pSeriesLeaderRows];
+  const featuredSeriesSlugs = p4pSeriesSlugs;
   const p4pPilotIds = p4pRows.map((row) => row.pilot.id);
   const p4pPilotResults = await prisma.pilot.findMany({
     where: { id: { in: p4pPilotIds } },
@@ -189,6 +224,10 @@ async function buildHomePayload(year: number): Promise<HomeResponse> {
   const poundForPound = p4pRows.map((row) => ({
     rank: row.rank,
     score: row.score,
+    section: (topPilotIds.has(row.pilot.id) ? 'top' : 'seriesLeader') as
+      | 'top'
+      | 'seriesLeader',
+    ledSeries: ledSeriesByPilotId.get(row.pilot.id) ?? [],
     pilot: {
       ...toPilotCard(row.pilot, undefined, undefined, {
         nameAlias: p4pAliasMap.get(row.pilot.id),

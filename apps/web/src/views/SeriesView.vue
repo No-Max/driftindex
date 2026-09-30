@@ -245,18 +245,26 @@ const prestigeColumnKeys = ['rank', 'series', 'hardness', 'samples'] as const;
           </article>
 
           <article class="card method-card">
-            <h3>{{ t('seriesPage.method.p4p.title') }}</h3>
-            <p>{{ t('seriesPage.method.p4p.body') }}</p>
-          </article>
-
-          <article class="card method-card">
             <h3>{{ t('seriesPage.method.indexPoints.title') }}</h3>
             <p>{{ t('seriesPage.method.indexPoints.body') }}</p>
           </article>
 
           <article class="card method-card">
-            <h3>{{ t('seriesPage.method.noData.title') }}</h3>
-            <p>{{ t('seriesPage.method.noData.body') }}</p>
+            <h3>{{ t('seriesPage.method.leadersDiff.title') }}</h3>
+            <p>{{ t('seriesPage.method.leadersDiff.body') }}</p>
+          </article>
+
+          <article class="card method-card method-card--accent">
+            <h3>{{ t('seriesPage.method.p4p.title') }}</h3>
+            <p>{{ t('seriesPage.method.p4p.body') }}</p>
+            <ul class="method-card__list">
+              <li>{{ t('seriesPage.method.p4p.items.place') }}</li>
+              <li>{{ t('seriesPage.method.p4p.items.missed') }}</li>
+              <li>{{ t('seriesPage.method.p4p.items.qual') }}</li>
+              <li>{{ t('seriesPage.method.p4p.items.hardness') }}</li>
+              <li>{{ t('seriesPage.method.p4p.items.awards') }}</li>
+            </ul>
+            <p>{{ t('seriesPage.method.p4p.footer') }}</p>
           </article>
         </div>
       </section>
@@ -462,12 +470,16 @@ const prestigeColumnKeys = ['rank', 'series', 'hardness', 'samples'] as const;
 
 .method-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: 1fr;
   gap: 1rem;
 }
 
 .method-card {
   padding: 1.1rem 1.15rem;
+}
+
+.method-card--accent {
+  border-color: rgba(255, 77, 26, 0.35);
 }
 
 .method-card h3 {
@@ -479,6 +491,21 @@ const prestigeColumnKeys = ['rank', 'series', 'hardness', 'samples'] as const;
   margin: 0;
   line-height: 1.55;
   color: var(--muted);
+}
+
+.method-card__list {
+  margin: 0.65rem 0;
+  padding-left: 1.15rem;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.method-card__list li + li {
+  margin-top: 0.2rem;
+}
+
+.method-card p + .method-card__list + p {
+  margin-top: 0;
 }
 
 </style>

@@ -251,6 +251,12 @@ export interface HomeP4PSeriesParticipation {
   avgQualScore: number | null;
 }
 
+export interface HomeP4PLedSeries {
+  slug: string;
+  name: string;
+  shortName: string | null;
+}
+
 export interface HomeP4PEntry {
   rank: number;
   score: number;
@@ -260,6 +266,13 @@ export interface HomeP4PEntry {
   otherSeries: HomeP4PSeriesParticipation[];
   /** Finished events in featured series for the current season. */
   seasonEvents: HomeP4PSeasonEvent[];
+  /**
+   * `top` — Drift Index top 10.
+   * `seriesLeader` — season leader of a featured series, appended after the top 10.
+   */
+  section?: 'top' | 'seriesLeader';
+  /** Featured series where this pilot is the current season points leader. */
+  ledSeries?: HomeP4PLedSeries[];
 }
 
 export interface OverlapContribution {
@@ -338,6 +351,8 @@ export interface PilotListEntry {
   bestSeries: PilotListSeriesParticipation | null;
   /** Featured series the pilot entered in this season (best P4P series first). */
   seriesParticipations: PilotListSeriesParticipation[];
+  /** Finished featured-series events this season (for per-series trophies). */
+  seasonEvents: HomeP4PSeasonEvent[];
 }
 
 export interface PilotsListSeriesFilter {

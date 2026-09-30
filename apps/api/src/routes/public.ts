@@ -19,6 +19,8 @@ import {
 import { Router } from 'express';
 import { computeP4P, pilotSeriesParticipations, type P4PSeriesParticipation } from '../lib/p4p.js';
 import { loadP4PInputs } from '../lib/p4pData.js';
+import { indexPilotSeasonEventsFromLoaded } from '../lib/p4pSeasonEvents.js';
+import { computeP4PTrophyBonusByPilotId } from '../lib/p4pTrophies.js';
 import { preferredSeriesPhotoUrl, resolveSeriesPhotoUrl } from '../lib/media/pilotPhoto.js';
 import { toPilotCard } from '../lib/pilot.js';
 import { resultDisplayNumber } from '../lib/resultNumber.js';
@@ -600,8 +602,16 @@ interface PilotsBaseList {
 
 async function buildPilotsBaseList(year: number): Promise<PilotsBaseList> {
   const prestige = await computePrestigeRanking(prisma, year);
-  const { inputs: p4pInputs } = await loadP4PInputs(prisma, year, prestige.hardnessBySlug);
-  const p4pRows = computeP4P(p4pInputs);
+  const { inputs: p4pInputs, pointsPlaceByEventId, seasonEvents } = await loadP4PInputs(
+    prisma,
+    year,
+    prestige.hardnessBySlug,
+  );
+  const trophyBonusByPilotId = computeP4PTrophyBonusByPilotId(
+    seasonEvents,
+    pointsPlaceByEventId,
+  );
+  const p4pRows = computeP4P(p4pInputs, undefined, trophyBonusByPilotId);
 
   const seriesFilters: PilotsListSeriesFilter[] = p4pInputs.map((series) => ({
     slug: series.slug,
@@ -621,6 +631,8 @@ async function buildPilotsBaseList(year: number): Promise<PilotsBaseList> {
     ...unrankedPilots,
   ]);
 
+  const eventsByPilotId = indexPilotSeasonEventsFromLoaded(seasonEvents, pointsPlaceByEventId);
+
   const ranked: PilotListEntry[] = p4pRows.map((row) => {
     const seriesParticipations = listPilotSeasonSeries(p4pInputs, row.pilot.id);
     return {
@@ -631,6 +643,7 @@ async function buildPilotsBaseList(year: number): Promise<PilotsBaseList> {
       }),
       bestSeries: seriesParticipations[0] ?? null,
       seriesParticipations,
+      seasonEvents: eventsByPilotId.get(row.pilot.id) ?? [],
     };
   });
 
@@ -644,6 +657,7 @@ async function buildPilotsBaseList(year: number): Promise<PilotsBaseList> {
       }),
       bestSeries: seriesParticipations[0] ?? null,
       seriesParticipations,
+      seasonEvents: eventsByPilotId.get(pilot.id) ?? [],
     };
   });
 

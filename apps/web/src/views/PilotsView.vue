@@ -5,10 +5,12 @@ import type {
   PilotsListResponse,
   PilotsListSeriesFilter,
 } from '@drift-index/shared';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, shallowRef, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { fetchPilots } from '../api/client';
+import DebouncedSearchInput from '../components/DebouncedSearchInput.vue';
 import PilotAvatar from '../components/PilotAvatar.vue';
+import PilotSeasonTrophies from '../components/PilotSeasonTrophies.vue';
 import SeriesLogo from '../components/SeriesLogo.vue';
 import { useLocalePath } from '../composables/useLocalePath';
 import { formatAvgPlaceRange } from '../lib/formatAvgPlace';
@@ -19,49 +21,65 @@ const { localePath } = useLocalePath();
 
 const PAGE_SIZE = 50;
 
-const data = ref<PilotsListResponse | null>(null);
+const data = shallowRef<PilotsListResponse | null>(null);
 const loading = ref(true);
 const error = ref(false);
+/** Debounced search term — updates only after DebouncedSearchInput settles. */
 const query = ref('');
 const seriesSlug = ref('');
-const seriesFilters = ref<PilotsListSeriesFilter[]>([]);
+const seriesFilters = shallowRef<PilotsListSeriesFilter[]>([]);
 const page = ref(1);
 
+let abortController: AbortController | null = null;
+let requestSeq = 0;
+
 async function load() {
+  abortController?.abort();
+  const controller = new AbortController();
+  abortController = controller;
+  const seq = ++requestSeq;
+
   loading.value = true;
   error.value = false;
   try {
-    data.value = await fetchPilots({
+    const next = await fetchPilots({
       page: page.value,
       pageSize: PAGE_SIZE,
       q: query.value,
       series: seriesSlug.value,
+      signal: controller.signal,
     });
-    page.value = data.value.page;
-    seriesFilters.value = data.value.seriesFilters;
+    if (seq !== requestSeq) return;
+    data.value = next;
+    if (page.value !== next.page) page.value = next.page;
+    seriesFilters.value = next.seriesFilters;
   } catch {
+    if (controller.signal.aborted) return;
     error.value = true;
     data.value = null;
   } finally {
-    loading.value = false;
+    if (seq === requestSeq) loading.value = false;
   }
 }
 
 watch(query, () => {
-  page.value = 1;
+  if (page.value !== 1) page.value = 1;
 });
 
 watch(seriesSlug, () => {
-  page.value = 1;
+  if (page.value !== 1) page.value = 1;
 });
 
 watch([page, query, seriesSlug], () => {
-  load();
+  void load();
+}, { immediate: true });
+
+onBeforeUnmount(() => {
+  abortController?.abort();
 });
 
-onMounted(load);
-
 const pageCount = computed(() => data.value?.pageCount ?? 1);
+const skeletonRows = Array.from({ length: 8 }, (_, i) => i);
 
 function goToPage(next: number) {
   page.value = Math.max(1, Math.min(next, pageCount.value));
@@ -92,7 +110,12 @@ function seriesMeta(series: PilotListSeriesParticipation) {
       <div class="hero__filters">
         <label class="search">
           <span class="sr-only">{{ t('pilots.search') }}</span>
-          <input v-model="query" type="search" :placeholder="t('pilots.search')" />
+          <DebouncedSearchInput
+            v-model="query"
+            :placeholder="t('pilots.search')"
+            :debounce-ms="300"
+            :min-length="3"
+          />
         </label>
         <label class="series-filter">
           <span class="sr-only">{{ t('pilots.filterSeries') }}</span>
@@ -110,12 +133,32 @@ function seriesMeta(series: PilotListSeriesParticipation) {
       </div>
     </div>
 
-    <p v-if="data && !loading && !error" class="pilots-summary muted">
+    <p v-if="data && !error" class="pilots-summary muted">
       {{ t('pilots.summary', { pilotCount: data.pilotCount, seriesCount: data.seriesCount }) }}
     </p>
 
-    <p v-if="loading" class="muted">{{ t('states.loading') }}</p>
-    <p v-else-if="error" class="muted">{{ t('states.error') }}</p>
+    <p v-if="error && !loading" class="muted">{{ t('states.error') }}</p>
+
+    <ol
+      v-else-if="loading"
+      class="pilots-list card pilots-list--skeleton"
+      aria-busy="true"
+      aria-label="Loading"
+    >
+      <li v-for="row in skeletonRows" :key="row" class="pilots-list__item">
+        <div class="pilots-list__link pilots-list__link--skeleton">
+          <span class="skel skel--avatar" />
+          <div class="pilots-list__body">
+            <span class="skel skel--name" />
+            <span class="skel skel--meta" />
+          </div>
+          <div class="pilots-list__tail">
+            <span class="skel skel--rank" />
+            <span class="skel skel--score" />
+          </div>
+        </div>
+      </li>
+    </ol>
 
     <template v-else-if="data">
       <p v-if="query || seriesSlug" class="results-meta muted">
@@ -153,6 +196,10 @@ function seriesMeta(series: PilotListSeriesParticipation) {
                   />
                   <span>{{ seriesMeta(series) }}</span>
                   <span class="muted">· {{ t('pilots.hardnessShort') }} {{ series.weight }}</span>
+                  <PilotSeasonTrophies
+                    :events="entry.seasonEvents"
+                    :series-slug="series.slug"
+                  />
                 </span>
               </p>
               <p v-else class="pilots-list__series muted">{{ t('pilots.unranked') }}</p>
@@ -173,7 +220,7 @@ function seriesMeta(series: PilotListSeriesParticipation) {
         <button
           type="button"
           class="pilots-pagination__btn"
-          :disabled="data.page <= 1 || loading"
+          :disabled="data.page <= 1"
           @click="goToPage(data.page - 1)"
         >
           {{ t('pilots.pagePrev') }}
@@ -184,7 +231,7 @@ function seriesMeta(series: PilotListSeriesParticipation) {
         <button
           type="button"
           class="pilots-pagination__btn"
-          :disabled="data.page >= data.pageCount || loading"
+          :disabled="data.page >= data.pageCount"
           @click="goToPage(data.page + 1)"
         >
           {{ t('pilots.pageNext') }}
@@ -304,6 +351,61 @@ function seriesMeta(series: PilotListSeriesParticipation) {
 .results-meta {
   margin: 0 0 0.75rem;
   font-size: 0.9rem;
+}
+
+.pilots-list__link--skeleton {
+  pointer-events: none;
+}
+
+.skel {
+  display: block;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    var(--surface-2) 0%,
+    rgba(255, 255, 255, 0.06) 45%,
+    var(--surface-2) 90%
+  );
+  background-size: 200% 100%;
+  animation: skel-shimmer 1.15s ease-in-out infinite;
+}
+
+.skel--avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.skel--name {
+  width: min(42%, 14rem);
+  height: 0.95rem;
+  margin-bottom: 0.55rem;
+}
+
+.skel--meta {
+  width: min(68%, 22rem);
+  height: 0.7rem;
+  opacity: 0.85;
+}
+
+.skel--rank {
+  width: 1.6rem;
+  height: 1.05rem;
+}
+
+.skel--score {
+  width: 2.4rem;
+  height: 0.75rem;
+}
+
+@keyframes skel-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
 }
 
 .pilots-pagination {
@@ -431,6 +533,10 @@ function seriesMeta(series: PilotListSeriesParticipation) {
   min-width: 0;
 }
 
+.pilots-list__series-item :deep(.season-trophies) {
+  margin-left: 0.1rem;
+}
+
 .pilots-list__series-item :deep(.series-logo) {
   width: 28px;
   height: 28px;
@@ -479,6 +585,17 @@ function seriesMeta(series: PilotListSeriesParticipation) {
 
   .pilots-list__rank {
     font-size: 1.05rem;
+  }
+
+  .skel--avatar {
+    width: 52px;
+    height: 52px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skel {
+    animation: none;
   }
 }
 </style>

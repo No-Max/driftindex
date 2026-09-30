@@ -10,8 +10,8 @@ import type {
   TracksListResponse,
 } from '@drift-index/shared';
 
-async function getJson<T>(path: string): Promise<T> {
-  const response = await fetch(path);
+async function getJson<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(path, init);
   if (!response.ok) {
     throw new Error(`Request failed: ${response.status}`);
   }
@@ -69,6 +69,7 @@ export function fetchPilots(options?: {
   pageSize?: number;
   q?: string;
   series?: string;
+  signal?: AbortSignal;
 }) {
   const params = new URLSearchParams();
   if (options?.year != null) params.set('year', String(options.year));
@@ -79,7 +80,9 @@ export function fetchPilots(options?: {
   const series = options?.series?.trim();
   if (series) params.set('series', series);
   const query = params.toString();
-  return getJson<PilotsListResponse>(`/api/pilots${query ? `?${query}` : ''}`);
+  return getJson<PilotsListResponse>(`/api/pilots${query ? `?${query}` : ''}`, {
+    signal: options?.signal,
+  });
 }
 
 export function fetchPilot(slug: string) {
