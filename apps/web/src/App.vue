@@ -440,8 +440,19 @@ onUnmounted(() => {
 
 @media (max-width: 720px) {
   .footer__top {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .footer__nav {
+    flex: 1 1 100%;
+    order: 3;
+    justify-content: center;
+  }
+
+  .footer .lang-switch {
+    margin-left: auto;
   }
 }
 </style>

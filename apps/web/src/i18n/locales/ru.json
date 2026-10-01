@@ -1,6 +1,6 @@
 {
   "brand": "Drift Index",
-  "tagline": "Лучшие пилоты вне серий",
+  "tagline": "Рейтинг пилотов вне серий",
   "seo": {
     "siteName": "Drift Index",
     "default": {
@@ -287,6 +287,7 @@
       "thirdPlaces": "3-и места",
       "duelsShort": "парные",
       "eventsShort": "этапов",
+      "seasonsShort": "сезонов",
       "qualShort": "/100"
     }
   },

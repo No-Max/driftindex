@@ -535,15 +535,11 @@ publicRouter.get('/pilots', async (req, res) => {
   const page = Math.min(parsePage(req.query.page, 1), pageCount);
   const pagePilots = listed.slice((page - 1) * pageSize, page * pageSize);
 
-  const rankedIdsOnPage = pagePilots
-    .filter((entry) => entry.rank != null)
-    .map((entry) => base.pilotIdBySlug[entry.pilot.slug])
-    .filter((id): id is string => id != null);
-
+  const pageSlugs = pagePilots.map((entry) => entry.pilot.slug);
   const statsByPilotSlug = new Map<string, ReturnType<typeof computePilotStats>>();
-  if (rankedIdsOnPage.length > 0) {
-    const rankedPilotResults = await prisma.pilot.findMany({
-      where: { id: { in: rankedIdsOnPage } },
+  if (pageSlugs.length > 0) {
+    const pagePilotResults = await prisma.pilot.findMany({
+      where: { slug: { in: pageSlugs } },
       include: {
         results: {
           include: {
@@ -556,13 +552,12 @@ publicRouter.get('/pilots', async (req, res) => {
         },
       },
     });
-    for (const pilot of rankedPilotResults) {
+    for (const pilot of pagePilotResults) {
       statsByPilotSlug.set(pilot.slug, computePilotStats(toStatsInput(pilot.results)));
     }
   }
 
   const pilots: PilotListEntry[] = pagePilots.map((entry) => {
-    if (entry.rank == null) return entry;
     const stats = statsByPilotSlug.get(entry.pilot.slug);
     if (!stats) return entry;
     return {

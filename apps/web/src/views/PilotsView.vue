@@ -173,37 +173,40 @@ function seriesMeta(series: PilotListSeriesParticipation) {
           :class="{ 'pilots-list__item--unranked': entry.rank == null }"
         >
           <RouterLink :to="localePath(`/pilots/${entry.pilot.slug}`)" class="pilots-list__link">
-            <PilotAvatar :pilot="entry.pilot" size="md" />
+            <PilotAvatar :pilot="entry.pilot" size="md" class="pilots-list__avatar" />
             <div class="pilots-list__body">
               <p class="pilots-list__name">
-                <span v-if="entry.pilot.number" class="muted">#{{ entry.pilot.number }} · </span>
                 {{ pilotName(entry) }}
               </p>
-              <p
-                v-if="entry.seriesParticipations.length > 0"
-                class="pilots-list__series"
-              >
-                <span
-                  v-for="series in entry.seriesParticipations"
-                  :key="series.slug"
-                  class="pilots-list__series-item"
-                >
-                  <SeriesLogo
-                    :slug="series.slug"
-                    :name="series.name"
-                    :logo-url="series.logoUrl"
-                    size="sm"
-                  />
-                  <span>{{ seriesMeta(series) }}</span>
-                  <span class="muted">· {{ t('pilots.hardnessShort') }} {{ series.weight }}</span>
-                  <PilotSeasonTrophies
-                    :events="entry.seasonEvents"
-                    :series-slug="series.slug"
-                  />
-                </span>
+              <p v-if="entry.pilot.stats" class="pilots-list__meta">
+                <span>{{ entry.pilot.stats.eventsCount }} {{ t('pilot.stats.eventsShort') }}</span>
+                <span>{{ entry.pilot.stats.seasonsCount }} {{ t('pilot.stats.seasonsShort') }}</span>
               </p>
-              <p v-else class="pilots-list__series muted">{{ t('pilots.unranked') }}</p>
             </div>
+            <p
+              v-if="entry.seriesParticipations.length > 0"
+              class="pilots-list__series"
+            >
+              <span
+                v-for="series in entry.seriesParticipations"
+                :key="series.slug"
+                class="pilots-list__series-item"
+              >
+                <SeriesLogo
+                  :slug="series.slug"
+                  :name="series.name"
+                  :logo-url="series.logoUrl"
+                  size="sm"
+                />
+                <span>{{ seriesMeta(series) }}</span>
+                <span class="muted">· {{ t('pilots.hardnessShort') }} {{ series.weight }}</span>
+                <PilotSeasonTrophies
+                  :events="entry.seasonEvents"
+                  :series-slug="series.slug"
+                />
+              </span>
+            </p>
+            <p v-else class="pilots-list__series muted">{{ t('pilots.unranked') }}</p>
             <div class="pilots-list__tail">
               <span class="pilots-list__rank">
                 {{ entry.rank ?? '—' }}
@@ -371,8 +374,8 @@ function seriesMeta(series: PilotListSeriesParticipation) {
 }
 
 .skel--avatar {
-  width: 64px;
-  height: 64px;
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
   flex-shrink: 0;
 }
@@ -469,18 +472,28 @@ function seriesMeta(series: PilotListSeriesParticipation) {
 .pilots-list__link {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'avatar body tail'
+    'avatar series tail';
   align-items: center;
-  gap: 0.85rem;
+  column-gap: 0.85rem;
+  row-gap: 0.15rem;
   padding: 0.75rem 1rem;
 }
 
+.pilots-list__avatar {
+  grid-area: avatar;
+  align-self: center;
+}
+
 .pilots-list__link :deep(.avatar--md) {
-  width: 64px;
-  height: 64px;
-  font-size: 1.02rem;
+  width: 72px;
+  height: 72px;
+  font-size: 1.05rem;
 }
 
 .pilots-list__tail {
+  grid-area: tail;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -508,6 +521,11 @@ function seriesMeta(series: PilotListSeriesParticipation) {
 }
 
 .pilots-list__body {
+  grid-area: body;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-self: center;
   min-width: 0;
 }
 
@@ -516,7 +534,17 @@ function seriesMeta(series: PilotListSeriesParticipation) {
   font-weight: 600;
 }
 
+.pilots-list__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
+  margin: 0.2rem 0 0;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
 .pilots-list__series {
+  grid-area: series;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -576,11 +604,37 @@ function seriesMeta(series: PilotListSeriesParticipation) {
   border: 0;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .pilots-list__link {
-    align-items: center;
-    gap: 0.65rem;
+    grid-template-areas:
+      'avatar body tail'
+      'series series series';
+    align-items: start;
+    column-gap: 0.65rem;
+    row-gap: 0.45rem;
     padding: 0.65rem 0.75rem;
+  }
+
+  .pilots-list__avatar {
+    align-self: start;
+  }
+
+  .pilots-list__link :deep(.avatar--md) {
+    width: 60px;
+    height: 60px;
+    font-size: 0.95rem;
+  }
+
+  .pilots-list__series {
+    margin-top: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    flex-wrap: nowrap;
+    row-gap: 0.35rem;
+  }
+
+  .pilots-list__series-item:not(:last-child)::after {
+    display: none;
   }
 
   .pilots-list__rank {
@@ -588,8 +642,20 @@ function seriesMeta(series: PilotListSeriesParticipation) {
   }
 
   .skel--avatar {
-    width: 52px;
-    height: 52px;
+    width: 60px;
+    height: 60px;
+  }
+}
+
+@media (max-width: 500px) {
+  .pilots-list__tail {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 400px) {
+  .pilots-list__score {
+    display: none;
   }
 }
 

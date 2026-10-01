@@ -239,33 +239,34 @@ function pilotPath(slug: string) {
                   </span>
                 </p>
               </RouterLink>
-              <p class="p4p-list__series">
-                <span
-                  v-for="series in seriesParticipations(item)"
-                  :key="series.slug"
-                  class="p4p-list__series-item"
-                >
-                  <SeriesLogo
-                    :slug="series.slug"
-                    :name="series.name"
-                    :logo-url="series.logoUrl"
-                    size="sm"
-                  />
-                  <span>{{ seriesMeta(series) }}</span>
-                  <span class="muted">· {{ t('pilots.hardnessShort') }} {{ series.weight }}</span>
-                  <PilotSeasonTrophies
-                    :events="item.seasonEvents"
-                    :series-slug="series.slug"
-                  />
-                </span>
-              </p>
-              <p v-if="item.pilot.stats && isFeatured(item.rank)" class="p4p-list__meta">
+              <p v-if="item.pilot.stats" class="p4p-list__meta">
                 <span>{{ item.pilot.stats.eventsCount }} {{ t('pilot.stats.eventsShort') }}</span>
+                <span>{{ item.pilot.stats.seasonsCount }} {{ t('pilot.stats.seasonsShort') }}</span>
                 <span v-if="item.pilot.stats.avgQualScore != null">
                   {{ item.pilot.stats.avgQualScore.toFixed(1) }} {{ t('pilot.stats.qualShort') }}
                 </span>
               </p>
             </div>
+            <p class="p4p-list__series">
+              <span
+                v-for="series in seriesParticipations(item)"
+                :key="series.slug"
+                class="p4p-list__series-item"
+              >
+                <SeriesLogo
+                  :slug="series.slug"
+                  :name="series.name"
+                  :logo-url="series.logoUrl"
+                  size="sm"
+                />
+                <span>{{ seriesMeta(series) }}</span>
+                <span class="muted">· {{ t('pilots.hardnessShort') }} {{ series.weight }}</span>
+                <PilotSeasonTrophies
+                  :events="item.seasonEvents"
+                  :series-slug="series.slug"
+                />
+              </span>
+            </p>
             <RouterLink :to="pilotPath(item.pilot.slug)" class="p4p-list__tail">
               <span class="p4p-list__rank">{{ item.rank }}</span>
               <span class="p4p-list__score">{{ item.score }}</span>
@@ -585,14 +586,34 @@ function pilotPath(slug: string) {
 .p4p-list__link {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'avatar body tail'
+    'avatar series tail';
   align-items: center;
-  gap: 0.85rem;
+  column-gap: 0.85rem;
+  row-gap: 0.15rem;
   padding: 0.85rem 1rem;
   min-width: 0;
 }
 
+.p4p-list__avatar-link {
+  grid-area: avatar;
+  align-self: center;
+}
+
+.p4p-list__body {
+  grid-area: body;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-self: center;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
 .p4p-list__item--compact .p4p-list__link {
-  gap: 0.75rem;
+  column-gap: 0.75rem;
   padding: 0.65rem 0.9rem;
 }
 
@@ -606,6 +627,7 @@ function pilotPath(slug: string) {
 }
 
 .p4p-list__tail {
+  grid-area: tail;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -656,12 +678,6 @@ function pilotPath(slug: string) {
   font-size: 1.17rem;
 }
 
-.p4p-list__body {
-  min-width: 0;
-  max-width: 100%;
-  overflow: hidden;
-}
-
 .p4p-list__name-link {
   display: block;
   min-width: 0;
@@ -697,6 +713,7 @@ function pilotPath(slug: string) {
 }
 
 .p4p-list__series {
+  grid-area: series;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -739,11 +756,16 @@ function pilotPath(slug: string) {
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem 0.5rem;
-  margin: 0.35rem 0 0;
+  margin: 0.2rem 0 0;
   font-size: 0.72rem;
   color: var(--muted);
   max-width: 100%;
   min-width: 0;
+}
+
+.p4p-list__item--compact .p4p-list__meta {
+  margin-top: 0.1rem;
+  font-size: 0.68rem;
 }
 
 .p4p-list__item--compact .p4p-list__series {
@@ -805,18 +827,31 @@ function pilotPath(slug: string) {
     width: 100%;
   }
 
+  .p4p-leader__badges,
+  .p4p-leader__score-row {
+    justify-content: center;
+  }
+
   .p4p-leader__events-table {
     max-height: 220px;
   }
 
   .p4p-list__link {
-    align-items: flex-start;
-    gap: 0.65rem;
+    grid-template-areas:
+      'avatar body tail'
+      'series series series';
+    align-items: start;
+    column-gap: 0.65rem;
+    row-gap: 0.45rem;
     padding: 0.65rem 0.75rem;
   }
 
   .p4p-list__item--compact .p4p-list__link {
     padding: 0.55rem 0.75rem;
+  }
+
+  .p4p-list__avatar-link {
+    align-self: start;
   }
 
   .p4p-list__body {
@@ -831,9 +866,37 @@ function pilotPath(slug: string) {
   }
 
   .p4p-list__series {
-    flex-wrap: wrap;
-    row-gap: 0.2rem;
+    margin-top: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    flex-wrap: nowrap;
+    row-gap: 0.35rem;
     overflow: visible;
+    font-size: 0.68rem;
+  }
+
+  .p4p-list__series-item {
+    gap: 0.3rem;
+  }
+
+  .p4p-list__series-item:not(:last-child)::after {
+    display: none;
+  }
+
+  .p4p-list__series-item :deep(.series-logo) {
+    width: 22px;
+    height: 22px;
+  }
+
+  .p4p-list__series-item :deep(.season-trophies--sm .season-trophies__icon svg) {
+    width: 0.78rem;
+    height: 0.78rem;
+  }
+
+  .p4p-list__series-item :deep(.season-trophies--sm .season-trophies__icon--qual .qual-crystal-trophy-svg) {
+    width: 0.74rem;
+    height: 0.88rem;
   }
 
   .p4p-list__series .p4p-series-link,
@@ -849,10 +912,38 @@ function pilotPath(slug: string) {
     overflow-wrap: anywhere;
   }
 
+  .p4p-list__score {
+    font-size: 0.72rem;
+  }
+
+  .p4p-list__tail {
+    min-width: 0;
+  }
+
+  .p4p-list__item--featured .p4p-list__score {
+    font-size: 0.78rem;
+  }
+
+  .p4p-list__item--compact .p4p-list__score {
+    font-size: 0.68rem;
+  }
+
   .p4p-list__item--featured :deep(.avatar--xl) {
     width: 72px;
     height: 72px;
     font-size: 1rem;
+  }
+}
+
+@media (max-width: 500px) {
+  .p4p-leader {
+    padding: 0.85rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .p4p-list__score {
+    display: none;
   }
 }
 </style>

@@ -450,9 +450,7 @@ const prestigeColumnKeys = ['rank', 'series', 'hardness', 'samples'] as const;
 
 .column-legend__row {
   display: grid;
-  grid-template-columns: minmax(7rem, 11rem) 1fr;
-  gap: 0.75rem 1rem;
-  align-items: start;
+  gap: 0.2rem;
 }
 
 .column-legend dt {
@@ -508,4 +506,25 @@ const prestigeColumnKeys = ['rank', 'series', 'hardness', 'samples'] as const;
   margin-top: 0;
 }
 
+@media (max-width: 768px) {
+  .table-wrap :deep(th),
+  .table-wrap :deep(td) {
+    padding: 0.65rem 0.7rem;
+  }
+
+  .series-cell strong {
+    display: none;
+  }
+
+  .series-cell .series-code {
+    margin-top: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .column-legend {
+    padding: 0.75rem 0.7rem 0.15rem;
+  }
+}
 </style>
