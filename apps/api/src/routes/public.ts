@@ -51,7 +51,7 @@ publicRouter.get('/health', (_req, res) => {
 publicRouter.get('/sitemap.xml', async (_req, res) => {
   try {
     const xml = await getOrSetCached(
-      'sitemap:xml',
+      'sitemap:xml:v2',
       () => buildSitemapXml(prisma),
       SITEMAP_CACHE_MS,
     );
