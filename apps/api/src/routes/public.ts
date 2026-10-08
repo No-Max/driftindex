@@ -55,9 +55,12 @@ publicRouter.get('/sitemap.xml', async (_req, res) => {
       () => buildSitemapXml(prisma),
       SITEMAP_CACHE_MS,
     );
-    res.type('application/xml; charset=utf-8');
+    // Always return 200 with a body. Express ETag + If-None-Match → 304 breaks Google Search Console.
+    res.status(200);
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
     res.setHeader('Cache-Control', 'public, max-age=3600');
-    res.send(xml);
+    res.removeHeader('ETag');
+    res.end(xml);
   } catch (err) {
     console.error('sitemap.xml', err);
     res.status(500).type('text/plain').send('Sitemap unavailable');
