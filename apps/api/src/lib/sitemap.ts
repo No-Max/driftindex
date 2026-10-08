@@ -27,6 +27,23 @@ function localeAbsolute(origin: string, locale: Locale, barePath: string): strin
   return `${origin}/${locale}${barePath}`;
 }
 
+/** Percent-encode path segments so loc values are valid in XML sitemaps (ASCII + IRIs). */
+export function normalizeSitemapUrl(url: string): string {
+  const parsed = new URL(url);
+  parsed.pathname = parsed.pathname
+    .split('/')
+    .map((segment) => {
+      if (!segment) return segment;
+      try {
+        return encodeURIComponent(decodeURIComponent(segment));
+      } catch {
+        return encodeURIComponent(segment);
+      }
+    })
+    .join('/');
+  return parsed.toString();
+}
+
 export function escapeXml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -43,24 +60,15 @@ function formatLastmod(date: Date): string {
 export function renderSitemapXml(origin: string, paths: readonly SitemapPath[]): string {
   const lines: string[] = [
     '<?xml version="1.0" encoding="UTF-8"?>',
-    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">',
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
   ];
 
+  // Plain sitemap: one <loc> per locale URL. Hreflang is declared in HTML (usePageSeo).
   for (const entry of paths) {
-    const alternateLinks = [
-      ...LOCALES.map(
-        (alt) =>
-          `    <xhtml:link rel="alternate" hreflang="${alt}" href="${escapeXml(localeAbsolute(origin, alt, entry.path))}"></xhtml:link>`,
-      ),
-      `    <xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(localeAbsolute(origin, 'en', entry.path))}"></xhtml:link>`,
-    ];
-
-    // Google hreflang sitemaps: one <url> per locale, identical xhtml:link set in each.
     for (const locale of LOCALES) {
-      const loc = localeAbsolute(origin, locale, entry.path);
+      const loc = normalizeSitemapUrl(localeAbsolute(origin, locale, entry.path));
       lines.push('  <url>');
       lines.push(`    <loc>${escapeXml(loc)}</loc>`);
-      lines.push(...alternateLinks);
       if (entry.lastmod) {
         lines.push(`    <lastmod>${formatLastmod(entry.lastmod)}</lastmod>`);
       }
