@@ -94,6 +94,10 @@ cd /opt/driftindex && npm run build --workspace=apps/web
 
 Tracking stays off until `VITE_UMAMI_WEBSITE_ID` is set (baked in at build time).
 
+## Sitemap
+
+`/sitemap.xml` is generated from the database (pilots, series, seasons, events, tracks) via `GET /api/sitemap.xml`. Nginx proxies the public URL to the API (`deploy/nginx-driftindex.conf`). After changing that config on the VPS, run `sudo nginx -t && sudo systemctl reload nginx`.
+
 ## Update after git pull
 
 ```bash

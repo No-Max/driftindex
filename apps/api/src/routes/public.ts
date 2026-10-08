@@ -37,12 +37,31 @@ import { loadSeriesLogoMap, seriesLogoFromMap } from '../lib/seriesLogos.js';
 import { computePrestigeRanking, persistPrestigeRanking } from '../lib/seriesOverlap.js';
 import { computeStandings, computeTeamStandings } from '../lib/standings.js';
 import { toTrackSummary } from '../lib/trackDto.js';
+import { buildSitemapXml } from '../lib/sitemap.js';
 import { loadTrackPhotosForProfile } from '../lib/trackPhotos.js';
 
 export const publicRouter = Router();
 
+const SITEMAP_CACHE_MS = 3_600_000;
+
 publicRouter.get('/health', (_req, res) => {
   res.json({ ok: true, service: 'drift-index-api', cache: responseCacheStats() });
+});
+
+publicRouter.get('/sitemap.xml', async (_req, res) => {
+  try {
+    const xml = await getOrSetCached(
+      'sitemap:xml',
+      () => buildSitemapXml(prisma),
+      SITEMAP_CACHE_MS,
+    );
+    res.type('application/xml; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.send(xml);
+  } catch (err) {
+    console.error('sitemap.xml', err);
+    res.status(500).type('text/plain').send('Sitemap unavailable');
+  }
 });
 
 publicRouter.get('/series/prestige', async (req, res) => {

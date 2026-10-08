@@ -51,6 +51,10 @@ export default defineConfig(({ mode }) => {
       port: 5020,
       proxy: {
         '/api': LOCAL_API,
+        '/sitemap.xml': {
+          target: LOCAL_API,
+          rewrite: () => '/api/sitemap.xml',
+        },
       },
     },
   };
