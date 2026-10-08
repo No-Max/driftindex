@@ -10,7 +10,7 @@ test('renderSitemapXml emits hreflang alternates and lastmod', () => {
   assert.match(xml, /<loc>https:\/\/driftindex\.pro\/en\/pilots\/foo<\/loc>/);
   assert.match(xml, /hreflang="ru" href="https:\/\/driftindex\.pro\/ru\/pilots\/foo"/);
   assert.match(xml, /<lastmod>2026-03-15<\/lastmod>/);
-  assert.equal((xml.match(/<url>/g) ?? []).length, 1);
+  assert.equal((xml.match(/<url>/g) ?? []).length, 2);
 });
 
 test('escapeXml encodes special characters', () => {

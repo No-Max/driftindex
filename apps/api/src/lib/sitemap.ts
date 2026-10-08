@@ -9,9 +9,6 @@ export const DEFAULT_SITE_ORIGIN = 'https://driftindex.pro';
 const LOCALES = ['en', 'ru'] as const;
 type Locale = (typeof LOCALES)[number];
 
-/** Canonical locale used in <loc> (alternates list en + ru + x-default). */
-const SITEMAP_LOC_LOCALE: Locale = 'en';
-
 export interface SitemapPath {
   path: string;
   lastmod?: Date;
@@ -50,23 +47,25 @@ export function renderSitemapXml(origin: string, paths: readonly SitemapPath[]):
   ];
 
   for (const entry of paths) {
-    const loc = localeAbsolute(origin, SITEMAP_LOC_LOCALE, entry.path);
-    lines.push('  <url>');
-    lines.push(`    <loc>${escapeXml(loc)}</loc>`);
-    for (const alt of LOCALES) {
-      const href = localeAbsolute(origin, alt, entry.path);
-      lines.push(
-        `    <xhtml:link rel="alternate" hreflang="${alt}" href="${escapeXml(href)}"/>`,
-      );
+    const alternateLinks = [
+      ...LOCALES.map(
+        (alt) =>
+          `    <xhtml:link rel="alternate" hreflang="${alt}" href="${escapeXml(localeAbsolute(origin, alt, entry.path))}"></xhtml:link>`,
+      ),
+      `    <xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(localeAbsolute(origin, 'en', entry.path))}"></xhtml:link>`,
+    ];
+
+    // Google hreflang sitemaps: one <url> per locale, identical xhtml:link set in each.
+    for (const locale of LOCALES) {
+      const loc = localeAbsolute(origin, locale, entry.path);
+      lines.push('  <url>');
+      lines.push(`    <loc>${escapeXml(loc)}</loc>`);
+      lines.push(...alternateLinks);
+      if (entry.lastmod) {
+        lines.push(`    <lastmod>${formatLastmod(entry.lastmod)}</lastmod>`);
+      }
+      lines.push('  </url>');
     }
-    const xDefault = localeAbsolute(origin, SITEMAP_LOC_LOCALE, entry.path);
-    lines.push(
-      `    <xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(xDefault)}"/>`,
-    );
-    if (entry.lastmod) {
-      lines.push(`    <lastmod>${formatLastmod(entry.lastmod)}</lastmod>`);
-    }
-    lines.push('  </url>');
   }
 
   lines.push('</urlset>');
