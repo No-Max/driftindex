@@ -26,8 +26,8 @@ sudo nginx -t && sudo systemctl reload nginx
 
 ## Umami analytics (self-hosted)
 
-- **Tracker** (public): `https://driftindex.pro/stats/stats.js` → posts to `/stats/api/send`
-- **Dashboard**: `https://analytics.driftindex.pro` (after DNS) or SSH tunnel (below)
+- **Tracker** (public): `https://driftindex.pro/stats/stats.js` → posts to `/stats/api/send` (`Disallow: /stats/` in site robots.txt + `X-Robots-Tag` in nginx)
+- **Dashboard**: `https://analytics.driftindex.pro` (after DNS) or SSH tunnel (below) — **not indexed** (`robots.txt` disallow all + `X-Robots-Tag` on nginx)
 
 Umami 3.x does not reliably support a path prefix for the UI, so the dashboard is on a subdomain (or localhost via tunnel). The tracker stays same-origin on the main site.
 
