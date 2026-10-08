@@ -96,7 +96,14 @@ Tracking stays off until `VITE_UMAMI_WEBSITE_ID` is set (baked in at build time)
 
 ## Sitemap
 
-`/sitemap.xml` is generated from the database (pilots, series, seasons, events, tracks) via `GET /api/sitemap.xml`. Nginx proxies the public URL to the API (`deploy/nginx-driftindex.conf`). After changing that config on the VPS, run `sudo nginx -t && sudo systemctl reload nginx`.
+`/sitemap.xml` is generated from the database (pilots, series, seasons, events, tracks) via `GET /api/sitemap.xml`. Nginx proxies the public URL to the API (`deploy/nginx-driftindex.conf`).
+
+The repo includes both **:80** and **:443** server blocks for `driftindex.pro` / `www`. HTTPS must not rely on the analytics vhost (Umami on :443), or `/sitemap.xml` and the site return Umami’s “Page not found”. After editing nginx on the VPS:
+
+```bash
+sudo cp /opt/driftindex/deploy/nginx-driftindex.conf /etc/nginx/sites-available/driftindex
+sudo nginx -t && sudo systemctl reload nginx
+```
 
 ## Update after git pull
 
